@@ -1,0 +1,19 @@
+{
+  "name": "codeplay-ludo-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CodePlay real-time Ludo backend: pure rules engine + Socket.io hub + room manager.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node server/test/runAll.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "jsdom": "^30.1.1",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.8.3",
+    "twilio": "^6.1.1",
+    "mongodb": "^7.6.0"
+  }
+}
