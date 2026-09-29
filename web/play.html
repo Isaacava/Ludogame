@@ -1,38 +1,113 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CodePlay Ludo</title><script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay — Ludo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <style>
-body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#f5f5f0;color:#222}.wrap{max-width:760px;margin:auto}.card{background:#fff;border:1px solid #ccc;border-radius:14px;padding:16px;margin-bottom:12px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.p{border:1px solid #ccc;border-radius:10px;padding:10px}.tok{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin:3px;color:#fff;font-weight:700}.green{background:#38a169}.red{background:#e53e3e}.yellow{background:#d69e2e}.blue{background:#3182ce}.movable{outline:3px solid gold;cursor:pointer}.dice{font-size:28px;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap}button{padding:10px 14px;border:0;border-radius:10px;background:#222;color:#fff;cursor:pointer}button:disabled{opacity:.4}.muted{color:#666}
-</style></head><body><div class="wrap">
-<div class="card"><h1>🎲 CodePlay Ludo</h1><div id="status" class="muted">Connecting…</div><div id="room"></div></div>
-<div class="card"><div class="dice">🎲 <span id="d1">-</span> + <span id="d2">-</span></div><div class="actions"><button id="roll">Roll dice</button><button id="split" disabled>Split</button><button id="combine" disabled>Combine</button></div></div>
-<div class="card"><h3>Players</h3><div id="players" class="players"></div></div>
-<div class="card"><pre id="log" style="white-space:pre-wrap"></pre></div>
-</div>
+:root{--bg:#f5f5f0;--panel:#fff;--ink:#222;--sub:#666;--line:#ccc;--green:#38a169;--red:#e53e3e;--yellow:#d69e2e;--blue:#3182ce;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--panel:#262626;--ink:#eee;--sub:#999;--line:#3a3a3a}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--panel:#262626;--ink:#eee;--sub:#999;--line:#3a3a3a}
+*{font-family:-apple-system,system-ui,sans-serif}body{background:var(--bg);color:var(--ink);margin:0;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px}h2{margin:2px 0;font-size:14px;text-align:center}#status{font-size:13px;color:var(--sub);min-height:20px;text-align:center}
+#wrap{position:relative;width:min(92vw,380px);aspect-ratio:1}#waitingRoom{width:min(92vw,380px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;text-align:center}#waitingRoom .roomCode{font-size:34px;font-weight:800;letter-spacing:4px;margin:10px 0}#waitingRoom button{margin-top:10px}
+#grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);border-radius:8px;overflow:hidden;border:1px solid var(--line)}.cell{border:.5px solid var(--line)}
+.base-green{background:color-mix(in srgb,var(--green) 22%,var(--panel))}.base-red{background:color-mix(in srgb,var(--red) 22%,var(--panel))}.base-yellow{background:color-mix(in srgb,var(--yellow) 22%,var(--panel))}.base-blue{background:color-mix(in srgb,var(--blue) 22%,var(--panel))}.path{background:var(--panel)}
+.home-green{background:color-mix(in srgb,var(--green) 45%,var(--panel))}.home-red{background:color-mix(in srgb,var(--red) 45%,var(--panel))}.home-yellow{background:color-mix(in srgb,var(--yellow) 45%,var(--panel))}.home-blue{background:color-mix(in srgb,var(--blue) 45%,var(--panel))}
+.center{background:conic-gradient(var(--green) 0 90deg,var(--red) 90deg 180deg,var(--yellow) 180deg 270deg,var(--blue) 270deg 360deg)}
+#tokens{position:absolute;inset:0}.tok{position:absolute;width:6.2%;height:6.2%;border-radius:50%;border:1.5px solid #fff;transform:translate(-50%,-50%);transition:left .35s cubic-bezier(.34,1.2,.64,1),top .35s cubic-bezier(.34,1.2,.64,1);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tok.movable{cursor:pointer;animation:glow 1s ease-in-out infinite alternate;z-index:5}@keyframes glow{from{box-shadow:0 0 4px 2px gold,0 1px 3px rgba(0,0,0,.35)}to{box-shadow:0 0 12px 6px gold,0 1px 3px rgba(0,0,0,.35)}}.tok.justCaptured{animation:poof .4s ease-out}@keyframes poof{from{transform:translate(-50%,-50%) scale(1.6);opacity:1}to{transform:translate(-50%,-50%) scale(0);opacity:0}}
+#diceArea{display:flex;gap:14px;align-items:center;justify-content:center;height:70px}.diceBox{perspective:300px}.die3d{width:52px;height:52px;position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.9,.3,1)}.die3d.rolling{animation:tumble .7s ease-out}@keyframes tumble{0%{transform:rotateX(0) rotateY(0)}100%{transform:rotateX(720deg) rotateY(540deg)}}
+.dieFace{position:absolute;inset:0;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;box-shadow:0 2px 6px rgba(0,0,0,.15)}.pip{width:9px;height:9px;border-radius:50%;background:var(--ink);margin:auto;opacity:0}
+button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;background:var(--ink);color:var(--bg)}button:disabled{opacity:.35}.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}.legend{font-size:11px;color:var(--sub)}.playerPanel{width:min(92vw,380px);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:4px}.playerPanel h4{margin:2px 0 4px;font-size:11.5px}.statChip{display:inline-block;border-radius:12px;padding:2px 7px;font-size:10px;border:1.5px solid var(--line);margin:2px}
+#captureFlash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.5);background:#e53e3e;color:#fff;font-weight:800;font-size:22px;padding:16px 26px;border-radius:14px;opacity:0;pointer-events:none;z-index:50;box-shadow:0 8px 30px rgba(0,0,0,.4);white-space:nowrap}#captureFlash.show{animation:flashPop .9s ease-out}@keyframes flashPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}35%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+</style>
+</head>
+<body>
+<h2>🎲 CodePlay Ludo</h2>
+<div id="status">Roll to begin.</div>
+<div id="waitingRoom" style="display:none"></div>
+<div id="wrap"><div id="grid"></div><div id="tokens"></div></div>
+<div id="diceArea"><div class="diceBox"><div class="die3d" id="die1"><div class="dieFace" id="face1"></div></div></div><div class="diceBox"><div class="die3d" id="die2"><div class="dieFace" id="face2"></div></div></div></div>
+<div class="row"><button id="rollBtn">🎲 Spin Dice</button></div>
+<div class="row" id="modeRow"></div>
+<div class="legend">✨ Glowing tokens are movable — tap the one you want.</div>
+<div id="playersPanel"></div>
+<div id="log"></div>
+<div id="captureFlash"></div>
 <script>
-const q=new URLSearchParams(location.search), server='https://codeplay-ludo-production.up.railway.app';
-const socket=io(server,{transports:['websocket','polling']});
-let roomCode=q.get('code')||'', playerToken=sessionStorage.getItem('codeplay_token_'+roomCode)||'', me=-1, state=null, dice=[0,0], selectedMode=null;
-const $=id=>document.getElementById(id), log=m=>{$('log').textContent=(m+'\n'+$('log').textContent).slice(0,5000)};
-socket.on('connect',()=>{$('status').textContent='Connected';if(q.get('action')==='create'){socket.emit('create-room',{playerCount:Number(q.get('players')||4)})}else if(roomCode){socket.emit('join-room',{code:roomCode})}});
-socket.on('connect_error',()=>{$('status').textContent='Backend unreachable'});
-socket.on('error-msg',m=>log('Server: '+m));
-socket.on('room-created',x=>{roomCode=x.code;$('room').textContent='Room '+roomCode;playerToken=x.playerToken;sessionStorage.setItem('codeplay_token_'+roomCode,playerToken);});
-socket.on('you-are-player',x=>{me=x.index;if(x.playerToken){playerToken=x.playerToken;sessionStorage.setItem('codeplay_token_'+(roomCode||'pending'),playerToken)}});
-socket.on('player-joined',x=>{ $('room').textContent='Room '+roomCode+' • '+x.joined+'/'+x.needed });
-socket.on('game-ready',x=>{state=x.state;render();$ ('status').textContent=(state.turn===me?'Your turn':'Game ready')});
-socket.on('dice-rolled',x=>{dice=x.dice;$('d1').textContent=dice[0];$('d2').textContent=dice[1];$('split').disabled=!x.options.canSplit;$('combine').disabled=!x.options.canCombine;selectedMode=null;$('status').textContent='Choose Split or Combine';});
-socket.on('move-applied',x=>{state=x.state;render();log('Moved '+x.move.color+' #'+(x.move.idx+1)+' by '+x.value)});
-socket.on('turn-passed',x=>{state=x.state;$('split').disabled=true;$('combine').disabled=true;$('d1').textContent='-';$('d2').textContent='-';render();$('status').textContent=state.turn===me?'Your turn':'Waiting for player '+(state.turn+1)});
-$('roll').onclick=()=>socket.emit('roll-dice',{code:roomCode});
-$('split').onclick=()=>{selectedMode='split';$('status').textContent='Tap a token to use the first die';render(true)};
-$('combine').onclick=()=>{selectedMode='combine';$('status').textContent='Tap a token to use '+(dice[0]+dice[1]);render(true)};
-function render(select=false){
- if(!state)return;
- $('players').innerHTML='';
- state.players.forEach((p,pi)=>{const div=document.createElement('div');div.className='p';div.innerHTML='<b>'+p.name+(pi===me?' (You)':'')+'</b><div>';
- p.colors.forEach(c=>{p.tokens[c].forEach((t,i)=>{const b=document.createElement('button');b.className='tok '+c;b.textContent=t===-1?'B':t===56?'H':String(t);if(select&&pi===me){const v=selectedMode==='combine'?dice[0]+dice[1]:(i===99?0:dice[0]);b.classList.add('movable');b.onclick=()=>play(c,i,v)}div.appendChild(b)})});
- div.innerHTML+='</div>';$('players').appendChild(div);});
+const PATH=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
+const START_INDEX={green:0,red:13,yellow:26,blue:39};
+const HOME_COLS={green:[[7,1],[7,2],[7,3],[7,4],[7,5]],red:[[1,7],[2,7],[3,7],[4,7],[5,7]],yellow:[[7,13],[7,12],[7,11],[7,10],[7,9]],blue:[[13,7],[12,7],[11,7],[10,7],[9,7]]};
+const HOME_BASE_POS={green:[[2,2],[2,3],[3,2],[3,3]],red:[[2,11],[2,12],[3,11],[3,12]],yellow:[[11,11],[11,12],[12,11],[12,12]],blue:[[11,2],[11,3],[12,2],[12,3]]};
+const COLORHEX={green:'#38a169',red:'#e53e3e',yellow:'#d69e2e',blue:'#3182ce'};
+const TEAM_SETUPS={2:[{name:'You',isHuman:true,colors:['red','blue']},{name:'Computer',isHuman:false,colors:['yellow','green']}],3:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']}],4:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']},{name:'Blue',isHuman:false,colors:['blue']}]};
+function pathIdx(rel,color){return(START_INDEX[color]+rel)%52}
+function globalCell(color,rel){if(rel<=50)return PATH[pathIdx(rel,color)];if(rel<=55)return HOME_COLS[color][rel-51];return[7,7]}
+var RULES={captureSendsCapturerHome:false},players=[],turn=0,d1=0,d2=0,gameOver=false,currentValid=[],finishOrder=[];
+function canUseValue(pos,value,isDie){if(pos===56)return false;if(pos===-1)return isDie&&value===6;return pos+value<=56}
+function legalMoves(pIdx,value,isDie){var out=[];players[pIdx].colors.forEach(function(color){players[pIdx].tokens[color].forEach(function(t,i){if(canUseValue(t,value,isDie))out.push({color:color,idx:i})})});return out}
+function wouldCapture(pIdx,mv,value){var p=players[pIdx],pos=p.tokens[mv.color][mv.idx];pos=pos===-1?0:pos+value;if(pos>50)return false;var g=pathIdx(pos,mv.color);return players.some(function(opp,oi){return oi!==pIdx&&opp.colors.some(function(oc){return opp.tokens[oc].some(function(t){return t>=0&&t<=50&&pathIdx(t,oc)===g})})})}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+const gridEl=document.getElementById('grid'),tokEl=document.getElementById('tokens'),statusEl=document.getElementById('status'),logEl=document.getElementById('log'),rollBtn=document.getElementById('rollBtn'),modeRow=document.getElementById('modeRow'),face1El=document.getElementById('face1'),face2El=document.getElementById('face2'),die1El=document.getElementById('die1'),die2El=document.getElementById('die2');
+function log(m){logEl.innerHTML='<div>'+m+'</div>'+logEl.innerHTML}
+const flashEl=document.getElementById('captureFlash');
+function flashCapture(text){flashEl.textContent=text;flashEl.classList.remove('show');void flashEl.offsetWidth;flashEl.classList.add('show')}
+const homeColSet={};Object.keys(HOME_COLS).forEach(function(c){HOME_COLS[c].forEach(function(rc){homeColSet[rc[0]+','+rc[1]]=c})});const pathSet={};PATH.forEach(function(rc,i){pathSet[rc[0]+','+rc[1]]=i});
+function cellClass(r,c){if(r<6&&c<6)return'base-green';if(r<6&&c>8)return'base-red';if(r>8&&c>8)return'base-yellow';if(r>8&&c<6)return'base-blue';if(r>=6&&r<=8&&c>=6&&c<=8)return'center';var key=r+','+c;if(homeColSet[key])return'home-'+homeColSet[key];return'path'}
+for(var r=0;r<15;r++)for(var c=0;c<15;c++){var d=document.createElement('div');d.className='cell '+cellClass(r,c);gridEl.appendChild(d)}
+const PIP_LAYOUTS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function buildFace(el){el.innerHTML='';for(var i=0;i<9;i++){var p=document.createElement('div');p.className='pip';el.appendChild(p)}}buildFace(face1El);buildFace(face2El);
+function showFace(el,value){if(!PIP_LAYOUTS[value])return;var ps=el.children;for(var i=0;i<9;i++)ps[i].style.opacity=PIP_LAYOUTS[value].includes(i)?'1':'0'}
+function animateDice(v1,v2){return new Promise(function(resolve){die1El.classList.add('rolling');die2El.classList.add('rolling');var ticks=0,f=setInterval(function(){showFace(face1El,1+Math.floor(Math.random()*6));showFace(face2El,1+Math.floor(Math.random()*6));ticks++;if(ticks>8)clearInterval(f)},70);setTimeout(function(){clearInterval(f);die1El.classList.remove('rolling');die2El.classList.remove('rolling');showFace(face1El,v1);showFace(face2El,v2);resolve()},700)})}
+function tokenPositions(){var out=[];players.forEach(function(p,pIdx){p.colors.forEach(function(color){p.tokens[color].forEach(function(pos,idx){var rc=pos===-1?HOME_BASE_POS[color][idx]:globalCell(color,pos);out.push({pIdx:pIdx,color:color,idx:idx,pos:pos,r:rc[0],c:rc[1]})})})});return out}
+function isCurrentlyValid(color,idx){return currentValid.some(function(m){return m.color===color&&m.idx===idx})}
+function tokenLabel(pos){if(pos===-1)return'Base';if(pos===56)return'🏠';if(pos>50)return'Home '+(pos-50);return'Track '+pos}
+function renderPlayerPanel(){var panelEl=document.getElementById('playersPanel');panelEl.innerHTML='';players.forEach(function(p,pIdx){var div=document.createElement('div');div.className='playerPanel';var active=p.colors.reduce(function(n,c){return n+p.tokens[c].filter(function(t){return t!==-1}).length},0),total=p.colors.length*4;div.innerHTML='<h4>'+ (p.isHuman?'🔴 ':'⬤ ') +cap(p.name)+' — '+active+'/'+total+' out of base</h4>';p.colors.forEach(function(color){p.tokens[color].forEach(function(t,idx){var chip=document.createElement('span');chip.className='statChip';chip.style.borderColor=COLORHEX[color];chip.textContent=cap(color).charAt(0)+idx+': '+tokenLabel(t);div.appendChild(chip)})});panelEl.appendChild(div)})}
+function render(){var existing=new Map();tokEl.querySelectorAll('.tok').forEach(function(el){existing.set(el.dataset.key,el)});var seen=new Set();tokenPositions().forEach(function(t){var key=t.color+':'+t.idx;seen.add(key);var el=existing.get(key);if(!el){el=document.createElement('div');el.className='tok';el.dataset.key=key;tokEl.appendChild(el)}el.style.background=COLORHEX[t.color];el.style.left=((t.c+.5)/15*100)+'%';el.style.top=((t.r+.5)/15*100)+'%';var valid=t.pIdx===HUMAN_INDEX&&turn===HUMAN_INDEX&&isCurrentlyValid(t.color,t.idx);el.classList.toggle('movable',valid);el.onclick=valid?function(){onTokenTap(t.color,t.idx)}:null});existing.forEach(function(el,key){if(!seen.has(key))el.remove()});renderPlayerPanel()}
+var pendingAfter=null,pendingValue=null;
+function onTokenTap(color,idx){if(!isCurrentlyValid(color,idx))return;if(GAME_MODE!=='friends'){var value=pendingValue,after=pendingAfter;currentValid=[];applyMove(turn,{color:color,idx:idx},value);render();if(gameOver){rollBtn.disabled=true;return}after();return}if(!window._netPending)return;var net=window._netPending;window._netPending=null;currentValid=[];window._netAfterMove=net.isLast?null:net.after;socket.emit('play-move',{code:ROOM_CODE,move:{color:color,idx:idx},value:net.value,mode:net.mode,isLastMoveThisTurn:net.isLast})}
+function applyMove(pIdx,mv,value){var p=players[pIdx],arr=p.tokens[mv.color];arr[mv.idx]=arr[mv.idx]===-1?0:arr[mv.idx]+value;var newPos=arr[mv.idx],captured=[];if(newPos<=50){var g=pathIdx(newPos,mv.color);players.forEach(function(opp,oi){if(oi!==pIdx)opp.colors.forEach(function(oc){opp.tokens[oc].forEach(function(t,ti){if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({color:oc,idx:ti});log(cap(p.name)+' captured '+cap(oc)+'!');flashCapture('💥 '+cap(oc)+' SENT HOME!')}})})});if(captured.length&&RULES.captureSendsCapturerHome){arr[mv.idx]=56;newPos=56;log(cap(p.name)+'’s '+mv.color+' token rushed home after the capture!');flashCapture('🏆 '+cap(mv.color)+' RUSHED HOME!')}}if(newPos===56&&!(captured.length&&RULES.captureSendsCapturerHome))log(cap(p.name)+'’s '+mv.color+' token reached home! 🏠');checkWinner(pIdx);render()}
+function checkWinner(pIdx){var p=players[pIdx],allDone=p.colors.every(function(c){return p.tokens[c].every(function(t){return t===56})});if(allDone&&!finishOrder.includes(pIdx)){finishOrder.push(pIdx);log(cap(p.name)+' finished — place '+finishOrder.length+'!');if(finishOrder.length===players.length-1){var lastIdx=players.findIndex(function(_,i){return !finishOrder.includes(i)});finishOrder.push(lastIdx);gameOver=true;statusEl.textContent='Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > ')}}}
+function nextTurn(){do{turn=(turn+1)%players.length}while(finishOrder.includes(turn))}
+function promptDie(value,after){var legal=legalMoves(turn,value,true);if(!legal.length){log('No legal move for die '+value+' — skipped.');after();return}if(legal.length===1){applyMove(turn,legal[0],value);render();if(!gameOver)after();else rollBtn.disabled=true;return}currentValid=legal;statusEl.textContent='Tap a glowing token to move it by '+value+'.';pendingAfter=after;pendingValue=value;render()}
+function startSplit(){modeRow.innerHTML='';promptDie(d1,function(){promptDie(d2,finishHumanTurn)})}
+function startCombine(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(turn,sum,false);if(legal.length===1){applyMove(turn,legal[0],sum);render();if(!gameOver)finishHumanTurn();return}currentValid=legal;statusEl.textContent='Tap a glowing token to move it by '+sum+'.';pendingAfter=finishHumanTurn;pendingValue=sum;render()}
+function finishHumanTurn(){currentValid=[];resolveEndOfTurn()}
+function resolveEndOfTurn(){if(gameOver){rollBtn.disabled=true;render();return}var doubleSix=d1===6&&d2===6;modeRow.innerHTML='';currentValid=[];if(doubleSix){statusEl.textContent=(players[turn].isHuman?'You':cap(players[turn].name))+' rolled double 6 — go again!';render();if(players[turn].isHuman)rollBtn.disabled=false;else setTimeout(doRoll,600)}else{nextTurn();beginTurn()}}
+function beginTurn(){if(gameOver)return;currentValid=[];modeRow.innerHTML='';render();if(players[turn].isHuman){statusEl.textContent='Your turn — spin the dice.';rollBtn.disabled=false}else{statusEl.textContent=cap(players[turn].name)+'’s turn...';rollBtn.disabled=true;setTimeout(doRoll,600)}}
+async function doRoll(){if(gameOver)return;var v1=1+Math.floor(Math.random()*6),v2=1+Math.floor(Math.random()*6);if(v2===6&&v1!==6){d1=v2;d2=v1}else{d1=v1;d2=v2}await animateDice(d1,d2);var splitLegal=legalMoves(turn,d1,true).length||legalMoves(turn,d2,true).length,combineLegal=legalMoves(turn,d1+d2,false).length;if(!splitLegal&&!combineLegal){log(cap(players[turn].name)+' rolled '+d1+' & '+d2+' — no legal moves.');resolveEndOfTurn();return}if(players[turn].isHuman){rollBtn.disabled=true;showModeChoice(splitLegal,combineLegal)}else aiPlayTurn()}
+function showModeChoice(splitLegal,combineLegal){modeRow.innerHTML='';statusEl.textContent='Rolled '+d1+' & '+d2+' — split or combine?';if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplit;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombine;modeRow.appendChild(c)}}
+function aiPlayTurn(){var sum=d1+d2,splitD1=legalMoves(turn,d1,true),splitD2=legalMoves(turn,d2,true),combineLegal=legalMoves(turn,sum,false),combineCap=combineLegal.filter(function(m){return wouldCapture(turn,m,sum)}),splitCap=splitD1.filter(function(m){return wouldCapture(turn,m,d1)}).concat(splitD2.filter(function(m){return wouldCapture(turn,m,d2)})),pick=function(legal){return legal.reduce(function(b,m){return players[turn].tokens[m.color][m.idx]>players[turn].tokens[b.color][b.idx]?m:b},legal[0])};setTimeout(function(){if(combineCap.length&&!splitCap.length){applyMove(turn,pick(combineCap),sum);render()}else if(splitD1.length||splitD2.length){var playDie=function(value,legal){if(!legal.length)return;var c=legal.find(function(m){return wouldCapture(turn,m,value)});if(c===undefined)c=legal.find(function(m){return players[turn].tokens[m.color][m.idx]===-1});if(c===undefined)c=pick(legal);applyMove(turn,c,value);render()};playDie(d1,splitD1);if(!gameOver)playDie(d2,legalMoves(turn,d2,true))}else if(combineLegal.length){applyMove(turn,pick(combineLegal),sum);render()}if(!gameOver)resolveEndOfTurn();else rollBtn.disabled=true},450)}
+function startGame(playerCount){players=TEAM_SETUPS[playerCount].map(function(p){return{name:p.name,isHuman:p.isHuman,colors:p.colors,tokens:Object.fromEntries(p.colors.map(function(c){return[c,[-1,-1,-1,-1]]}))}});turn=0;d1=0;d2=0;gameOver=false;currentValid=[];finishOrder=[];showFace(face1El,1);showFace(face2El,1);beginTurn()}
+var GAME_MODE='computer',HUMAN_INDEX=0,socket=null,ROOM_CODE=null;
+rollBtn.onclick=function(){if(!players.length||gameOver)return;if(GAME_MODE==='computer'&&!players[turn].isHuman)return;if(GAME_MODE==='friends'&&turn!==HUMAN_INDEX)return;rollBtn.disabled=true;if(GAME_MODE==='friends')socket.emit('roll-dice',{code:ROOM_CODE});else doRoll()}
+function wrText(t){statusEl.textContent=t}
+function showWaitingRoom(html){document.getElementById('waitingRoom').style.display='block';document.getElementById('waitingRoom').innerHTML=html;document.getElementById('wrap').style.display='none';document.getElementById('diceArea').style.display='none';document.querySelectorAll('.row').forEach(function(r){r.style.display='none'})}
+function hideWaitingRoom(){document.getElementById('waitingRoom').style.display='none';document.getElementById('wrap').style.display='block';document.getElementById('diceArea').style.display='flex';document.querySelectorAll('.row').forEach(function(r){r.style.display='flex'})}
+function renderWaiting(joined,needed){var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>💬 Share on WhatsApp</button></a>')}
+function applyServerState(st){players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':'Player '+(i+1),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)wrText('Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > '))}
+function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(turn===HUMAN_INDEX){wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
+function showModeChoiceNet(splitLegal,combineLegal){modeRow.innerHTML='';wrText('Rolled '+d1+' & '+d2+' — split or combine?');if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplitNet;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombineNet;modeRow.appendChild(c)}}
+function startSplitNet(){modeRow.innerHTML='';promptDieNet(d1,false,function(){promptDieNet(d2,true,null)})}
+function promptDieNet(value,isLast,after){var legal=legalMoves(HUMAN_INDEX,value,true);if(!legal.length){log('No legal move for die '+value+' — skipped.');if(isLast)socket.emit('end-turn',{code:ROOM_CODE});else after();return}if(legal.length===1){commitNet(legal[0],value,isLast,after);return}currentValid=legal;wrText('Tap a token to move it by '+value+'.');window._netPending={value:value,isLast:isLast,after:after,mode:'split'};render()}
+function commitNet(mv,value,isLast,after){currentValid=[];modeRow.innerHTML='';render();window._netAfterMove=isLast?null:after;socket.emit('play-move',{code:ROOM_CODE,move:mv,value:value,mode:isLast&&value===d1+d2?'combine':'split',isLastMoveThisTurn:isLast})}
+function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(HUMAN_INDEX,sum,false);if(legal.length===1){commitNet(legal[0],sum,true,null);return}currentValid=legal;wrText('Tap a token to move it by '+sum+'.');window._netPending={value:sum,isLast:true,after:null,mode:'combine'};render()}
+function initFriendsMode(action,existingCode,playerCount){
+ GAME_MODE='friends';socket=io(window.CODEPLAY_SOCKET_URL||'https://codeplay-ludo-production.up.railway.app');
+ socket.on('connect_error',function(){showWaitingRoom('<p>Could not reach the game server.</p>')});
+ socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='room-not-found'||msg==='room-full')showWaitingRoom('<p>'+ (msg==='room-full'?'That room is already full.':'No room with that code — check it and try again.')+'</p><button onclick="history.back()">Back</button>')});
+ socket.on('you-are-player',function(x){HUMAN_INDEX=x.index});
+ socket.on('room-created',function(x){ROOM_CODE=x.code;renderWaiting(x.joined,x.needed)});
+ socket.on('player-joined',function(x){if(!players.length)renderWaiting(x.joined,x.needed)});
+ socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});
+ socket.on('dice-rolled',function(x){d1=x.dice[0];d2=x.dice[1];animateDice(d1,d2).then(function(){if(!x.options.canSplit&&!x.options.canCombine){log(cap(players[x.turn||turn].name)+' rolled '+d1+' & '+d2+' — no legal moves.');return}if(x.turn!==HUMAN_INDEX){wrText(cap(players[x.turn].name)+' rolled '+d1+' & '+d2+'...');return}var splitLegal=legalMoves(HUMAN_INDEX,d1,true).length||legalMoves(HUMAN_INDEX,d2,true).length,combineLegal=legalMoves(HUMAN_INDEX,d1+d2,false).length;showModeChoiceNet(splitLegal,combineLegal)})});
+ socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture('💥 '+cap(c.color)+' SENT HOME!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)cb()});
+ socket.on('turn-passed',function(x){window._netAfterMove=null;window._netPending=null;applyServerState(x.state);currentValid=[];modeRow.innerHTML='';beginNetTurn()});
+ if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount});showWaitingRoom('<p>Creating room...</p>')}else{ROOM_CODE=String(existingCode||'').trim().toUpperCase();socket.emit('join-room',{code:ROOM_CODE});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
 }
-function play(color,idx,value){if(selectedMode==='split'&&value===0)value=dice[0];socket.emit('play-move',{code:roomCode,move:{color,idx},value,mode:selectedMode,isLastMoveThisTurn:selectedMode==='combine'});$('split').disabled=true;$('combine').disabled=true}
-</script></body></html>
+const params=new URLSearchParams(location.search);RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
+if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);else startGame(Number(params.get('players'))||4);
+</script>
+</body>
+</html>
