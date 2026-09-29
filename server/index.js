@@ -36,14 +36,14 @@ const allowedOrigins=(process.env.CORS_ORIGIN||'*').split(',').map(s=>s.trim()).
 const io=new Server(httpServer,{cors:{origin:allowedOrigins.length===1?allowedOrigins[0]:allowedOrigins}});
 
 io.on('connection',socket=>{
-  socket.on('create-room',({playerCount})=>{
+  socket.on('create-room',({playerCount,name,color})=>{
     if(![2,3,4].includes(playerCount))return socket.emit('error-msg','invalid player count');
-    const room=rooms.createRoom(playerCount,socket.id);socket.join(room.code);
+    const room=rooms.createRoom(playerCount,socket.id,{name,color});socket.join(room.code);
     socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
-  socket.on('join-room',({code})=>{
-    const result=rooms.joinRoom(code,socket.id);if(result.error)return socket.emit('error-msg',result.error);
+  socket.on('join-room',({code,name,color})=>{
+    const result=rooms.joinRoom(code,socket.id,{name,color});if(result.error)return socket.emit('error-msg',result.error);
     const room=result.room;socket.join(room.code);
     const myIndex=rooms.playerIndexOf(room,socket.id);
     socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
