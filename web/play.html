@@ -118,7 +118,7 @@ function initFriendsMode(action,existingCode,playerCount){
    else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
  });
 }
-const params=new URLSearchParams(location.search);const PLAYER_NAME=decodeURIComponent(params.get('name')||'Guest').slice(0,40)||'Guest';const PLAYER_COLOR=decodeURIComponent(params.get('color')||'')||null;RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
+const params=new URLSearchParams(location.search);const PLAYER_NAME=(params.get('name')||'Guest').slice(0,40)||'Guest';const PLAYER_COLOR=params.get('color')||null;RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
 if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);else startGame(Number(params.get('players'))||4);
 </script>
 </body>
