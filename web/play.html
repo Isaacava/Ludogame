@@ -10,8 +10,7 @@ body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#f5f5f0;c
 <div class="card"><pre id="log" style="white-space:pre-wrap"></pre></div>
 </div>
 <script>
-const q=new URLSearchParams(location.search), server=decodeURIComponent(q.get('server')||localStorage.getItem('codeplay_server')||'').replace(/\/$/,'');
-if(!server){document.getElementById('status').textContent='Missing backend URL';throw new Error('Missing server URL')}
+const q=new URLSearchParams(location.search), server='https://codeplay-ludo-production.up.railway.app';
 const socket=io(server,{transports:['websocket','polling']});
 let roomCode=q.get('code')||'', playerToken=sessionStorage.getItem('codeplay_token_'+roomCode)||'', me=-1, state=null, dice=[0,0], selectedMode=null;
 const $=id=>document.getElementById(id), log=m=>{$('log').textContent=(m+'\n'+$('log').textContent).slice(0,5000)};
