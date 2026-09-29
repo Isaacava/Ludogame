@@ -8,7 +8,8 @@ Real-time Ludo backend and WhatsApp onboarding bot.
 - **Railway** is the intended home for the persistent Node/Socket.IO backend and WAHA service.
 - **MongoDB Atlas** stores durable player/session/match data.
 - Active game state remains in memory for low-latency Socket.IO play.
-- **WAHA** provides the free self-hosted WhatsApp bridge for development/low-volume use.
+- **WhatsApp Cloud API (Meta)** is the preferred production WhatsApp transport. The Railway backend exposes `/whatsapp/meta`, so no second WhatsApp container is required.
+- **Guest mode** lets anyone play without a WhatsApp account; friends mode also works without registration.
 
 ## Environment
 
@@ -42,3 +43,17 @@ The server is authoritative for dice consumption. A die cannot be reused, split/
 ## GitHub
 
 Repository: https://github.com/Isaacava/Ludogame
+
+
+## WhatsApp Cloud API setup
+
+The Railway webhook is:
+`https://codeplay-ludo-production.up.railway.app/whatsapp/meta`
+
+In Meta's WhatsApp/Developer configuration, set that callback URL, choose a verify token matching `META_WHATSAPP_VERIFY_TOKEN`, and subscribe the app/WABA to the `messages` webhook. Meta verifies the callback with a GET request and sends incoming events as signed POST requests.
+
+For sending messages, configure a WhatsApp Business Account phone number, its Phone Number ID, and a system-user access token with WhatsApp Business Messaging permission. The adapter uses Graph API v26.0 by default.
+
+## Guest mode
+
+The landing page now offers "Continue as Guest — no registration". Guests can choose a display name/colour, play against the computer, create friend rooms, or join an existing room. The guest profile stays only in the browser unless the player later chooses WhatsApp login.
