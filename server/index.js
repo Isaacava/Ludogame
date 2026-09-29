@@ -8,6 +8,7 @@ const {ConfigStore}=require('./config/configStore');
 const {createAdminRoutes}=require('./admin/adminRoutes');
 const {createBotApp,UserStore,SessionStore}=require('./whatsappBot');
 const {createWahaApp}=require('./bot/wahaAdapter');
+const {createMetaWhatsAppApp}=require('./bot/metaWhatsAppAdapter');
 const {MongoPersistence}=require('./db/mongoPersistence');
 
 const PORT=process.env.PORT||3001;
@@ -20,13 +21,14 @@ const sessions=new SessionStore(persistence);
 const app=express();
 const {router:adminRouter}=createAdminRoutes(configStore);
 app.use('/api/admin',adminRouter);
+app.use(createMetaWhatsAppApp({users}));
 app.use(createBotApp({users,sessions}));
 app.use(createWahaApp({users}));
 app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/config/public',(req,res)=>{
   const cfg=configStore.getAll();
-  res.json({bot:{whatsappNumber:cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts}});
+  res.json({bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts}});
 });
 
 const httpServer=http.createServer(app);
