@@ -18,7 +18,7 @@ function timingSafeHexCompare(expected, actual) {
 }
 
 function verifySignature(rawBody, signature) {
-  if (!APP_SECRET) return true;
+  if (!APP_SECRET) return process.env.NODE_ENV !== 'production';
   if (!signature || !signature.startsWith('sha256=')) return false;
   const digest = crypto.createHmac('sha256', APP_SECRET).update(rawBody).digest('hex');
   return timingSafeHexCompare(digest, signature.slice(7));
@@ -88,7 +88,7 @@ function createMetaWhatsAppApp({ users }) {
     return res.sendStatus(403);
   });
 
-  app.post('/whatsapp/meta', express.raw({ type: ['application/json', '*/json'] }), async (req, res) => {
+  app.post('/whatsapp/meta', express.raw({ type: 'application/json' }), async (req, res) => {
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
     if (!verifySignature(raw, req.get('x-hub-signature-256'))) return res.sendStatus(401);
 
