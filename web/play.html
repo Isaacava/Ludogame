@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodePlay Ludo</title><script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#f5f5f0;color:#222}.wrap{max-width:760px;margin:auto}.card{background:#fff;border:1px solid #ccc;border-radius:14px;padding:16px;margin-bottom:12px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.p{border:1px solid #ccc;border-radius:10px;padding:10px}.tok{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin:3px;color:#fff;font-weight:700}.green{background:#38a169}.red{background:#e53e3e}.yellow{background:#d69e2e}.blue{background:#3182ce}.movable{outline:3px solid gold;cursor:pointer}.dice{font-size:28px;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap}button{padding:10px 14px;border:0;border-radius:10px;background:#222;color:#fff;cursor:pointer}button:disabled{opacity:.4}.muted{color:#666}
+</style></head><body><div class="wrap">
+<div class="card"><h1>🎲 CodePlay Ludo</h1><div id="status" class="muted">Connecting…</div><div id="room"></div></div>
+<div class="card"><div class="dice">🎲 <span id="d1">-</span> + <span id="d2">-</span></div><div class="actions"><button id="roll">Roll dice</button><button id="split" disabled>Split</button><button id="combine" disabled>Combine</button></div></div>
+<div class="card"><h3>Players</h3><div id="players" class="players"></div></div>
+<div class="card"><pre id="log" style="white-space:pre-wrap"></pre></div>
+</div>
+<script>
+const q=new URLSearchParams(location.search), server=decodeURIComponent(q.get('server')||localStorage.getItem('codeplay_server')||'').replace(/\/$/,'');
+if(!server){document.getElementById('status').textContent='Missing backend URL';throw new Error('Missing server URL')}
+const socket=io(server,{transports:['websocket','polling']});
+let roomCode=q.get('code')||'', playerToken=sessionStorage.getItem('codeplay_token_'+roomCode)||'', me=-1, state=null, dice=[0,0], selectedMode=null;
+const $=id=>document.getElementById(id), log=m=>{$('log').textContent=(m+'\n'+$('log').textContent).slice(0,5000)};
+socket.on('connect',()=>{$('status').textContent='Connected';if(q.get('action')==='create'){socket.emit('create-room',{playerCount:Number(q.get('players')||4)})}else if(roomCode){socket.emit('join-room',{code:roomCode})}});
+socket.on('connect_error',()=>{$('status').textContent='Backend unreachable'});
+socket.on('error-msg',m=>log('Server: '+m));
+socket.on('room-created',x=>{roomCode=x.code;$('room').textContent='Room '+roomCode;playerToken=x.playerToken;sessionStorage.setItem('codeplay_token_'+roomCode,playerToken);});
+socket.on('you-are-player',x=>{me=x.index;if(x.playerToken){playerToken=x.playerToken;sessionStorage.setItem('codeplay_token_'+(roomCode||'pending'),playerToken)}});
+socket.on('player-joined',x=>{ $('room').textContent='Room '+roomCode+' • '+x.joined+'/'+x.needed });
+socket.on('game-ready',x=>{state=x.state;render();$ ('status').textContent=(state.turn===me?'Your turn':'Game ready')});
+socket.on('dice-rolled',x=>{dice=x.dice;$('d1').textContent=dice[0];$('d2').textContent=dice[1];$('split').disabled=!x.options.canSplit;$('combine').disabled=!x.options.canCombine;selectedMode=null;$('status').textContent='Choose Split or Combine';});
+socket.on('move-applied',x=>{state=x.state;render();log('Moved '+x.move.color+' #'+(x.move.idx+1)+' by '+x.value)});
+socket.on('turn-passed',x=>{state=x.state;$('split').disabled=true;$('combine').disabled=true;$('d1').textContent='-';$('d2').textContent='-';render();$('status').textContent=state.turn===me?'Your turn':'Waiting for player '+(state.turn+1)});
+$('roll').onclick=()=>socket.emit('roll-dice',{code:roomCode});
+$('split').onclick=()=>{selectedMode='split';$('status').textContent='Tap a token to use the first die';render(true)};
+$('combine').onclick=()=>{selectedMode='combine';$('status').textContent='Tap a token to use '+(dice[0]+dice[1]);render(true)};
+function render(select=false){
+ if(!state)return;
+ $('players').innerHTML='';
+ state.players.forEach((p,pi)=>{const div=document.createElement('div');div.className='p';div.innerHTML='<b>'+p.name+(pi===me?' (You)':'')+'</b><div>';
+ p.colors.forEach(c=>{p.tokens[c].forEach((t,i)=>{const b=document.createElement('button');b.className='tok '+c;b.textContent=t===-1?'B':t===56?'H':String(t);if(select&&pi===me){const v=selectedMode==='combine'?dice[0]+dice[1]:(i===99?0:dice[0]);b.classList.add('movable');b.onclick=()=>play(c,i,v)}div.appendChild(b)})});
+ div.innerHTML+='</div>';$('players').appendChild(div);});
+}
+function play(color,idx,value){if(selectedMode==='split'&&value===0)value=dice[0];socket.emit('play-move',{code:roomCode,move:{color,idx},value,mode:selectedMode,isLastMoveThisTurn:selectedMode==='combine'});$('split').disabled=true;$('combine').disabled=true}
+</script></body></html>
