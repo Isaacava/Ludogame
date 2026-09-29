@@ -1,41 +1,123 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CodePlay Ludo</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:24px;line-height:1.5;background:#f5f5f0;color:#222}
-main{background:#fff;padding:28px;border-radius:16px;border:1px solid #ddd}
-.actions{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
-button{padding:12px 16px;border-radius:10px;border:0;font:inherit;cursor:pointer;background:#222;color:#fff}
-.status{margin-top:14px;color:#666}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eee;font-size:13px}
-</style></head>
-<body><main>
-<div class="badge">CodePlay</div>
-<h1>🎲 CodePlay Ludo</h1>
-<p>Play Ludo with friends from your browser. The game server is already connected for you.</p>
-<div class="actions">
-<button onclick="openCreate(2)">Create 2-player</button>
-<button onclick="openCreate(3)">Create 3-player</button>
-<button onclick="openCreate(4)">Create 4-player</button>
-<button onclick="join()">Join room</button>
+:root{--bg:#f5f5f0;--panel:#fff;--ink:#1a1a1a;--sub:#666;--line:#e2e2e2;--accent:#25d366;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131313;--panel:#1f1f1f;--ink:#f2f2f2;--sub:#999;--line:#333}}
+:root[data-theme="dark"]{--bg:#131313;--panel:#1f1f1f;--ink:#f2f2f2;--sub:#999;--line:#333}
+*{box-sizing:border-box;font-family:-apple-system,system-ui,sans-serif}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;align-items:center}
+.screen{display:none;width:100%;max-width:420px;flex:1;flex-direction:column;padding:24px 20px}.screen.active{display:flex}h1{font-size:26px;margin:8px 0 4px}h2{font-size:19px;margin:4px 0 14px}p.sub{color:var(--sub);font-size:14px;margin:0 0 22px}.spacer{flex:1}
+button{border:none;border-radius:10px;padding:14px 18px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-bottom:10px}.btn-primary{background:var(--ink);color:var(--bg)}.btn-whatsapp{background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--ink)}.btn-game{background:var(--panel);border:1.5px solid var(--line);color:var(--ink);text-align:left;font-size:16px;padding:16px}.btn-game .tag{float:right;font-size:11px;color:var(--sub);font-weight:400}
+input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 14px;font-size:16px;background:var(--panel);color:var(--ink);margin-bottom:14px}.hero{background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);border-radius:16px;height:160px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;font-size:48px}.avatarRow{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}.avatar{width:44px;height:44px;border-radius:50%;border:2.5px solid transparent;cursor:pointer}.avatar.selected{border-color:var(--ink)}.countRow{display:flex;gap:8px;margin-bottom:6px}.countBtn{flex:1;margin:0;background:var(--panel);border:1.5px solid var(--line);color:var(--ink)}.countBtn.selected{background:var(--ink);color:var(--bg);border-color:var(--ink)}.hint{font-size:12px;color:var(--sub);margin:0 0 16px;min-height:16px}.err{color:#e53e3e;font-size:13px;margin:-8px 0 12px;min-height:16px}.linkRow{text-align:center;font-size:13px;color:var(--sub);margin-top:8px}.linkRow a{color:var(--ink);font-weight:600;text-decoration:none;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="screen active" id="landing">
+  <div class="hero">🎲</div>
+  <h1>CodePlay</h1>
+  <p class="sub">Ludo, Whot &amp; Chess — join with a code, play right from WhatsApp.</p>
+  <div class="spacer"></div>
+  <button class="btn-whatsapp" onclick="go('signin')">💬 Continue with WhatsApp</button>
+  <div class="linkRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
 </div>
-<div id="status" class="status">Checking game server…</div>
-</main>
+
+<div class="screen" id="signin">
+  <h2>Connect your WhatsApp</h2>
+  <p class="sub">Message our bot to get a 6-digit login code, then enter it below.</p>
+  <button class="btn-whatsapp" onclick="openWhatsApp()">💬 Message the CodePlay bot</button>
+  <div style="height:14px"></div>
+  <input id="loginCodeInput" placeholder="Enter your 6-digit code" maxlength="6" inputmode="numeric">
+  <div class="err" id="signinErr"></div>
+  <button class="btn-primary" onclick="submitLoginCode()">Continue</button>
+  <div class="linkRow"><a onclick="go('landing')">Back</a></div>
+</div>
+
+<div class="screen" id="onboarding">
+  <h2>You're in! One last thing.</h2>
+  <p class="sub">How should other players see you?</p>
+  <input id="displayName" placeholder="Display name" maxlength="20">
+  <p class="sub" style="margin-bottom:8px;">Pick a color</p>
+  <div class="avatarRow" id="avatarRow"></div>
+  <div class="err" id="onboardErr"></div>
+  <div class="spacer"></div>
+  <button class="btn-primary" onclick="finishOnboarding()">Start Playing</button>
+</div>
+
+<div class="screen" id="select">
+  <h2 id="welcomeMsg">Choose a game</h2>
+  <button class="btn-game" onclick="chooseGame('ludo')">🎲 Ludo <span class="tag">2-4 players</span></button>
+  <button class="btn-game" onclick="chooseGame('whot')">🃏 Whot <span class="tag">coming soon</span></button>
+  <button class="btn-game" onclick="chooseGame('chess')">♟️ Chess <span class="tag">coming soon</span></button>
+  <div class="spacer"></div>
+  <div class="linkRow">Playing from WhatsApp? Just message the bot instead.</div>
+</div>
+
+<div class="screen" id="ludoMode">
+  <h2>Ludo</h2>
+  <p class="sub" style="margin-bottom:10px;">How many players?</p>
+  <div class="countRow" id="countRow">
+    <button class="countBtn" onclick="setCount(2)">2</button>
+    <button class="countBtn" onclick="setCount(3)">3</button>
+    <button class="countBtn selected" onclick="setCount(4)">4</button>
+  </div>
+  <p class="hint" id="countHint">4 players — one colour each.</p>
+  <button class="btn-primary" onclick="playComputer()">🤖 vs Computer</button>
+  <button class="btn-outline" onclick="createRoom()">👥 Create a room (play with friends)</button>
+  <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
+  <input id="joinCode" placeholder="e.g. K7QP" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;">
+  <div class="err" id="joinErr"></div>
+  <button class="btn-outline" onclick="joinRoom()">Join with code</button>
+  <div class="linkRow"><a onclick="go('select')">Back</a></div>
+</div>
+
 <script>
-const SERVER='https://codeplay-ludo-production.up.railway.app';
-async function checkServer(){
-  try{
-    const r=await fetch(SERVER+'/health',{cache:'no-store'});
-    document.getElementById('status').textContent=r.ok?'🟢 Game server online':'🟠 Game server responded unexpectedly';
-  }catch{
-    document.getElementById('status').textContent='🔴 Game server is currently unreachable';
-  }
+const API_BASE=window.CODEPLAY_API_BASE||'https://codeplay-ludo-production.up.railway.app';
+const PLAY_URL=window.CODEPLAY_PLAY_URL||'/play.html';
+const AVATAR_COLORS=['#e53e3e','#38a169','#d69e2e','#3182ce'];
+var session={token:localStorage.getItem('codeplay_token'),name:null,color:null};
+var botNumber=null;
+
+function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
+async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null}catch(e){}}
+function openWhatsApp(){var n=String(botNumber||'').replace(/\D/g,'');if(!n)return alert('WhatsApp bot is not configured yet.');window.open('https://wa.me/'+n,'_blank')}
+async function submitLoginCode(){
+ const code=document.getElementById('loginCodeInput').value.trim(),errEl=document.getElementById('signinErr');
+ if(!/^\d{6}$/.test(code)){errEl.textContent='Enter the 6-digit code the bot sent you.';return} errEl.textContent='';
+ try{
+  const res=await fetch(API_BASE+'/api/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+  if(!res.ok){errEl.textContent=res.status===401?'That code is wrong or has expired — ask the bot for a new one.':'Something went wrong. Try again.';return}
+  const data=await res.json();session.token=data.token;localStorage.setItem('codeplay_token',data.token);
+  if(data.user.name){session.name=data.user.name;document.getElementById('welcomeMsg').textContent='Hey '+data.user.name+' — choose a game';go('select')}
+  else{go('onboarding');renderAvatars()}
+ }catch(e){errEl.textContent='Could not reach the game server.'}
 }
-function openCreate(players){location.href='/play.html?mode=friends&action=create&players='+players;}
-function join(){
-  const code=prompt('Room code');
-  if(!code)return;
-  location.href='/play.html?mode=friends&action=join&code='+encodeURIComponent(code.trim().toUpperCase());
+async function restoreSession(){
+ if(!session.token)return;
+ try{const res=await fetch(API_BASE+'/api/auth/session',{headers:{Authorization:'Bearer '+session.token}});
+  if(!res.ok){localStorage.removeItem('codeplay_token');session.token=null;return}
+  const data=await res.json();session.name=data.user.name;document.getElementById('welcomeMsg').textContent='Hey '+data.user.name+' — choose a game';go('select')
+ }catch(e){}
 }
-checkServer();
-</script></body></html>
+function renderAvatars(){
+ const row=document.getElementById('avatarRow');row.innerHTML='';
+ AVATAR_COLORS.forEach(function(c){const d=document.createElement('div');d.className='avatar';d.style.background=c;d.onclick=function(){document.querySelectorAll('.avatar').forEach(function(a){a.classList.remove('selected')});d.classList.add('selected');session.color=c};row.appendChild(d)})
+}
+function finishOnboarding(){
+ const name=document.getElementById('displayName').value.trim(),errEl=document.getElementById('onboardErr');
+ if(!name){errEl.textContent='Pick a display name.';return} if(!session.color){errEl.textContent='Pick a color.';return}
+ errEl.textContent='';session.name=name;document.getElementById('welcomeMsg').textContent='Hey '+name+' — choose a game';go('select')
+}
+let ludoCount=4;
+function navigate(url){location.href=url}
+function setCount(n){ludoCount=n;document.querySelectorAll('.countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
+function playComputer(){navigate(PLAY_URL+'?players='+ludoCount)}
+function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount)}
+function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code)}
+function chooseGame(game){if(game==='ludo'){go('ludoMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
+loadPublicConfig();restoreSession();
+</script>
+</body>
+</html>
