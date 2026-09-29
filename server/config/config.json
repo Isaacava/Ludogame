@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "playerCounts": [2, 3, 4],
+    "safeZonesEnabled": false,
+    "blockadesEnabled": false,
+    "extraTurnValues": [6],
+    "doubleValueGrantsExtraTurn": true,
+    "captureSendsCapturerHome": false,
+    "exactRollToFinish": true
+  },
+  "monetization": {
+    "adsEnabled": true,
+    "adPlacements": {
+      "homepageTop": true,
+      "homepageSticky": true,
+      "waitingRoom": true,
+      "inGameSticky": true,
+      "winScreen": true
+    },
+    "maxAdsPerPage": 3
+  },
+  "season": {
+    "resetDayOfMonth": 1,
+    "rewardTopN": 10,
+    "rewardType": "cash"
+  },
+  "bot": {
+    "welcomeMessage": "👋 Welcome to CodePlay!\n\nWhat should we call you?",
+    "gameMenuHeader": "Which game do you want to play?",
+    "whatsappNumber": "+1234567890"
+  },
+  "maintenance": {
+    "siteEnabled": true,
+    "maintenanceMessage": "CodePlay is down for maintenance — back soon!"
+  }
+}
