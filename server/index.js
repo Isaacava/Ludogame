@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/config/public',(req,res)=>{
   const cfg=configStore.getAll();
-  res.json({bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts}});
+  res.json({bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts,captureSendsCapturerHome:!!cfg.rules.captureSendsCapturerHome}});
 });
 
 const httpServer=http.createServer(app);
