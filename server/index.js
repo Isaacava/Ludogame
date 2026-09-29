@@ -1,4 +1,5 @@
 'use strict';
+const path=require('path');
 const http=require('http');
 const express=require('express');
 const {Server}=require('socket.io');
@@ -21,6 +22,7 @@ const {router:adminRouter}=createAdminRoutes(configStore);
 app.use('/api/admin',adminRouter);
 app.use(createBotApp({users,sessions}));
 app.use(createWahaApp({users}));
+app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/config/public',(req,res)=>{
   const cfg=configStore.getAll();
