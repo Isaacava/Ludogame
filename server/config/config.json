@@ -27,7 +27,7 @@
   "bot": {
     "welcomeMessage": "👋 Welcome to CodePlay!\n\nWhat should we call you?",
     "gameMenuHeader": "Which game do you want to play?",
-    "whatsappNumber": "+1234567890"
+    "whatsappNumber": ""
   },
   "maintenance": {
     "siteEnabled": true,
