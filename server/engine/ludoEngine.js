@@ -24,7 +24,7 @@ const DEFAULT_RULES = {
   blockadesEnabled:false,
   extraTurnValues:[6],
   doubleValueGrantsExtraTurn:true,
-  captureSendsCapturerHome:false,
+  captureSendsCapturerHome:false, // Naija Ludo variant: a capturing token may be removed/finished as the capture reward
   exactRollToFinish:true
 };
 function pathIdx(rel,color){ return (START_INDEX[color]+rel)%52; }
