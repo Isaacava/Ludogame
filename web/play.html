@@ -67,6 +67,7 @@ function renderPlayerPanel(){var panelEl=document.getElementById('playersPanel')
 function render(){var existing=new Map();tokEl.querySelectorAll('.tok').forEach(function(el){existing.set(el.dataset.key,el)});var seen=new Set();tokenPositions().forEach(function(t){var key=t.color+':'+t.idx;seen.add(key);var el=existing.get(key);if(!el){el=document.createElement('div');el.className='tok';el.dataset.key=key;tokEl.appendChild(el)}el.style.background=COLORHEX[t.color];el.style.left=((t.c+.5)/15*100)+'%';el.style.top=((t.r+.5)/15*100)+'%';var valid=t.pIdx===HUMAN_INDEX&&turn===HUMAN_INDEX&&isCurrentlyValid(t.color,t.idx);el.classList.toggle('movable',valid);el.onclick=valid?function(){onTokenTap(t.color,t.idx)}:null});existing.forEach(function(el,key){if(!seen.has(key))el.remove()});renderPlayerPanel()}
 var pendingAfter=null,pendingValue=null;
 function onTokenTap(color,idx){if(!isCurrentlyValid(color,idx))return;if(GAME_MODE!=='friends'){var value=pendingValue,after=pendingAfter;currentValid=[];applyMove(turn,{color:color,idx:idx},value);render();if(gameOver){rollBtn.disabled=true;return}after();return}if(!window._netPending)return;var net=window._netPending;window._netPending=null;currentValid=[];window._netAfterMove=net.isLast?null:net.after;socket.emit('play-move',{code:ROOM_CODE,move:{color:color,idx:idx},value:net.value,mode:net.mode,isLastMoveThisTurn:net.isLast})}
+// Capture behavior is controlled by the server's public rule configuration; the URL cannot override it.
 function applyMove(pIdx,mv,value){var p=players[pIdx],arr=p.tokens[mv.color];arr[mv.idx]=arr[mv.idx]===-1?0:arr[mv.idx]+value;var newPos=arr[mv.idx],captured=[];if(newPos<=50){var g=pathIdx(newPos,mv.color);players.forEach(function(opp,oi){if(oi!==pIdx)opp.colors.forEach(function(oc){opp.tokens[oc].forEach(function(t,ti){if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({color:oc,idx:ti});log(cap(p.name)+' captured '+cap(oc)+'!');flashCapture('💥 '+cap(oc)+' SENT HOME!')}})})});if(captured.length&&RULES.captureSendsCapturerHome){arr[mv.idx]=56;newPos=56;log(cap(p.name)+'’s '+mv.color+' token rushed home after the capture!');flashCapture('🏆 '+cap(mv.color)+' RUSHED HOME!')}}if(newPos===56&&!(captured.length&&RULES.captureSendsCapturerHome))log(cap(p.name)+'’s '+mv.color+' token reached home! 🏠');checkWinner(pIdx);render()}
 function checkWinner(pIdx){var p=players[pIdx],allDone=p.colors.every(function(c){return p.tokens[c].every(function(t){return t===56})});if(allDone&&!finishOrder.includes(pIdx)){finishOrder.push(pIdx);log(cap(p.name)+' finished — place '+finishOrder.length+'!');if(finishOrder.length===players.length-1){var lastIdx=players.findIndex(function(_,i){return !finishOrder.includes(i)});finishOrder.push(lastIdx);gameOver=true;statusEl.textContent='Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > ')}}}
 function nextTurn(){do{turn=(turn+1)%players.length}while(finishOrder.includes(turn))}
@@ -118,8 +119,23 @@ function initFriendsMode(action,existingCode,playerCount){
    else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
  });
 }
-const params=new URLSearchParams(location.search);const PLAYER_NAME=(params.get('name')||'Guest').slice(0,40)||'Guest';const PLAYER_COLOR=params.get('color')||null;RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
-if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);else startGame(Number(params.get('players'))||4);
+const params=new URLSearchParams(location.search);
+const PLAYER_NAME=(params.get('name')||'Guest').slice(0,40)||'Guest';
+const PLAYER_COLOR=params.get('color')||null;
+async function loadPublicRules(){
+  try{
+    const res=await fetch('/api/config/public',{cache:'no-store'});
+    const cfg=await res.json();
+    if(cfg&&cfg.rules&&typeof cfg.rules.captureSendsCapturerHome==='boolean'){
+      RULES.captureSendsCapturerHome=cfg.rules.captureSendsCapturerHome;
+    }
+  }catch(e){}
+}
+(async function boot(){
+  await loadPublicRules();
+  if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);
+  else startGame(Number(params.get('players'))||4);
+})();
 </script>
 </body>
 </html>
