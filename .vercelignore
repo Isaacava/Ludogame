@@ -1,0 +1,7 @@
+server/
+admin/
+docs/
+test/
+Dockerfile
+docker-compose.yml
+*.md
