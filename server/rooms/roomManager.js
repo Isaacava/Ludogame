@@ -40,7 +40,7 @@ class RoomManager {
       if(player){ player.socketId=null; player.connected=false; }
     }
   }
-  sweepExpired(maxAgeMs=10*60*1000){
+  sweepExpired(maxAgeMs=30*60*1000){
     const now=Date.now();
     for(const [code,room] of this.rooms){ if(!room.engine && now-room.createdAt>maxAgeMs) this.rooms.delete(code); }
   }
