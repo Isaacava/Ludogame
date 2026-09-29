@@ -21,6 +21,7 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   <p class="sub">Ludo, Whot &amp; Chess — join with a code, play right from WhatsApp.</p>
   <div class="spacer"></div>
   <button class="btn-whatsapp" onclick="go('signin')">💬 Continue with WhatsApp</button>
+  <button class="btn-outline" onclick="startGuest()">🎮 Continue as Guest — no registration</button>
   <div class="linkRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
 </div>
 
@@ -36,8 +37,8 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
 </div>
 
 <div class="screen" id="onboarding">
-  <h2>You're in! One last thing.</h2>
-  <p class="sub">How should other players see you?</p>
+  <h2 id="onboardTitle">You're in! One last thing.</h2>
+  <p class="sub" id="onboardSub">How should other players see you?</p>
   <input id="displayName" placeholder="Display name" maxlength="20">
   <p class="sub" style="margin-bottom:8px;">Pick a color</p>
   <div class="avatarRow" id="avatarRow"></div>
@@ -105,19 +106,21 @@ function renderAvatars(){
  const row=document.getElementById('avatarRow');row.innerHTML='';
  AVATAR_COLORS.forEach(function(c){const d=document.createElement('div');d.className='avatar';d.style.background=c;d.onclick=function(){document.querySelectorAll('.avatar').forEach(function(a){a.classList.remove('selected')});d.classList.add('selected');session.color=c};row.appendChild(d)})
 }
+function startGuest(){session.guest=true;session.token=null;session.name='Guest';session.color=null;localStorage.setItem('codeplay_guest','1');document.getElementById('onboardTitle').textContent='Play as a guest';document.getElementById('onboardSub').textContent='Pick a name and colour for this game. Nothing is registered.';document.getElementById('displayName').value='Guest';go('onboarding');renderAvatars()}
 function finishOnboarding(){
  const name=document.getElementById('displayName').value.trim(),errEl=document.getElementById('onboardErr');
  if(!name){errEl.textContent='Pick a display name.';return} if(!session.color){errEl.textContent='Pick a color.';return}
- errEl.textContent='';session.name=name;document.getElementById('welcomeMsg').textContent='Hey '+name+' — choose a game';go('select')
+ errEl.textContent='';session.name=name;localStorage.setItem('codeplay_guest_profile',JSON.stringify({name:name,color:session.color}));document.getElementById('welcomeMsg').textContent=(session.guest?'Playing as guest, ':'Hey ')+name+' — choose a game';go('select')
 }
 let ludoCount=4;
 function navigate(url){location.href=url}
 function setCount(n){ludoCount=n;document.querySelectorAll('.countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
-function playComputer(){navigate(PLAY_URL+'?players='+ludoCount)}
-function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount)}
-function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code)}
+function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest')+'&color='+encodeURIComponent(session.color||'')}
+function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
+function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+profileQuery())}
+function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code+profileQuery())}
 function chooseGame(game){if(game==='ludo'){go('ludoMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
-loadPublicConfig();restoreSession();
+(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null}}catch(e){}})();loadPublicConfig();restoreSession();
 </script>
 </body>
 </html>
