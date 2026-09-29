@@ -1,0 +1,94 @@
+'use strict';
+const http=require('http');
+const express=require('express');
+const {Server}=require('socket.io');
+const {RoomManager}=require('./rooms/roomManager');
+const {ConfigStore}=require('./config/configStore');
+const {createAdminRoutes}=require('./admin/adminRoutes');
+const {createBotApp,UserStore,SessionStore}=require('./whatsappBot');
+const {createWahaApp}=require('./bot/wahaAdapter');
+const {MongoPersistence}=require('./db/mongoPersistence');
+
+const PORT=process.env.PORT||3001;
+const configStore=new ConfigStore();
+const rooms=new RoomManager(configStore);
+const persistence=new MongoPersistence();
+const users=new UserStore(persistence);
+const sessions=new SessionStore(persistence);
+
+const app=express();
+const {router:adminRouter}=createAdminRoutes(configStore);
+app.use('/api/admin',adminRouter);
+app.use(createBotApp({users,sessions}));
+app.use(createWahaApp({users}));
+app.get('/health',(req,res)=>res.send('ok'));
+app.get('/api/config/public',(req,res)=>{
+  const cfg=configStore.getAll();
+  res.json({bot:{whatsappNumber:cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts}});
+});
+
+const httpServer=http.createServer(app);
+const allowedOrigins=(process.env.CORS_ORIGIN||'*').split(',').map(s=>s.trim()).filter(Boolean);
+const io=new Server(httpServer,{cors:{origin:allowedOrigins.length===1?allowedOrigins[0]:allowedOrigins}});
+
+io.on('connection',socket=>{
+  socket.on('create-room',({playerCount})=>{
+    if(![2,3,4].includes(playerCount))return socket.emit('error-msg','invalid player count');
+    const room=rooms.createRoom(playerCount,socket.id);socket.join(room.code);
+    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken});
+    socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
+  });
+  socket.on('join-room',({code})=>{
+    const result=rooms.joinRoom(code,socket.id);if(result.error)return socket.emit('error-msg',result.error);
+    const room=result.room;socket.join(room.code);
+    const myIndex=rooms.playerIndexOf(room,socket.id);
+    socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
+    io.to(room.code).emit('player-joined',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount});
+    if(room.engine)io.to(room.code).emit('game-ready',{code:room.code,state:room.engine.toJSON()});
+  });
+  socket.on('reconnect-player',({code,playerToken})=>{
+    const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
+    const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
+    socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});
+    if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
+  });
+  socket.on('roll-dice',({code})=>{
+    const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
+    const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
+    try{
+      const {dice,options}=room.engine.rollDice();
+      io.to(room.code).emit('dice-rolled',{dice,options,turn:room.engine.turn});
+      if(!options.canSplit&&!options.canCombine){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{reason:'no-legal-moves',...endResult,state:room.engine.toJSON()});}
+    }catch(e){socket.emit('error-msg',e.message);}
+  });
+  socket.on('play-move',({code,move,value,mode,isLastMoveThisTurn})=>{
+    const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
+    const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
+    if(!room.engine.dice)return socket.emit('error-msg','roll the dice first');
+    try{
+      const result=room.engine.applyMove(move,value,mode);
+      io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});
+      const remaining=result.consumedDice||[];
+      const allDiceConsumed=remaining.length===2&&remaining.every(v=>!v);
+      if(allDiceConsumed||isLastMoveThisTurn||result.gameOver){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});}
+    }catch(e){socket.emit('error-msg',e.message);}
+  });
+  socket.on('end-turn',({code})=>{
+    const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
+    const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
+    const options=room.engine.legalOptions();
+    if(room.engine.dice&&(options.canSplit||options.canCombine))return socket.emit('error-msg','cannot-end-turn-yet');
+    const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
+  });
+  socket.on('disconnect',()=>rooms.removeSocket(socket.id));
+});
+setInterval(()=>rooms.sweepExpired(),60*1000);
+
+async function startServer(){
+  try{if(persistence.enabled){await persistence.connect();console.log(`MongoDB connected: ${persistence.dbName}`);}}
+  catch(err){console.error('MongoDB connection failed:',err.message);if(process.env.REQUIRE_MONGODB==='true')process.exit(1);}
+  httpServer.listen(PORT,()=>console.log(`CodePlay Ludo server listening on :${PORT}`));
+}
+startServer();
+
+module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,startServer};
