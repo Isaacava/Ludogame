@@ -90,7 +90,7 @@ function loadActiveRoom(){try{var raw=localStorage.getItem('codeplay_active_ludo
 function clearActiveRoom(){localStorage.removeItem('codeplay_active_ludo_room')}
 function normalizeRoomCode(c){return String(c||'').trim().toUpperCase()}
 function renderWaiting(joined,needed){var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>💬 Share on WhatsApp</button></a>')}
-function applyServerState(st){players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':'Player '+(i+1),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)wrText('Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > '))}
+function applyServerState(st){players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)wrText('Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > '))}
 function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(turn===HUMAN_INDEX){wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
 function showModeChoiceNet(splitLegal,combineLegal){modeRow.innerHTML='';wrText('Rolled '+d1+' & '+d2+' — split or combine?');if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplitNet;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombineNet;modeRow.appendChild(c)}}
 function startSplitNet(){modeRow.innerHTML='';promptDieNet(d1,false,function(){promptDieNet(d2,true,null)})}
@@ -114,11 +114,11 @@ function initFriendsMode(action,existingCode,playerCount){
  socket.on('turn-passed',function(x){window._netAfterMove=null;window._netPending=null;applyServerState(x.state);currentValid=[];modeRow.innerHTML='';beginNetTurn()});
  socket.on('connect',function(){
    if(shouldReconnect){showWaitingRoom('<p>Reconnecting to room '+ROOM_CODE+'...</p>');socket.emit('reconnect-player',{code:ROOM_CODE,playerToken:playerToken});return;}
-   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount});showWaitingRoom('<p>Creating room...</p>')}
-   else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
+   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Creating room...</p>')}
+   else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
  });
 }
-const params=new URLSearchParams(location.search);RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
+const params=new URLSearchParams(location.search);const PLAYER_NAME=decodeURIComponent(params.get('name')||'Guest').slice(0,40)||'Guest';const PLAYER_COLOR=decodeURIComponent(params.get('color')||'')||null;RULES.captureSendsCapturerHome=params.get('captureHome')==='1';
 if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);else startGame(Number(params.get('players'))||4);
 </script>
 </body>
