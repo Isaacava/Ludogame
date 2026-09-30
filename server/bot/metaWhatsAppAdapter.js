@@ -77,7 +77,7 @@ function markSeen(id) {
   return false;
 }
 
-function createMetaWhatsAppApp({ users }) {
+function createMetaWhatsAppApp({ users, configStore }) {
   const app = express();
 
   app.get('/whatsapp/meta', (req, res) => {
@@ -110,7 +110,7 @@ function createMetaWhatsAppApp({ users }) {
       try {
         const phone = normalizePhone(message.from);
         const existing = await users.getAsync(phone);
-        const { reply, patch } = handleMessage(existing, message.text);
+        const { reply, patch } = handleMessage(existing, message.text, configStore);
         users.upsert(phone, patch);
         await sendWhatsAppText(message.from, reply);
       } catch (err) {
