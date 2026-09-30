@@ -1,12 +1,13 @@
 'use strict';
 const {io,configStore}=require('./index');
 const {WhotRoomManager}=require('./rooms/whotRoomManager');
+const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
 
 const rooms=new WhotRoomManager(configStore);
 const reactions=new Set(['😂','🔥','👏','😭','Omo!','Sharp!']);
 function emitWhotAudio(room,playerIndex,cue){const player=room&&room.players[playerIndex];if(player&&player.socketId)io.to(player.socketId).emit('game-audio',{game:'whot',cue});}
 function emitWhotRoomAudio(room,cue){if(!room)return;room.players.forEach((_,index)=>emitWhotAudio(room,index,cue));}
-function emitWhotResultAudio(room,playerIndex,result){if(!room||!result)return;const kind=result.resolution&&result.resolution.kind;const cue={normal:'whot-card','hold-on':'whot-hold-on','pick-two':'whot-pick2','pick-three':'whot-pick3',suspension:'whot-suspension','general-market':'whot-general-market',whot:'whot-wild'}[kind]||'whot-card';emitWhotRoomAudio(room,cue);if(result.gameOver){const winner=result.state&&result.state.winner!=null?result.state.winner:playerIndex;room.players.forEach((_,index)=>emitWhotAudio(room,index,index===winner?'game-winner':'game-loser'));}}
+function emitWhotResultAudio(room,playerIndex,result){if(!room||!result)return;const kind=result.resolution&&result.resolution.kind;const cue={normal:'whot-card','hold-on':'whot-hold-on','pick-two':'whot-pick2','pick-three':'whot-pick3',suspension:'whot-suspension','general-market':'whot-general-market',whot:'whot-wild'}[kind]||'whot-card';emitWhotRoomAudio(room,cue);if(result.gameOver){const winner=result.state&&result.state.winner!=null?result.state.winner:playerIndex;room.players.forEach((_,index)=>emitWhotAudio(room,index,index===winner?'game-winner':'game-loser'));notifyGameResults(room,{winnerIndex:winner,gameName:'Whot'}).catch(()=>{});}}
 const humanRoom=(room)=>room.players.map((p,index)=>({index,name:p.name||`Player ${index+1}`,connected:!!p.socketId,bot:!!p.bot}));
 
 function emitState(room,extra={}){
@@ -44,17 +45,19 @@ function scheduleBot(room){
 }
 
 io.on('connection',socket=>{
-  socket.on('whot:create-room',({playerCount,name,mode})=>{
+  socket.on('whot:create-room',({playerCount,name,mode,whatsappToken})=>{
+    const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const count=Number(playerCount),cfg=configStore.get('whot')||{};
     if(cfg.enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
     const allowed=Array.isArray(cfg.playerCounts)&&cfg.playerCounts.length?cfg.playerCounts:[2,3,4];
     if(!allowed.includes(count))return socket.emit('whot:error',{message:'player-count-disabled'});
-    const room=rooms.createRoom(count,socket.id,{name},mode==='computer'?'computer':'friends');
+    const room=rooms.createRoom(count,socket.id,{name,whatsappPhone:whatsapp?.phone||null},mode==='computer'?'computer':'friends');
     socket.join(`WHOT_${room.code}`);
     socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null});
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
-  socket.on('whot:join-room',({code,name,playerToken})=>{
+  socket.on('whot:join-room',({code,name,playerToken,whatsappToken})=>{
+    const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const existing=rooms.getRoom(code);
     if(existing&&playerToken){
       const resumed=rooms.reconnect(existing,socket.id,playerToken);
@@ -65,7 +68,7 @@ io.on('connection',socket=>{
       }
     }
     if((configStore.get('whot')||{}).enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
-    const result=rooms.joinRoom(code,socket.id,{name});
+    const result=rooms.joinRoom(code,socket.id,{name,whatsappPhone:whatsapp?.phone||null});
     if(result.error)return socket.emit('whot:error',{message:result.error});
     const room=result.room,index=rooms.playerIndexOf(room,socket.id);socket.join(`WHOT_${room.code}`);
     socket.emit('whot:joined',{code:room.code,index,playerToken:rooms.playerTokenAt(room,index),joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null});
