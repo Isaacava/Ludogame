@@ -53,7 +53,7 @@ class LudoEngine {
     if(pos===56)return false;
     if(pos===-1){if(!(isDie&&value===6))return false;return !this._blockedByOtherColor(pathIdx(0,color),color);}
     const newPos=pos+value;
-    if(newPos>56)return false;
+    if(newPos>56 && this.rules.exactRollToFinish)return false;
     if(this.rules.blockadesEnabled){
       const steps=Math.min(value,Math.max(0,50-pos));
       for(let s=1;s<=steps;s++)if(this._blockedByOtherColor(pathIdx(pos+s,color),color))return false;
@@ -110,7 +110,7 @@ class LudoEngine {
         if(captured.length&&this.rules.captureGrantsExtraTurn)this.captureBonusPending=true;
       }
       const finishedNow=newPos===56,teamFinished=this._checkWinner(this.turn);
-      return {captured,finishedNow,teamFinished,gameOver:this.gameOver,newPos,mode:'direct',consumedDice:null};
+      return {captured,finishedNow,teamFinished,gameOver:this.gameOver,newPos,mode:'direct',consumedDice:null,capturerFinishedByCapture:captured.length>0&&this.rules.captureSendsCapturerHome,capturerColor:captured.length&&this.rules.captureSendsCapturerHome?move.color:null,capturerIdx:captured.length&&this.rules.captureSendsCapturerHome?move.idx:null};
     }
     const [a,b]=this.dice,available=this.remainingDice,both=available[0]&&available[1],sum=a+b;
     let resolvedMode=mode,dieIndex=-1;
@@ -150,7 +150,7 @@ class LudoEngine {
     const finishedNow=newPos===56;
     if(finishedNow&&!(captured.length&&this.rules.captureSendsCapturerHome))this._log(`${p.name}'s ${move.color} token reached home`);
     const teamFinished=this._checkWinner(this.turn);
-    return {captured,finishedNow,teamFinished,gameOver:this.gameOver,newPos,mode:resolvedMode,consumedDice:this.remainingDice.map(Boolean)};
+    return {captured,finishedNow,teamFinished,gameOver:this.gameOver,newPos,mode:resolvedMode,consumedDice:this.remainingDice.map(Boolean),capturerFinishedByCapture:captured.length>0&&this.rules.captureSendsCapturerHome,capturerColor:captured.length&&this.rules.captureSendsCapturerHome?move.color:null,capturerIdx:captured.length&&this.rules.captureSendsCapturerHome?move.idx:null};
   }
   _checkWinner(pIdx){
     const p=this.players[pIdx],allDone=p.colors.every(c=>p.tokens[c].every(t=>t===56));
