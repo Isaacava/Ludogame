@@ -39,6 +39,7 @@ class RoomManager {
     const rules=this.configStore?this.configStore.get('rules'):undefined;
     room.engine=new LudoEngine(room.playerCount,undefined,rules);
     room.rematchVotes=new Set();
+    room.whatsappResultsSent=false;room.whatsappResultsPromise=null;room.whatsappNotifiedPhones=new Set();
     room.engine.players.forEach((enginePlayer,index)=>{
       enginePlayer.name=room.players[index].name||`Player ${index+1}`;
       enginePlayer.profileColor=room.players[index].color||null;
