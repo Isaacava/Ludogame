@@ -17,6 +17,9 @@ const waha=spawn('/entrypoint.sh',[],{
   cwd:'/app',
   env:{
     ...process.env,
+    WHATSAPP_DEFAULT_ENGINE:'NOWEB',
+    WAHA_NOWEB_WA_VERSION:process.env.WAHA_NOWEB_WA_VERSION||'auto-web',
+    WAHA_NOWEB_WA_VERSION_FORCE:process.env.WAHA_NOWEB_WA_VERSION_FORCE||'False',
     PORT:wahaPort,
     WHATSAPP_API_PORT:wahaPort,
     WAHA_BASE_URL:wahaUrl
