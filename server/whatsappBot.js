@@ -85,10 +85,16 @@ Reply 2, 3 or 4.`;
 function handleMessage(user,text,configStore=botConfig){
   const t=(text||'').trim().toLowerCase();
   if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
+  const gameJoin=t.match(/^join\s+(ludo|whot)\s+([a-z0-9]{4})$/);
+  if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&gameJoin){
+    const game=gameJoin[1],code=gameJoin[2].toUpperCase();
+    const page=game==='whot'?'whot.html':'play.html';
+    return{reply:`Joining ${game} room *${code}* — tap to open the board:\n${SITE_URL}/${page}?mode=friends&action=join&code=${code}`,patch:{stage:'game_menu'}};
+  }
   const joinMatch=t.match(/^join\s+([a-z0-9]{4})$/);
   if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&joinMatch){
     const code=joinMatch[1].toUpperCase();
-    return{reply:`Joining room *${code}* — tap to open the board:\n${SITE_URL}/play.html?mode=friends&action=join&code=${code}`,patch:{stage:'game_menu'}};
+    return{reply:`Tell me the game too: JOIN LUDO ${code} or JOIN WHOT ${code}.`,patch:{stage:'game_menu'}};
   }
   if(!user||user.stage==='new')return{reply:configStore.get('bot').welcomeMessage,patch:{stage:'awaiting_name'}};
   if(user.stage==='awaiting_name'){
