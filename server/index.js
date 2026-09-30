@@ -125,8 +125,16 @@ io.on('connection',socket=>{
 setInterval(()=>rooms.sweepExpired(),60*1000);
 
 async function startServer(){
-  try{if(persistence.enabled){await persistence.connect();console.log(`MongoDB connected: ${persistence.dbName}`);}}
-  catch(err){console.error('MongoDB connection failed:',err.message);if(process.env.REQUIRE_MONGODB==='true')process.exit(1);}
+  try{
+    if(persistence.enabled){
+      await persistence.connect();
+      await configStore.hydrateFromPersistence(persistence);
+      console.log(`MongoDB connected: ${persistence.dbName}`);
+    }
+  }catch(err){
+    console.error('MongoDB connection failed:',err.message);
+    if(process.env.REQUIRE_MONGODB==='true')process.exit(1);
+  }
   httpServer.listen(PORT,()=>console.log(`CodePlay Ludo server listening on :${PORT}`));
 }
 startServer();
