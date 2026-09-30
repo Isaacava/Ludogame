@@ -371,6 +371,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     animateCall(prompt);
 
     const isTurn=state.turn===me&&!state.gameOver;
+    const canDraw=isTurn;
     e.market.classList.toggle('canDraw',!!canDraw);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=canDraw?onDraw:null;
 
     e.status.textContent=state.gameOver?'Round complete':isTurn?
@@ -430,7 +431,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
     if(!creating&&requestedCode){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
     socket.on('connect',()=>{
-      if(mode==='computer'){socket.emit('whot:create-room',{playerCount:2,name:profileName,mode:'computer'});showWaiting('Starting your computer match…');return}
+      if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer'});showWaiting('Starting your computer match…');return}
       if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends'});showWaiting('Creating your Whot room…');return}
       if(playerToken&&roomCode){socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
       socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null});showWaiting('Joining room '+roomCode+'…');
