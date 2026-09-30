@@ -29,6 +29,7 @@ class WhotRoomManager{
     room.engine=new WhotEngine(room.playerCount,undefined,this.configStore&&this.configStore.get('whot'));
     room.players.forEach((p,i)=>room.engine.players[i].name=p.name||`Player ${i+1}`);
     room.rematchVotes=new Set();
+    room.whatsappResultsSent=false;room.whatsappResultsPromise=null;room.whatsappNotifiedPhones=new Set();
     room.engine.start();
     return room.engine;
   }
