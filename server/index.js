@@ -20,6 +20,29 @@ const sessions=new SessionStore(persistence);
 const roomPlayers=(room)=>room.players.map((p,index)=>({index,name:p.name||`Player ${index+1}`,color:p.color||null,connected:!!p.socketId}));
 const SAFE_REACTIONS=new Set(['😂','🔥','👏','😭','😎','😳','Omo!','Sharp!']);
 
+function emitGameAudio(room,playerIndex,cue){
+  const player=room&&room.players[playerIndex];
+  if(player&&player.socketId)io.to(player.socketId).emit('game-audio',{game:'ludo',cue});
+}
+function emitRoomAudio(room,cue){
+  if(!room)return;
+  room.players.forEach((_,index)=>emitGameAudio(room,index,cue));
+}
+function emitLudoResultAudio(room,playerIndex,result){
+  if(!room||!result)return;
+  if(result.captured&&result.captured.length){
+    emitGameAudio(room,playerIndex,'ludo-capture-attacker');
+    result.captured.forEach(c=>emitGameAudio(room,c.player,'ludo-capture-victim'));
+    if(result.capturerFinishedByCapture)emitGameAudio(room,playerIndex,'ludo-capture-finished');
+  }else if(result.finishedNow){
+    emitGameAudio(room,playerIndex,'ludo-piece-home');
+  }
+  if(result.gameOver){
+    const winnerIndex=Array.isArray(result.finishOrder)&&result.finishOrder.length?result.finishOrder[0]:playerIndex;
+    room.players.forEach((_,index)=>emitGameAudio(room,index,index===winnerIndex?'game-winner':'game-loser'));
+  }
+}
+
 
 const app=express();
 const {router:adminRouter}=createAdminRoutes(configStore);
@@ -118,6 +141,7 @@ io.on('connection',socket=>{
     try{
       const {dice,options}=room.engine.rollDice();
       io.to(room.code).emit('dice-rolled',{dice,options,turn:room.engine.turn});
+      emitRoomAudio(room,'ludo-dice');
       if(!options.canSplit&&!options.canCombine){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{reason:'no-legal-moves',...endResult,state:room.engine.toJSON()});}
     }catch(e){socket.emit('error-msg',e.message);}
   });
@@ -128,11 +152,13 @@ io.on('connection',socket=>{
     try{
       const result=room.engine.applyMove(move,value,mode);
       io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});
+      emitLudoResultAudio(room,pIdx,result);
       const remaining=result.consumedDice||[];
       const allDiceConsumed=remaining.length>0&&remaining.every(v=>!v);
       if(allDiceConsumed||result.gameOver){
         const endResult=room.engine.endTurn();
         io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
+        if(!endResult.gameOver)emitGameAudio(room,endResult.nextTurn,'ludo-turn');
       }
     }catch(e){socket.emit('error-msg',e.message);}
   });
@@ -159,6 +185,7 @@ io.on('connection',socket=>{
     const options=room.engine.legalOptions();
     if(room.engine.dice&&(options.canSplit||options.canCombine))return socket.emit('error-msg','cannot-end-turn-yet');
     const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
+    if(!endResult.gameOver)emitGameAudio(room,endResult.nextTurn,'ludo-turn');
   });
   socket.on('disconnect',()=>{
     const removed=rooms.removeSocket(socket.id);
