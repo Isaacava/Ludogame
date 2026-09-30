@@ -85,7 +85,7 @@ const rnd=(()=>{let n=0;return()=>((n=n+0.61803398875)%1)})();
   const g=new WhotEngine(2,rnd(),{handSize:1,whotCallMode:'number'});
   g.started=true;
   g.players=[
-    {name:'A',cards:[{id:'whot-1',shape:'whot',number:20,isWhot:true,score:20}]},
+    {name:'A',cards:[{id:'whot-1',shape:'whot',number:20,isWhot:true,score:20},{id:'circle-9',shape:'circle',number:9,isWhot:false,score:9}]},
     {name:'B',cards:[{id:'circle-7',shape:'circle',number:7,isWhot:false,score:7},{id:'triangle-3',shape:'triangle',number:3,isWhot:false,score:3}]}
   ];
   g.played=[{id:'circle-20',shape:'circle',number:20,isWhot:false,score:20}];
