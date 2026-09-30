@@ -69,7 +69,8 @@ const io=new Server(httpServer,{
 
 io.on('connection',socket=>{
   socket.on('create-room',({playerCount,name,color})=>{
-    if(![2,3,4].includes(playerCount))return socket.emit('error-msg','invalid player count');
+    const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
+    if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
     const room=rooms.createRoom(playerCount,socket.id,{name,color});socket.join(room.code);
     socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
