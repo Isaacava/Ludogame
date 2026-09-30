@@ -24,7 +24,7 @@ function verifySignature(rawBody, signature) {
   return timingSafeHexCompare(digest, signature.slice(7));
 }
 
-async function sendWhatsAppText(to, text, fetchImpl = global.fetch) {
+async function sendWhatsAppMessage(to, message, fetchImpl = global.fetch) {
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
     throw new Error('Meta WhatsApp Cloud API is not configured');
   }
@@ -39,8 +39,7 @@ async function sendWhatsAppText(to, text, fetchImpl = global.fetch) {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: String(to).replace(/\D/g, ''),
-      type: 'text',
-      text: { preview_url: false, body: String(text || '') }
+      ...message
     })
   });
   if (!res.ok) {
@@ -60,7 +59,8 @@ function extractMessages(body) {
           id: message.id,
           from: message.from,
           type: message.type,
-          text: message.type === 'text' ? message.text?.body || '' : ''
+          text: interactiveTextFromMessage(message),
+          raw: message
         });
       }
     }
@@ -102,7 +102,7 @@ function createMetaWhatsAppApp({ users, configStore }) {
     for (const message of extractMessages(body)) {
       if (!message.from || markSeen(message.id)) continue;
       if (message.type !== 'text') {
-        try { await sendWhatsAppText(message.from, 'Please send a text message so I can help you register and start playing.'); }
+        try { await sendWhatsAppButtonMessage(message.from, 'I can help you start a game. Send your name first, or use the menu options when available.', [{ id: 'game_ludo', title: '🎲 Ludo' }, { id: 'game_whot', title: '🃏 Whot' }]); }
         catch (err) { console.error('Meta WhatsApp reply failed:', err.message); }
         continue;
       }
@@ -110,9 +110,12 @@ function createMetaWhatsAppApp({ users, configStore }) {
       try {
         const phone = normalizePhone(message.from);
         const existing = await users.getAsync(phone);
-        const { reply, patch } = handleMessage(existing, message.text, configStore);
-        users.upsert(phone, patch);
-        await sendWhatsAppText(message.from, reply);
+        const command = normalizeInteractiveCommand(message.text);
+        const result = handleMessage(existing, command, configStore);
+        users.upsert(phone, result.patch || {});
+        const allowedWhotCounts = (configStore.get('whot')?.playerCounts || [2, 3, 4]);
+        result.allowedWhotCounts = allowedWhotCounts;
+        await sendInteractiveOrText(message.from, result, existing, configStore);
       } catch (err) {
         console.error('Meta WhatsApp message handling failed:', err.message);
       }
@@ -122,4 +125,4 @@ function createMetaWhatsAppApp({ users, configStore }) {
   return app;
 }
 
-module.exports = { createMetaWhatsAppApp, sendWhatsAppText, extractMessages };
+module.exports = { createMetaWhatsAppApp, sendWhatsAppText, sendWhatsAppButtonMessage, sendWhatsAppListMessage, extractMessages, normalizeInteractiveCommand, interactiveForState };
