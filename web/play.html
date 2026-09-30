@@ -21,6 +21,9 @@
 .dieFace{position:absolute;inset:0;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;box-shadow:0 2px 6px rgba(0,0,0,.15)}.pip{width:9px;height:9px;border-radius:50%;background:var(--ink);margin:auto;opacity:0}
 button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;background:var(--ink);color:var(--bg)}button:disabled{opacity:.35}.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}.legend{font-size:11px;color:var(--sub)}.playerPanel{width:min(92vw,380px);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:4px}.playerPanel h4{margin:2px 0 4px;font-size:11.5px}.statChip{display:inline-block;border-radius:12px;padding:2px 7px;font-size:10px;border:1.5px solid var(--line);margin:2px}
 #captureFlash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.5);background:#e53e3e;color:#fff;font-weight:800;font-size:22px;padding:16px 26px;border-radius:14px;opacity:0;pointer-events:none;z-index:50;box-shadow:0 8px 30px rgba(0,0,0,.4);white-space:nowrap}#captureFlash.show{animation:flashPop .9s ease-out}@keyframes flashPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}35%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+.socialBar{width:min(92vw,380px);display:none;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}.socialBar button{padding:8px 10px;font-size:16px;min-width:42px}.socialBar .invite{font-size:12px;padding:9px 12px}
+.reactionBubble{position:fixed;left:50%;bottom:18%;transform:translateX(-50%) scale(.6);background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:9px 14px;font-size:15px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;z-index:60}.reactionBubble.show{animation:reactionPop 1.3s ease-out}@keyframes reactionPop{0%{opacity:0;transform:translateX(-50%) scale(.6)}15%{opacity:1;transform:translateX(-50%) scale(1.08)}30%{transform:translateX(-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-34px) scale(1)}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:80}.modalCard{width:min(94vw,390px);max-height:86vh;overflow:auto;background:var(--panel);color:var(--ink);border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:center}.modalCard h3{margin:0 0 5px;font-size:24px}.resultSub{color:var(--sub);font-size:12px;margin-bottom:14px}.resultRow{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;text-align:left}.resultRow.winner{border-width:2px}.rank{width:24px;font-weight:800}.resultName{flex:1;font-weight:700}.resultActions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:15px}.resultActions button{flex:1;min-width:120px}.rematchState{font-size:12px;color:var(--sub);min-height:18px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -31,10 +34,33 @@ button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weig
 <div id="diceArea"><div class="diceBox"><div class="die3d" id="die1"><div class="dieFace" id="face1"></div></div></div><div class="diceBox"><div class="die3d" id="die2"><div class="dieFace" id="face2"></div></div></div></div>
 <div class="row"><button id="rollBtn">🎲 Spin Dice</button></div>
 <div class="row" id="modeRow"></div>
+<div id="socialBar" class="socialBar">
+  <button class="reactBtn" data-reaction="😂">😂</button>
+  <button class="reactBtn" data-reaction="🔥">🔥</button>
+  <button class="reactBtn" data-reaction="👏">👏</button>
+  <button class="reactBtn" data-reaction="😭">😭</button>
+  <button class="reactBtn" data-reaction="Omo!">Omo!</button>
+  <button class="reactBtn" data-reaction="Sharp!">Sharp!</button>
+  <button id="inviteBtn" class="invite">📨 Invite</button>
+</div>
 <div class="legend">✨ Glowing tokens are movable — tap the one you want.</div>
 <div id="playersPanel"></div>
 <div id="log"></div>
 <div id="captureFlash"></div>
+<div id="reactionBubble" class="reactionBubble"></div>
+<div id="gameOverModal" class="modal">
+  <div class="modalCard">
+    <h3 id="gameOverTitle">🏆 Game Over</h3>
+    <div id="gameOverSub" class="resultSub"></div>
+    <div id="resultsList"></div>
+    <div id="rematchState" class="rematchState"></div>
+    <div class="resultActions">
+      <button id="rematchBtn">🔄 Play Again</button>
+      <button id="shareResultBtn">📤 Share Result</button>
+      <button id="homeBtn">🏠 Home</button>
+    </div>
+  </div>
+</div>
 <script>
 const PATH=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
 const START_INDEX={green:0,red:13,yellow:26,blue:39};
@@ -45,13 +71,13 @@ const SAFE_CELLS=new Set([0,8,13,21,26,34,39,47]);
 const TEAM_SETUPS={2:[{name:'You',isHuman:true,colors:['red','blue']},{name:'Computer',isHuman:false,colors:['yellow','green']}],3:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']}],4:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']},{name:'Blue',isHuman:false,colors:['blue']}]};
 function pathIdx(rel,color){return(START_INDEX[color]+rel)%52}
 function globalCell(color,rel){if(rel<=50)return PATH[pathIdx(rel,color)];if(rel<=55)return HOME_COLS[color][rel-51];return[7,7]}
-var RULES={safeZonesEnabled:false,blockadesEnabled:false,extraTurnValues:[6],doubleValueGrantsExtraTurn:true,captureSendsCapturerHome:true,captureGrantsExtraTurn:false,exactRollToFinish:true},players=[],turn=0,d1=0,d2=0,gameOver=false,currentValid=[],finishOrder=[],captureBonusPending=false,SOCKET_URL='https://codeplay-ludo-production.up.railway.app';
+var RULES={safeZonesEnabled:false,blockadesEnabled:false,extraTurnValues:[6],doubleValueGrantsExtraTurn:true,captureSendsCapturerHome:true,captureGrantsExtraTurn:false,exactRollToFinish:true},players=[],turn=0,d1=0,d2=0,gameOver=false,currentValid=[],finishOrder=[],captureBonusPending=false,connectionStates=[],rematchRequested=false,SOCKET_URL='https://codeplay-ludo-production.up.railway.app';
 function blockedByOtherColor(abs,movingColor){if(!RULES.blockadesEnabled)return false;var counts={};players.forEach(function(p){p.colors.forEach(function(c){p.tokens[c].forEach(function(t){if(t>=0&&t<=50&&pathIdx(t,c)===abs)counts[c]=(counts[c]||0)+1})})});return Object.keys(counts).some(function(c){return c!==movingColor&&counts[c]>=2})}
 function canUseValue(pos,value,isDie,color){if(pos===56)return false;if(pos===-1){if(!(isDie&&value===6))return false;return !blockedByOtherColor(pathIdx(0,color),color)}var newPos=pos+value;if(newPos>56&&RULES.exactRollToFinish)return false;if(RULES.blockadesEnabled){var steps=Math.min(value,Math.max(0,50-pos));for(var s=1;s<=steps;s++)if(blockedByOtherColor(pathIdx(pos+s,color),color))return false}return true}
 function legalMoves(pIdx,value,isDie){var out=[];players[pIdx].colors.forEach(function(color){players[pIdx].tokens[color].forEach(function(t,i){if(canUseValue(t,value,isDie,color))out.push({color:color,idx:i})})});return out}
 function wouldCapture(pIdx,mv,value){var p=players[pIdx],pos=p.tokens[mv.color][mv.idx];pos=pos===-1?0:pos+value;if(pos>50)return false;var g=pathIdx(pos,mv.color);if(RULES.safeZonesEnabled&&SAFE_CELLS.has(g))return false;return players.some(function(opp,oi){return oi!==pIdx&&opp.colors.some(function(oc){return opp.tokens[oc].some(function(t){return t>=0&&t<=50&&pathIdx(t,oc)===g})})})}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-const gridEl=document.getElementById('grid'),tokEl=document.getElementById('tokens'),statusEl=document.getElementById('status'),logEl=document.getElementById('log'),rollBtn=document.getElementById('rollBtn'),modeRow=document.getElementById('modeRow'),face1El=document.getElementById('face1'),face2El=document.getElementById('face2'),die1El=document.getElementById('die1'),die2El=document.getElementById('die2');
+const gridEl=document.getElementById('grid'),tokEl=document.getElementById('tokens'),statusEl=document.getElementById('status'),logEl=document.getElementById('log'),rollBtn=document.getElementById('rollBtn'),modeRow=document.getElementById('modeRow'),face1El=document.getElementById('face1'),face2El=document.getElementById('face2'),die1El=document.getElementById('die1'),die2El=document.getElementById('die2'),socialBarEl=document.getElementById('socialBar'),reactionBubbleEl=document.getElementById('reactionBubble'),gameOverModalEl=document.getElementById('gameOverModal'),gameOverTitleEl=document.getElementById('gameOverTitle'),gameOverSubEl=document.getElementById('gameOverSub'),resultsListEl=document.getElementById('resultsList'),rematchBtn=document.getElementById('rematchBtn'),shareResultBtn=document.getElementById('shareResultBtn'),homeBtn=document.getElementById('homeBtn'),rematchStateEl=document.getElementById('rematchState');
 function log(m){logEl.innerHTML='<div>'+m+'</div>'+logEl.innerHTML}
 const flashEl=document.getElementById('captureFlash');
 function flashCapture(text){flashEl.textContent=text;flashEl.classList.remove('show');void flashEl.offsetWidth;flashEl.classList.add('show')}
