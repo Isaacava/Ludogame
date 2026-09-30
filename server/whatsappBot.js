@@ -109,14 +109,20 @@ function handleMessage(user,text,configStore=botConfig){
     return{reply:`Didn't catch that.\n\n${GAME_MENU}`,patch:{}};
   }
   if(user.stage==='whot_mode_menu'){
-    if(t==='1'||t.includes('computer')){const cfg=getWhotConfig(configStore);if(cfg.enabled===false||!(cfg.playerCounts||[2,3,4]).includes(2))return{reply:'2-player Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'Whot vs Computer is a 2-player game.\n\nTap to play:\n'+SITE_URL+'/whot.html?mode=computer&players=2&name='+encodeURIComponent(user.name||'Guest'),patch:{stage:'game_menu'}};}
+    if(t==='1'||t.includes('computer')){const cfg=getWhotConfig(configStore);if(cfg.enabled===false)return{reply:'Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'How many players should be in the computer match?\n\n'+getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'computer'}};}
     if(t==='2'||t.includes('friend'))return{reply:getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'friends'}};
     return{reply:`Didn't catch that.\n\n${WHOT_MODE_MENU}`,patch:{stage:'whot_mode_menu'}};
   }
   if(user.stage==='whot_count'){
     const allowed=(getWhotConfig(configStore).playerCounts||[2,3,4]).map(String);if(!allowed.includes(t))return{reply:`Didn't catch that.\n\n${getWhotCountMenu(configStore)}`,patch:{stage:'whot_count'}};
-    const link=`${SITE_URL}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}`;
-    return{reply:`Tap to create your Whot room — you'll get a 4-letter code:\n${link}\n\nShare the code with your friends.`,patch:{stage:'game_menu',pendingMode:null}};
+    const pendingMode=user.pendingMode==='computer'?'computer':'friends';
+    const link=pendingMode==='computer'
+      ? `${SITE_URL}/whot.html?mode=computer&players=${t}&name=${encodeURIComponent(user.name||'Guest')}`
+      : `${SITE_URL}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}`;
+    const reply=pendingMode==='computer'
+      ? `Tap to start your ${t}-player Whot match against computer opponents:\n${link}`
+      : `Tap to create your Whot room — you'll get a 4-letter code:\n${link}\n\nShare the code with your friends.`;
+    return{reply,patch:{stage:'game_menu',pendingMode:null}};
   }
   if(user.stage==='ludo_mode_menu'){
     if(t==='1'||t.includes('computer'))return{reply:COUNT_MENU,patch:{stage:'ludo_count',pendingMode:'computer'}};
