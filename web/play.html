@@ -137,7 +137,7 @@ function loadActiveRoom(){try{var raw=localStorage.getItem(activeRoomKey());retu
 function clearActiveRoom(){localStorage.removeItem(activeRoomKey())}
 function normalizeRoomCode(c){return String(c||'').trim().toUpperCase()}
 function renderWaiting(joined,needed){var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>💬 Share on WhatsApp</button></a>')}
-function applyServerState(st){if(st.rules)RULES=Object.assign(RULES,st.rules);players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)wrText('Game over: '+finishOrder.map(function(i){return cap(players[i].name)}).join(' > '))}
+function applyServerState(st){if(st.rules)RULES=Object.assign(RULES,st.rules);players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});if(connectionStates.length!==players.length)connectionStates=players.map(function(){return true});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)showGameOver()}
 function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(turn===HUMAN_INDEX){wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
 function showModeChoiceNet(splitLegal,combineLegal){modeRow.innerHTML='';wrText('Rolled '+d1+' & '+d2+' — split or combine?');if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplitNet;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombineNet;modeRow.appendChild(c)}}
 function startSplitNet(){modeRow.innerHTML='';promptDieNet(d1,false,function(){promptDieNet(d2,true,null)})}
@@ -145,7 +145,7 @@ function promptDieNet(value,isLast,after){var legal=legalMoves(HUMAN_INDEX,value
 function commitNet(mv,value,isLast,after){currentValid=[];modeRow.innerHTML='';render();window._netAfterMove=isLast?null:after;socket.emit('play-move',{code:ROOM_CODE,move:mv,value:value,mode:isLast&&value===d1+d2?'combine':'split',isLastMoveThisTurn:isLast})}
 function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(HUMAN_INDEX,sum,false);if(legal.length===1){commitNet(legal[0],sum,true,null);return}currentValid=legal;wrText('Tap a token to move it by '+sum+'.');window._netPending={value:sum,isLast:true,after:null,mode:'combine'};render()}
 function initFriendsMode(action,existingCode,playerCount){
- GAME_MODE='friends';socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
+ GAME_MODE='friends';renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
  var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode);
  var sameTabRoom=!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
  if(sameTabRoom){ROOM_CODE=savedCode;playerToken=saved.playerToken;seatEstablished=true;if(saved.playerCount)playerCount=saved.playerCount;}
@@ -163,9 +163,13 @@ function initFriendsMode(action,existingCode,playerCount){
      history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+(players.length?'&players='+players.length:''));
    }
  });
- socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;seatEstablished=true;saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed)});
- socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;renderWaiting(x.joined,x.needed);if(x.started)hideWaitingRoom()});
- socket.on('player-joined',function(x){renderWaiting(x.joined,x.needed)});
+ socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;seatEstablished=true;setRoomRoster(x.players);saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed);renderSocialBar()});
+ socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;setRoomRoster(x.players);if(x.started)hideWaitingRoom();else renderWaiting(x.joined,x.needed)});
+ socket.on('player-joined',function(x){setRoomRoster(x.players);renderWaiting(x.joined,x.needed)});
+ socket.on('player-connection',function(x){setRoomRoster(x.players);log((x.name||'Player')+(x.connected?' reconnected.':' disconnected.'))});
+ socket.on('reaction',function(x){showReaction(x.name,x.reaction)});
+ socket.on('rematch-status',function(x){rematchStateEl.textContent=x.requested+' / '+x.needed+' players ready for the rematch.'});
+ socket.on('game-rematch',function(x){rematchRequested=false;hideGameOver();applyServerState(x.state);beginNetTurn()});
  socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});
  socket.on('dice-rolled',function(x){d1=x.dice[0];d2=x.dice[1];animateDice(d1,d2).then(function(){if(!x.options.canSplit&&!x.options.canCombine){log('No legal moves for the current roll.');return}if(x.turn!==HUMAN_INDEX){wrText('The other player rolled '+d1+' & '+d2+'...');return}var splitLegal=legalMoves(HUMAN_INDEX,d1,true).length||legalMoves(HUMAN_INDEX,d2,true).length,combineLegal=legalMoves(HUMAN_INDEX,d1+d2,false).length;showModeChoiceNet(splitLegal,combineLegal)})});
  socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture('💥 '+cap(c.color)+' SENT HOME!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)cb()});
