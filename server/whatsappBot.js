@@ -68,8 +68,8 @@ const WHOT_MODE_MENU=`Whot — how do you want to play?
 2. 👥 vs Friends (create a room & get a code)
 
 Reply with a number.`;
-function getWhotConfig(){return botConfig.get('whot')||{enabled:true,playerCounts:[2,3,4]}}
-function getWhotCountMenu(){const allowed=Array.isArray(getWhotConfig().playerCounts)&&getWhotConfig().playerCounts.length?getWhotConfig().playerCounts:[2,3,4];return `How many players?\n${allowed.includes(2)?'2 — classic 2-player game\n':''}${allowed.includes(3)?'3 — 3 players\n':''}${allowed.includes(4)?'4 — 4 players\n':''}\nReply with one of the enabled numbers.`;}
+function getWhotConfig(configStore=botConfig){return configStore.get('whot')||{enabled:true,playerCounts:[2,3,4]}}
+function getWhotCountMenu(configStore=botConfig){const cfg=getWhotConfig(configStore),allowed=Array.isArray(cfg.playerCounts)&&cfg.playerCounts.length?cfg.playerCounts:[2,3,4];return `How many players?\n${allowed.includes(2)?'2 — classic 2-player game\n':''}${allowed.includes(3)?'3 — 3 players\n':''}${allowed.includes(4)?'4 — 4 players\n':''}\nReply with one of the enabled numbers.`;}
 const MODE_MENU=`Ludo — how do you want to play?
 1. 🤖 vs Computer
 2. 👥 vs Friends (create a room & get a code)
@@ -82,7 +82,7 @@ const COUNT_MENU=`How many players?
 
 Reply 2, 3 or 4.`;
 
-function handleMessage(user,text){
+function handleMessage(user,text,configStore=botConfig){
   const t=(text||'').trim().toLowerCase();
   if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
   const joinMatch=t.match(/^join\s+([a-z0-9]{4})$/);
@@ -90,7 +90,7 @@ function handleMessage(user,text){
     const code=joinMatch[1].toUpperCase();
     return{reply:`Joining room *${code}* — tap to open the board:\n${SITE_URL}/play.html?mode=friends&action=join&code=${code}`,patch:{stage:'game_menu'}};
   }
-  if(!user||user.stage==='new')return{reply:botConfig.get('bot').welcomeMessage,patch:{stage:'awaiting_name'}};
+  if(!user||user.stage==='new')return{reply:configStore.get('bot').welcomeMessage,patch:{stage:'awaiting_name'}};
   if(user.stage==='awaiting_name'){
     const name=text.trim().slice(0,40);if(!name)return{reply:'Just your name is fine — what should we call you?',patch:{}};
     const loginCode=generateLoginCode();
@@ -98,17 +98,17 @@ function handleMessage(user,text){
   }
   if(user.stage==='game_menu'){
     if(t==='1'||t.includes('ludo'))return{reply:MODE_MENU,patch:{stage:'ludo_mode_menu'}};
-    if(t==='2'||t.includes('whot')){if(getWhotConfig().enabled===false)return{reply:`Whot is temporarily disabled.\n\n${GAME_MENU}`,patch:{}};return{reply:WHOT_MODE_MENU,patch:{stage:'whot_mode_menu'}};}
+    if(t==='2'||t.includes('whot')){if(getWhotConfig(configStore).enabled===false)return{reply:`Whot is temporarily disabled.\n\n${GAME_MENU}`,patch:{}};return{reply:WHOT_MODE_MENU,patch:{stage:'whot_mode_menu'}};}
     if(t==='3'||t.includes('chess'))return{reply:`Chess is coming soon! ♟️ Want to play Ludo instead?\n\n${GAME_MENU}`,patch:{}};
     return{reply:`Didn't catch that.\n\n${GAME_MENU}`,patch:{}};
   }
   if(user.stage==='whot_mode_menu'){
     if(t==='1'||t.includes('computer')){const cfg=getWhotConfig();if(cfg.enabled===false||!(cfg.playerCounts||[2,3,4]).includes(2))return{reply:'2-player Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'Whot vs Computer is a 2-player game.\n\nTap to play:\n'+SITE_URL+'/whot.html?mode=computer&players=2&name='+encodeURIComponent(user.name||'Guest'),patch:{stage:'game_menu'}};}
-    if(t==='2'||t.includes('friend'))return{reply:getWhotCountMenu(),patch:{stage:'whot_count',pendingMode:'friends'}};
+    if(t==='2'||t.includes('friend'))return{reply:getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'friends'}};
     return{reply:`Didn't catch that.\n\n${WHOT_MODE_MENU}`,patch:{stage:'whot_mode_menu'}};
   }
   if(user.stage==='whot_count'){
-    const allowed=(getWhotConfig().playerCounts||[2,3,4]).map(String);if(!allowed.includes(t))return{reply:`Didn't catch that.\n\n${getWhotCountMenu()}`,patch:{stage:'whot_count'}};
+    const allowed=(getWhotConfig(configStore).playerCounts||[2,3,4]).map(String);if(!allowed.includes(t))return{reply:`Didn't catch that.\n\n${getWhotCountMenu(configStore)}`,patch:{stage:'whot_count'}};
     const link=`${SITE_URL}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}`;
     return{reply:`Tap to create your Whot room — you'll get a 4-letter code:\n${link}\n\nShare the code with your friends.`,patch:{stage:'game_menu',pendingMode:null}};
   }
@@ -130,7 +130,7 @@ function handleMessage(user,text){
 }
 
 function createBotApp(options={}){
-  const userStore=options.users||users,sessionStore=options.sessions||sessions,app=express();
+  const userStore=options.users||users,sessionStore=options.sessions||sessions,cfgStore=options.configStore||botConfig,app=express();
   app.use(express.urlencoded({extended:false}));app.use(express.json());
   app.use((req,res,next)=>{
     res.header('Access-Control-Allow-Origin',process.env.SITE_ORIGIN||'*');
@@ -147,7 +147,7 @@ function createBotApp(options={}){
       if(!twilio.validateRequest(twilioAuthToken,signature,webhookUrl,req.body))return res.sendStatus(403);
     }
     const phone=normalizePhone(req.body.From),body=req.body.Body||'',existing=await userStore.getAsync(phone);
-    const {reply,patch}=handleMessage(existing,body);userStore.upsert(phone,patch);
+    const {reply,patch}=handleMessage(existing,body,cfgStore);userStore.upsert(phone,patch);
     const twiml=new MessagingResponse();twiml.message(reply);res.type('text/xml').send(twiml.toString());
   });
   app.post('/api/auth/verify',async(req,res)=>{
