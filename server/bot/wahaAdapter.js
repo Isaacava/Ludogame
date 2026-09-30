@@ -113,6 +113,9 @@ refresh();setInterval(refresh,5000);
 </script></body></html>`;
 }
 
+let lastAutoRestartAt=0;
+const AUTO_RESTART_COOLDOWN_MS=15_000;
+
 function createWahaApp(opts={}){
   const fetchImpl=opts.fetchImpl,userStore=opts.users||defaultUsers,app=express();
 
@@ -150,9 +153,25 @@ function createWahaApp(opts={}){
 
   app.get('/waha/status',pairingAuth,async(req,res)=>{
     try{
-      const response=await wahaRequest(`/api/sessions/${encodeURIComponent(getWahaSession())}`,{},fetchImpl);
+      const sessionPath=`/api/sessions/${encodeURIComponent(getWahaSession())}`;
+      const response=await wahaRequest(sessionPath,{},fetchImpl);
       const data=await response.json().catch(()=>({}));
       if(!response.ok)return res.status(response.status).json(data);
+
+      if(data.status==='FAILED'){
+        const now=Date.now();
+        if(now-lastAutoRestartAt>AUTO_RESTART_COOLDOWN_MS){
+          lastAutoRestartAt=now;
+          const restart=await wahaRequest(`${sessionPath}/restart`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'}
+          },fetchImpl);
+          if(restart.ok){
+            return res.json({...data,status:'RESTARTING',autoRestarted:true});
+          }
+        }
+      }
+
       return res.json(data);
     }catch(e){
       return res.status(502).json({error:'waha-unavailable',message:e.message});
