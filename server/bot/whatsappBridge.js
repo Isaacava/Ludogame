@@ -84,23 +84,29 @@ function gameResultMessage({won,playerName,opponents}){
 async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
   if(!room||!Array.isArray(room.players)||room.whatsappResultsSent||room.whatsappResultsPromise)return;
   if(winnerIndex==null||!room.players[winnerIndex])return;
+  room.whatsappNotifiedPhones=room.whatsappNotifiedPhones||new Set();
   room.whatsappResultsPromise=(async()=>{
-  const winner=room.players[winnerIndex];
-  const humanPlayers=room.players.filter(p=>!p.bot);
-  const tasks=humanPlayers.filter(p=>p.whatsappPhone).map(player=>{
-    const playerIndex=room.players.indexOf(player);
-    const won=player===winner;
-    const opponents=won
-      ? room.players.filter((p,i)=>i!==playerIndex&&p.name).map(p=>p.name)
-      : [winner.name||'the winner'];
-    return sendWhatsAppText(player.whatsappPhone,
-      gameResultMessage({won,playerName:player.name,opponents})
-        +`\n\n— CodePlay ${gameName}`
-    ).catch(err=>console.error('WhatsApp result notification failed:',err.message));
+    const winner=room.players[winnerIndex];
+    const humanPlayers=room.players.filter(p=>!p.bot&&p.whatsappPhone);
+    const tasks=humanPlayers
+      .filter(player=>!room.whatsappNotifiedPhones.has(player.whatsappPhone))
+      .map(async player=>{
+        const playerIndex=room.players.indexOf(player);
+        const won=player===winner;
+        const opponents=won
+          ? room.players.filter((p,i)=>i!==playerIndex&&p.name).map(p=>p.name)
+          : [winner.name||'the winner'];
+        const message=gameResultMessage({won,playerName:player.name,opponents})+`\\n\\n— CodePlay ${gameName}`;
+        await sendWhatsAppText(player.whatsappPhone,message);
+        room.whatsappNotifiedPhones.add(player.whatsappPhone);
+      });
+    await Promise.all(tasks);
+    if(room.whatsappNotifiedPhones.size>=humanPlayers.length)room.whatsappResultsSent=true;
+  })().catch(err=>{
+    room.whatsappResultsPromise=null;
+    console.error('WhatsApp game result notification failed:',err.message);
+    throw err;
   });
-  await Promise.all(tasks);
-  room.whatsappResultsSent=true;
-})().catch(err=>{room.whatsappResultsPromise=null;throw err;});
   return room.whatsappResultsPromise;
 }
 
