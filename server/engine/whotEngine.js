@@ -76,7 +76,7 @@ class WhotEngine{
     const card=this.players[playerIndex].cards[cardIndex];if(!card)return false;
     if(this.pendingPick){return this._isPickDefender(card)||(this.rules.whotCanDefendPick&&card.isWhot)}
     if(card.isWhot)return true;
-    if(!this._matchesWhotCall(card))return false;
+    if(this.whotCall)return this._matchesWhotCall(card);
     const top=this._top();return !!top&&(card.shape===this.activeShape||card.number===top.number);
   }
   playableCards(playerIndex=this.turn){
