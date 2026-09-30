@@ -10,7 +10,8 @@ const DEFAULTS = {
     blockadesEnabled: false,
     extraTurnValues: [6],
     doubleValueGrantsExtraTurn: true,
-    captureSendsCapturerHome: false,
+    captureSendsCapturerHome: true,
+    captureGrantsExtraTurn: false,
     exactRollToFinish: true
   },
   monetization: {
