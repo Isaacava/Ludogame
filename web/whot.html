@@ -18,6 +18,23 @@ body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 button{font:inherit;color:inherit;background:none;border:0}
 button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .page{min-height:100vh;display:flex;justify-content:center}
+.rotatePrompt{display:none}
+@media(max-width:900px) and (orientation:portrait){
+  html,body{background:#04100d}
+  .rotatePrompt{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;background:
+    radial-gradient(circle at 50% 35%,rgba(30,127,95,.25),transparent 36%),
+    linear-gradient(180deg,#071a14,#020907);color:#f8fbf9}
+  .rotateIcon{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;font-size:44px;background:linear-gradient(145deg,#ffdd67,#eb9c2f);color:#1d1b0e;box-shadow:0 12px 34px rgba(238,168,55,.25);animation:rotatePhone 2s ease-in-out infinite}
+  .rotateTitle{margin-top:20px;font-size:25px;font-weight:950;letter-spacing:-.02em}
+  .rotateSub{max-width:330px;margin-top:10px;color:#a9bbb5;font-size:14px;line-height:1.45}
+  .rotateHint{margin-top:18px;padding:9px 13px;border-radius:999px;background:rgba(255,215,90,.08);border:1px solid rgba(255,215,90,.22);color:#ffe680;font-size:11px;font-weight:900}
+  body>.page{visibility:hidden}
+}
+@keyframes rotatePhone{0%,100%{transform:rotate(0)}35%{transform:rotate(-16deg)}65%{transform:rotate(16deg)}}
+@media(max-width:900px) and (orientation:landscape){
+  .page{min-height:100svh}
+  .app{width:100%;height:100svh;padding:0;gap:0}
+}
 .app{width:min(1080px,100%);padding:10px 12px 18px;display:grid;gap:10px}
 .topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
 .brandWrap{display:flex;align-items:center;gap:10px}
@@ -135,6 +152,22 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
  .hand{min-height:135px;padding:4px 12px 10px;gap:7px}.handCard{width:73px;height:102px;margin:0}.handCard .card{border-width:2px}.handCard .card .shape{font-size:38px}.handCard .card .num{font-size:21px}
  .status{bottom:148px;font-size:10px}.turnArc{width:175px;height:175px}.callPill{font-size:10px}.tableTop{top:60px}.handPanel{bottom:33px}.handHint{padding:0 34px}
 }
+@media(max-width:900px) and (orientation:landscape){
+  .topbar{height:44px;padding:4px 8px}
+  .logoMark{width:30px;height:30px}.brand{font-size:12px}.room{font-size:8px}.iconBtn{width:34px;height:34px}
+  .handPanel{padding-bottom:1px}.handHint{font-size:8px}
+  .hand{height:94px;min-height:94px;padding:2px 10px 5px;gap:6px}
+  .handCard{width:62px;height:86px}
+  .handCard .card .shape{font-size:32px}.handCard .card .num{font-size:19px}.handCard .card .tag{font-size:7px}
+  .reactions{height:26px;font-size:9px;padding:2px 7px 4px}
+  .react{padding:5px 7px;font-size:10px}
+  .tableTop{top:48px}.ruleBanner{padding:5px 10px}.ruleEyebrow{font-size:6px}#ruleMain{font-size:10px}#ruleSub{font-size:7px}
+  .status{top:90px;font-size:8px;padding:4px 7px}
+  .seat{width:118px;min-height:42px;padding:5px 6px}.seat.seat-rel-0{bottom:100px}
+  .seat.seat-count-4.seat-rel-1,.seat.seat-count-4.seat-rel-3{top:50%}
+  .centerCore{gap:10px}.stack{width:74px;height:104px}.topCard{width:84px;height:118px}
+  .card .shape{font-size:44px}.card .num{font-size:21px}
+}
 @media(max-width:430px){
  .seat{width:128px;min-height:48px;padding:6px 7px}.seat.seat-rel-0{left:50%;bottom:132px;transform:translateX(-50%)}.seat.seat-count-3.seat-rel-1,.seat.seat-count-4.seat-rel-1{left:4px;top:27%}.seat.seat-count-3.seat-rel-2,.seat.seat-count-4.seat-rel-3{right:4px;left:auto;top:27%;transform:none}.seat.seat-count-2.seat-rel-1,.seat.seat-count-4.seat-rel-2{left:50%;right:auto;top:68px;transform:translateX(-50%)}.seat.seat-count-4.seat-rel-1{top:34%;transform:translateY(-50%)}.seat.seat-count-4.seat-rel-3{top:34%;transform:translateY(-50%)}.avatar{width:29px;height:29px;border-radius:9px}.seatName{font-size:10px}.seatMeta{font-size:8px}.miniHand{margin-top:2px}
  .handCard{width:64px;height:90px;margin:0}.hand{min-height:104px;height:104px;padding:2px 10px 7px;gap:6px}.handHint{font-size:8px;line-height:1.15}
@@ -143,6 +176,12 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 </style>
 </head>
 <body>
+<div id="rotatePrompt" class="rotatePrompt" aria-live="polite">
+  <div class="rotateIcon">↻</div>
+  <div class="rotateTitle">Rotate your phone</div>
+  <div class="rotateSub">Whot is built for landscape mode so you can see the full table, every player, and your hand comfortably.</div>
+  <div class="rotateHint">Turn your phone sideways to continue</div>
+</div>
 <div class="page">
 <main class="app">
   <header class="topbar">
