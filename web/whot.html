@@ -41,6 +41,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .avatar{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;font-weight:950;background:linear-gradient(145deg,#2b3b36,#16251f);border:1px solid rgba(255,255,255,.10);box-shadow:0 8px 16px rgba(0,0,0,.22);position:relative;z-index:1}
 .seat.turn .avatar{box-shadow:0 0 0 2px rgba(255,215,90,.55),0 0 18px rgba(255,215,90,.28)}
 .seatText{min-width:0;position:relative;z-index:1}.seatName{font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.seatMeta{font-size:10px;color:var(--muted);margin-top:2px}
+.seat.turn .seatMeta{color:#ffe99a}
+.turnBadge{display:inline-block;margin-left:5px;padding:2px 5px;border-radius:999px;border:1px solid rgba(255,215,90,.24);background:rgba(255,215,90,.08);font-size:8px;font-weight:950;letter-spacing:.06em;color:#ffe99a}
 .tableWrap{position:relative;display:grid;place-items:center;min-height:0}
 .table{position:relative;width:100%;min-height:0;height:100%;max-height:700px;border-radius:34px;overflow:hidden;background:
  radial-gradient(circle at 50% 45%,rgba(49,156,114,.18),transparent 35%),
@@ -74,6 +76,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @keyframes marketPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px) scale(1.015)}}
 .stack.disabled{cursor:default;opacity:.48}.stack.disabled .stackMain{animation:none}
 .topCard{width:112px;height:158px}.topCard .card{width:100%;height:100%}
+.topCard.cardEnter{animation:discardDrop .34s cubic-bezier(.16,.9,.26,1.12)}
+@keyframes discardDrop{0%{opacity:0;transform:translateY(-24px) scale(.78) rotate(-8deg)}65%{opacity:1;transform:translateY(4px) scale(1.035) rotate(2deg)}100%{opacity:1;transform:none}}
+.marketGhost{width:72px;height:104px;border-radius:13px;border:2px solid rgba(255,255,255,.92);background:repeating-linear-gradient(45deg,#153a64 0 7px,#1e4b82 7px 14px);box-shadow:0 12px 26px rgba(0,0,0,.34);display:grid;place-items:center;overflow:hidden}
+.marketGhost:after{content:"CP";width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,215,90,.72);color:#ffe99a;font-size:9px;font-weight:950;background:rgba(255,215,90,.08)}
 .card{--card:#f8f8f5;--inkcard:#161a18;--shape:#2b7ef6;width:112px;height:158px;border-radius:17px;background:linear-gradient(180deg,#fff,#eff1ed);color:var(--inkcard);border:3px solid #fff;box-shadow:0 18px 34px rgba(0,0,0,.34);display:flex;flex-direction:column;justify-content:space-between;padding:11px;user-select:none;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s,opacity .18s;transform-origin:50% 88%}
 .card:after{content:"";position:absolute;inset:0;background:linear-gradient(125deg,rgba(255,255,255,.62),transparent 28%,transparent 72%,rgba(0,0,0,.04));pointer-events:none}
 .card .num{font-size:28px;font-weight:950;line-height:1;position:relative;z-index:1}
@@ -88,7 +94,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .handCard.unplayable .card{filter:saturate(.62) brightness(.82);opacity:.62}
 .handCard.enter{animation:dealIn .36s cubic-bezier(.18,.9,.26,1.2) both}
 @keyframes dealIn{from{opacity:0;transform:translateY(34px) scale(.75) rotate(7deg)}to{opacity:1;transform:none}}
-.flying{position:fixed;z-index:50;pointer-events:none;will-change:transform,opacity;transition:transform .46s cubic-bezier(.2,.8,.2,1),opacity .46s}
+.flying{position:fixed;z-index:80;pointer-events:none;will-change:transform,opacity;transition:transform .46s cubic-bezier(.2,.8,.2,1),opacity .46s}
 .specialFx{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);opacity:0;z-index:15;pointer-events:none;padding:12px 18px;border-radius:16px;font-weight:1000;letter-spacing:.12em;background:rgba(7,18,14,.76);border:1px solid rgba(255,255,255,.1);box-shadow:0 14px 34px rgba(0,0,0,.28);backdrop-filter:blur(10px)}
 .specialFx.show{animation:specialPop .85s ease-out forwards}
 .specialFx.pick2{color:#ffca63;box-shadow:0 0 30px rgba(255,173,62,.26)}.specialFx.pick3{color:#ff6f7c;box-shadow:0 0 30px rgba(255,86,98,.28)}.specialFx.market{color:#8de9bf;box-shadow:0 0 30px rgba(40,216,109,.22)}.specialFx.whot{color:#ffe680;box-shadow:0 0 30px rgba(255,215,90,.32)}
@@ -287,13 +293,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     e.roomLabel.textContent='Room '+roomCode;
     e.marketCount.textContent=String(state.marketCount||0);
 
-    e.topSlot.innerHTML=state.top?'<div class="topCard cardEnter">'+cardHtml(state.top)+'</div>':'';
+    e.topSlot.innerHTML=state.top?'<div class="topCard '+((extra&&extra.played)?'cardEnter':'')+'">'+cardHtml(state.top)+'</div>':'';
     e.players.innerHTML='';
     (state.players||[]).forEach(p=>{
       const d=document.createElement('div');
       d.className='seat'+(p.index===state.turn?' turn':'');
       const initial=(p.name||'P').trim().charAt(0).toUpperCase();
-      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' 🤖':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+'</div></div>';
+      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' 🤖':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+(p.index===state.turn?'<span class="turnBadge">'+(p.index===me?'YOUR TURN':'TURN')+'</span>':'')+'</div></div>';
       e.players.appendChild(d);
     });
 
@@ -303,7 +309,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       const playable=canPlay(card,state),wrap=document.createElement('div');
       const n=Math.max(own.length,1),mid=(n-1)/2,delta=(index-mid);
       const rotation=(delta*6).toFixed(2)+'deg',lift=(Math.abs(delta)*2).toFixed(1)+'px';
-      wrap.className='handCard '+(playable?'playable':'unplayable');
+      const animateNew=!!extra&&!extra.played&&!extra.drawn;
+      wrap.className='handCard '+(playable?'playable':'unplayable')+(animateNew?' enter':'');
       wrap.style.setProperty('--r',rotation);wrap.style.setProperty('--y',lift);
       wrap.style.zIndex=String(10-index);
       wrap.setAttribute('data-card-id',card.id);
@@ -330,7 +337,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       const top=e.topSlot.getBoundingClientRect();
       animateFlight(oldHand[extra.played],top,document.querySelector('[data-card-id="'+CSS.escape(extra.played)+'"]')?.outerHTML||cardHtml(state.top));
     }
-    if(extra&&extra.drawn&&extra.drawn.length){animateFlight(oldMarket,e.hand.getBoundingClientRect(),'<div class="card"></div>',.76)}
+    if(extra&&extra.drawn&&extra.drawn.length){animateFlight(oldMarket,e.hand.getBoundingClientRect(),'<div class="marketGhost"></div>',.7)}
     if(extra&&extra.resolution&&extra.resolution.kind)special(extra.resolution.kind);
     if(state.gameOver)showGameOver();
   }
@@ -358,6 +365,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     e.whotModal.classList.add('show');
   }
   function showGameOver(){
+    if(e.gameOver.classList.contains('show'))return;
     const winner=state.winner!=null&&state.players[state.winner]?state.players[state.winner].name:'Winner';
     e.winnerTitle.textContent='🏆 '+winner+' wins!';
     e.winnerSub.textContent='Penalty points remaining in each hand';
