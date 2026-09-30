@@ -149,7 +149,7 @@ function interactiveForState(userBefore, result) {
   if (stage === 'game_menu') {
     return {
       kind: 'buttons',
-      body: 'Choose a game to start.',
+      body: String(result.reply || 'Choose a game to start.').slice(0, 1024),
       buttons: [
         { id: 'game_ludo', title: '🎲 Ludo' },
         { id: 'game_whot', title: '🃏 Whot' },
@@ -161,7 +161,7 @@ function interactiveForState(userBefore, result) {
   if (stage === 'whot_mode_menu') {
     return {
       kind: 'buttons',
-      body: 'How do you want to play Whot?',
+      body: String(result.reply || 'How do you want to play Whot?').slice(0, 1024),
       buttons: [
         { id: 'whot_computer', title: '🤖 Computer' },
         { id: 'whot_friends', title: '👥 Friends' }
@@ -173,9 +173,11 @@ function interactiveForState(userBefore, result) {
     const allowed = (result?.allowedWhotCounts || [2, 3, 4]).map(Number);
     return {
       kind: 'list',
-      body: userBefore?.pendingMode === 'computer'
-        ? 'How many players should be in the computer match?'
-        : 'How many players should be in the Whot room?',
+      body: String(result.reply || (
+        userBefore?.pendingMode === 'computer'
+          ? 'How many players should be in the computer match?'
+          : 'How many players should be in the Whot room?'
+      )).slice(0, 1024),
       buttonText: 'Choose players',
       rows: allowed.map(n => ({
         id: `whot_count_${n}`,
@@ -188,7 +190,7 @@ function interactiveForState(userBefore, result) {
   if (stage === 'ludo_mode_menu') {
     return {
       kind: 'buttons',
-      body: 'How do you want to play Ludo?',
+      body: String(result.reply || 'How do you want to play Ludo?').slice(0, 1024),
       buttons: [
         { id: 'ludo_computer', title: '🤖 Computer' },
         { id: 'ludo_friends', title: '👥 Friends' }
@@ -199,7 +201,7 @@ function interactiveForState(userBefore, result) {
   if (stage === 'ludo_count') {
     return {
       kind: 'list',
-      body: 'How many players?',
+      body: String(result.reply || 'How many players?').slice(0, 1024),
       buttonText: 'Choose players',
       rows: [2, 3, 4].map(n => ({
         id: `ludo_count_${n}`,
@@ -215,10 +217,6 @@ function interactiveForState(userBefore, result) {
 async function sendInteractiveOrText(to, result, userBefore, fetchImpl = global.fetch) {
   const interactive = interactiveForState(userBefore, result);
   if (!interactive) return sendWhatsAppText(to, result.reply, fetchImpl);
-
-  const reply = String(result.reply || '');
-  // Room/computer links must never be hidden behind the next menu.
-  if (/https?:\/\//i.test(reply)) await sendWhatsAppText(to, reply, fetchImpl);
 
   if (interactive.kind === 'buttons') {
     return sendWhatsAppButtonMessage(to, interactive.body, interactive.buttons, fetchImpl);
