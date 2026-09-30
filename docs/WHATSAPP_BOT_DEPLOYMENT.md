@@ -74,14 +74,16 @@ Subscribe the WhatsApp Business Account/app to the `messages` webhook field.
 
 ## User flow
 
-1. New WhatsApp number sends any message.
-2. Bot asks for the player's name.
-3. Bot creates a 6-digit login code valid for 10 minutes.
-4. Bot presents the game menu.
+1. A WhatsApp user sends any message.
+2. The webhook gives the bot the sender's WhatsApp number; that number is the user's CodePlay identity.
+3. The bot stores/retrieves the user's record by normalized WhatsApp phone number.
+4. The bot asks for a display name once, then the user can play immediately — no CodePlay login is required for multiplayer.
 5. Ludo and Whot choices use native WhatsApp buttons/lists where supported.
 6. Friend mode returns a real room-creation URL.
 7. A player can join with `JOIN LUDO ABCD` or `JOIN WHOT ABCD`.
-8. Web login verification consumes the one-time 6-digit code and creates a persistent session.
+8. Web login is optional. When the user types `CONNECT WEB` (or `LOGIN`), the bot creates a 6-digit one-time code. The web app consumes that code and creates a session tied to the same WhatsApp user record.
+
+This means game access, WhatsApp identity, and optional web authentication are separate concerns: multiplayer is guest-first, while the WhatsApp number is the durable identity used to reconnect the user's data.
 
 ## Important deployment note
 
