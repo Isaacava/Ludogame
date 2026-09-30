@@ -9,7 +9,7 @@ class RoomManager {
   constructor(configStore) { this.rooms = new Map(); this.configStore = configStore; }
   createRoom(playerCount, hostSocketId, profile = {}) {
     let code; do { code = generateCode(); } while (this.rooms.has(code));
-    const room = { code, playerCount, players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',color:profile.color||null}], engine:null, rematchVotes:new Set(), createdAt:Date.now() };
+    const room = { code, playerCount, players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',color:profile.color||null,whatsappPhone:profile.whatsappPhone||null}], engine:null, rematchVotes:new Set(), createdAt:Date.now() };
     this.rooms.set(code, room); return room;
   }
   joinRoom(code, socketId, profile = {}) {
