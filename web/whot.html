@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CodePlay Whot</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--bg:#101114;--panel:#1a1d22;--panel2:#20242a;--ink:#f5f7fa;--muted:#9ca3af;--line:#30343b;--accent:#25d366;--gold:#f2c94c}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#262b33 0,#101114 50%);color:var(--ink)}button{font:inherit;border:0;cursor:pointer}.page{min-height:100vh;display:flex;justify-content:center}.app{width:min(760px,100%);padding:14px 14px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}.bar,.panel{background:rgba(26,29,34,.94);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}.bar{padding:12px 14px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:800}.sub{font-size:12px;color:var(--muted)}.iconBtn{background:var(--panel2);color:var(--ink);padding:10px 12px;border-radius:12px}.players{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.player{padding:9px;background:var(--panel);border:1px solid var(--line);border-radius:14px}.player.turn{border-color:var(--gold)}.player .name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.player .cards{font-size:12px;color:var(--muted);margin-top:2px}.table{padding:16px;display:grid;place-items:center;gap:12px;min-height:300px;background:linear-gradient(145deg,#0d4b40,#062d28);position:relative}.call{min-height:22px;color:var(--gold);font-weight:800}.pile{display:flex;gap:18px;align-items:center}.deck{width:88px;height:126px;border-radius:13px;background:repeating-linear-gradient(45deg,#143c70,#143c70 7px,#194b86 7px,#194b86 14px);display:grid;place-items:center;border:3px solid #e9eef8;box-shadow:0 8px 20px rgba(0,0,0,.3);color:#fff;font-weight:800}.card{width:92px;height:130px;border-radius:13px;background:#fdfdfd;color:#16181b;display:flex;flex-direction:column;justify-content:space-between;padding:10px;border:3px solid #fff;box-shadow:0 8px 18px rgba(0,0,0,.32);user-select:none}.card .num{font-size:24px;font-weight:900;line-height:1}.card .shape{font-size:50px;text-align:center;line-height:1}.card .tag{font-size:10px;font-weight:800;text-align:right;text-transform:uppercase;opacity:.65}.card.whot{background:linear-gradient(150deg,#ffde70,#f69c34)}.card.playable{transform:translateY(-7px);box-shadow:0 0 0 2px var(--gold),0 12px 24px rgba(0,0,0,.3)}.status{padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.22);text-align:center;font-size:14px}.actions{width:100%;display:flex}.action{flex:1;padding:13px;border-radius:12px;background:var(--panel2);color:var(--ink);font-weight:800}.action.primary{background:var(--accent);color:#fff}.action:disabled{opacity:.45;cursor:not-allowed}.handPanel{padding:12px}.hand{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.hand .card{width:84px;height:118px;padding:8px}.reactions{display:flex;gap:6px;overflow-x:auto}.react{flex:0 0 auto;padding:8px 10px;border-radius:999px;background:var(--panel2);color:var(--ink)}.wait{text-align:center;padding:32px 20px}.roomCode{font-size:42px;letter-spacing:8px;font-weight:900;margin:8px 0 18px}.share{margin-top:10px;width:100%;padding:12px;border-radius:12px;background:#2a7bf6;color:#fff;font-weight:800}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal.show{display:flex}.modalCard{width:min(430px,100%);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}.modalCard h3{margin:0 0 6px}.shapeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.shapeBtn{padding:13px 8px;border-radius:12px;background:var(--panel2);color:var(--ink);font-weight:800}.result{display:grid;gap:8px;margin-top:12px}.resultRow{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:10px;background:var(--panel2)}.resultRow.winner{border:1px solid var(--gold)}@media(max-width:540px){.players{grid-template-columns:repeat(2,1fr)}.table{min-height:250px}.pile{gap:10px}.deck,.card{width:78px;height:112px}.card .shape{font-size:42px}.hand .card{width:76px;height:108px}}
+</style>
+</head>
+<body>
+<div class="page"><main class="app">
+  <div class="bar"><div><div class="brand">🃏 CodePlay Whot</div><div class="sub" id="roomLabel">Connecting…</div></div><button class="iconBtn" id="homeBtn">⌂</button></div>
+  <section id="waiting" class="panel wait" style="display:none"><div class="sub">Share this room code</div><div class="roomCode" id="roomCode">----</div><div id="waitingText">Waiting for players…</div><button class="share" id="inviteBtn">💬 Invite on WhatsApp</button></section>
+  <section id="game" style="display:none">
+    <div class="players" id="players"></div>
+    <div class="panel table">
+      <div class="call" id="callLabel">Match by shape or number</div>
+      <div class="pile"><div class="deck" id="market">MARKET<br><span id="marketCount">0</span></div><div id="topSlot"></div></div>
+      <div class="status" id="status">Loading…</div>
+      <div class="actions"><button class="action primary" id="drawBtn">Take from Market</button></div>
+    </div>
+    <div class="panel handPanel"><div class="sub" style="margin-bottom:8px">Your cards</div><div class="hand" id="hand"></div></div>
+    <div class="reactions" id="reactions"></div>
+  </section>
+</main></div>
+<div class="modal" id="whotModal"><div class="modalCard"><h3>Call a shape</h3><div class="sub">Choose the shape the next player must follow.</div><div class="shapeGrid" id="shapeGrid"></div></div></div>
+<div class="modal" id="gameOver"><div class="modalCard"><h3 id="winnerTitle">🏆 Round over</h3><div id="winnerSub" class="sub"></div><div class="result" id="results"></div><div style="display:flex;gap:8px;margin-top:14px"><button class="action primary" id="rematchBtn">Play Again</button><button class="action" id="shareBtn">Share Result</button></div></div></div>
+<script>
+(function(){
+const params=new URLSearchParams(location.search),API_BASE=window.CODEPLAY_API_BASE||'',profileName=(params.get('name')||'Guest').slice(0,40)||'Guest',SOCKET_DEFAULT='https://codeplay-ludo-production.up.railway.app';
+const SHAPE_GLYPHS={circle:'●',triangle:'▲',cross:'✚',square:'■',star:'★',whot:'W'},SHAPE_LABEL={circle:'Circle',triangle:'Triangle',cross:'Cross',square:'Square',star:'Star'},REACTIONS=['😂','🔥','👏','😭','Omo!','Sharp!'];
+let socket=null,roomCode=(params.get('code')||'').trim().toUpperCase(),playerToken=null,me=0,state=null,mode=params.get('mode')||'friends',action=params.get('action')||'create';
+const e={roomLabel:document.getElementById('roomLabel'),waiting:document.getElementById('waiting'),roomCode:document.getElementById('roomCode'),waitingText:document.getElementById('waitingText'),game:document.getElementById('game'),players:document.getElementById('players'),topSlot:document.getElementById('topSlot'),marketCount:document.getElementById('marketCount'),status:document.getElementById('status'),hand:document.getElementById('hand'),drawBtn:document.getElementById('drawBtn'),whotModal:document.getElementById('whotModal'),shapeGrid:document.getElementById('shapeGrid'),gameOver:document.getElementById('gameOver'),winnerTitle:document.getElementById('winnerTitle'),winnerSub:document.getElementById('winnerSub'),results:document.getElementById('results'),rematchBtn:document.getElementById('rematchBtn'),shareBtn:document.getElementById('shareBtn'),callLabel:document.getElementById('callLabel'),reactions:document.getElementById('reactions'),homeBtn:document.getElementById('homeBtn'),inviteBtn:document.getElementById('inviteBtn')};
+function tabId(){let x=sessionStorage.getItem('codeplay_whot_tab_id');if(!x){x=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random();sessionStorage.setItem('codeplay_whot_tab_id',x)}return x}
+function activeKey(){return 'codeplay_active_whot_room:'+tabId()}
+function saveRoom(){if(roomCode&&playerToken)localStorage.setItem(activeKey(),JSON.stringify({code:roomCode,playerToken,savedAt:Date.now()}))}
+function loadRoom(){try{return JSON.parse(localStorage.getItem(activeKey())||'null')}catch(e){return null}}
+function cap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1)}
+function showWaiting(t){e.waiting.style.display='block';e.game.style.display='none';e.waitingText.textContent=t||'Waiting for players…'}
+function showGame(){e.waiting.style.display='none';e.game.style.display='block'}
+function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function cardHtml(card,playable){return '<div class="card'+(card.isWhot?' whot':'')+(playable?' playable':'')+'" data-card-id="'+card.id+'"><div class="num">'+card.number+'</div><div class="shape">'+(SHAPE_GLYPHS[card.shape]||'?')+'</div><div class="tag">'+(card.isWhot?'WHOT':cap(card.shape))+'</div></div>'}
+function canPlay(card,s){if(s.pendingPick)return card.number===s.pendingPick.number||(!card.isWhot?false:!!s.rules.whotCanDefendPick);if(card.isWhot)return true;if(s.whotCall)return s.whotCall.mode==='shape'?card.shape===s.whotCall.value:card.number===s.whotCall.value;return !!s.top&&(card.shape===s.activeShape||card.number===s.top.number)}
+function render(){
+  if(!state)return;showGame();e.roomLabel.textContent='Room '+roomCode;e.marketCount.textContent=String(state.marketCount||0);e.topSlot.innerHTML=state.top?cardHtml(state.top,false):'';
+  e.players.innerHTML='';(state.players||[]).forEach(p=>{const d=document.createElement('div');d.className='player'+(p.index===state.turn?' turn':'');d.innerHTML='<div class="name">'+esc(p.name||'Player')+'</div><div class="cards">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · You':'')+'</div>';e.players.appendChild(d)});
+  e.hand.innerHTML='';const own=state.players[me]&&state.players[me].cards||[];own.forEach((card,index)=>{const playable=state.turn===me&&!state.gameOver&&canPlay(card,state),wrap=document.createElement('div');wrap.innerHTML=cardHtml(card,playable);const node=wrap.firstElementChild;if(playable)node.onclick=()=>onCard(index,card);else node.style.opacity='.72';e.hand.appendChild(node)});
+  e.callLabel.textContent=state.whotCall?(state.whotCall.mode==='shape'?'Call: '+cap(state.whotCall.value):'Call: '+state.whotCall.value):(state.pendingPick?'Pick '+state.pendingPick.amount+' — defend with '+state.pendingPick.number:'Match '+cap(state.activeShape||'shape')+' or '+(state.top?state.top.number:'number'));
+  e.drawBtn.disabled=state.turn!==me||state.gameOver;
+  if(state.gameOver)showGameOver();else e.status.textContent=state.turn===me?(state.pendingPick?'You are under a Pick '+state.pendingPick.amount+' — play a '+state.pendingPick.number+' or take the market.':'Your turn — play a card or take from the market.'):(state.players[state.turn]?state.players[state.turn].name:'Opponent')+' is thinking…';
+}
+function onCard(index,card){if(card.isWhot)openWhotCall(index);else socket.emit('whot:play-card',{code:roomCode,cardId:card.id})}
+function openWhotCall(index){e.shapeGrid.innerHTML='';['circle','triangle','cross','square','star'].forEach(shape=>{const b=document.createElement('button');b.className='shapeBtn';b.textContent=SHAPE_GLYPHS[shape]+' '+SHAPE_LABEL[shape];b.onclick=()=>{e.whotModal.classList.remove('show');socket.emit('whot:play-card',{code:roomCode,cardId:state.players[me].cards[index].id,call:shape})};e.shapeGrid.appendChild(b)});e.whotModal.classList.add('show')}
+function showGameOver(){const winner=state.winner!=null&&state.players[state.winner]?state.players[state.winner].name:'Winner';e.winnerTitle.textContent='🏆 '+winner+' wins!';e.winnerSub.textContent='Penalty points remaining in each hand';e.results.innerHTML='';(state.players||[]).forEach((p,i)=>{const row=document.createElement('div');row.className='resultRow'+(i===state.winner?' winner':'');row.innerHTML='<span>'+esc(p.name)+'</span><span>'+(state.roundScores?state.roundScores[i]:'—')+' pts</span>';e.results.appendChild(row)})}
+function connect(){
+  socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10});
+  const saved=loadRoom();if(!roomCode&&saved){roomCode=saved.code;playerToken=saved.playerToken}
+  socket.on('connect',function(){
+    if(playerToken&&roomCode){socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
+    if(mode==='computer'){socket.emit('whot:create-room',{playerCount:2,name:profileName,mode:'computer'});showWaiting('Starting your game…');return}
+    if(action==='create'){const count=Math.min(4,Math.max(2,Number(params.get('players'))||2));socket.emit('whot:create-room',{playerCount:count,name:profileName,mode:'friends'});showWaiting('Creating room…');return}
+    socket.emit('whot:join-room',{code:roomCode,name:profileName});showWaiting('Joining room '+roomCode+'…');
+  });
+  socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;if(x.started)setState(x.state);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+  socket.on('whot:joined',x=>{roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;if(x.started)setState(x.state);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+  socket.on('whot:state',x=>{if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state)});
+  socket.on('whot:status',x=>{if(x.roomCode)roomCode=x.roomCode;if(x.text)e.status.textContent=x.text;if(x.waiting)showWaiting(x.text)});
+  socket.on('whot:error',x=>{e.status.textContent=x.message||String(x);if(x.message==='room-full'||x.message==='room-not-found')showWaiting(x.message)});
+  socket.on('whot:reaction',x=>{e.status.textContent=(x.name||'Player')+' '+x.reaction});
+  socket.on('whot:rematch-status',x=>{e.status.textContent=x.requested+' / '+x.needed+' players ready for a rematch.'});
+  socket.on('whot:rematch',x=>{e.gameOver.classList.remove('show');setState(x.state)});
+  socket.on('connect_error',()=>showWaiting('Could not reach the game server.'));
+}
+function setState(s){state=s;render();if(state&&state.gameOver)e.gameOver.classList.add('show');}
+e.drawBtn.onclick=()=>socket.emit('whot:draw',{code:roomCode});
+e.homeBtn.onclick=()=>location.href='/';
+e.inviteBtn.onclick=()=>{if(roomCode){const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}};
+e.rematchBtn.onclick=()=>{e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
+e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
+REACTIONS.forEach(r=>{const b=document.createElement('button');b.className='react';b.textContent=r;b.onclick=()=>socket.emit('whot:reaction',{code:roomCode,reaction:r});e.reactions.appendChild(b)});
+connect();
+})();
+</script>
+</body>
+</html>
