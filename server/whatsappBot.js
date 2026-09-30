@@ -103,7 +103,7 @@ function handleMessage(user,text,configStore=botConfig){
     return{reply:`Didn't catch that.\n\n${GAME_MENU}`,patch:{}};
   }
   if(user.stage==='whot_mode_menu'){
-    if(t==='1'||t.includes('computer')){const cfg=getWhotConfig();if(cfg.enabled===false||!(cfg.playerCounts||[2,3,4]).includes(2))return{reply:'2-player Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'Whot vs Computer is a 2-player game.\n\nTap to play:\n'+SITE_URL+'/whot.html?mode=computer&players=2&name='+encodeURIComponent(user.name||'Guest'),patch:{stage:'game_menu'}};}
+    if(t==='1'||t.includes('computer')){const cfg=getWhotConfig(configStore);if(cfg.enabled===false||!(cfg.playerCounts||[2,3,4]).includes(2))return{reply:'2-player Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'Whot vs Computer is a 2-player game.\n\nTap to play:\n'+SITE_URL+'/whot.html?mode=computer&players=2&name='+encodeURIComponent(user.name||'Guest'),patch:{stage:'game_menu'}};}
     if(t==='2'||t.includes('friend'))return{reply:getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'friends'}};
     return{reply:`Didn't catch that.\n\n${WHOT_MODE_MENU}`,patch:{stage:'whot_mode_menu'}};
   }
