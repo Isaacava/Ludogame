@@ -235,6 +235,27 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
     if(!playerCounts.length) throw new Error('Enable at least one player mode.');
     const extraTurnValues=$('extraTurnValues').value.split(',').map(function(v){return Number(v.trim())}).filter(function(v){return Number.isInteger(v)&&v>=1&&v<=6}); return {playerCounts,safeZonesEnabled:$('safeZonesEnabled').checked,blockadesEnabled:$('blockadesEnabled').checked,captureSendsCapturerHome:$('captureSendsCapturerHome').checked,captureGrantsExtraTurn:$('captureGrantsExtraTurn').checked,exactRollToFinish:$('exactRollToFinish').checked,doubleValueGrantsExtraTurn:$('doubleValueGrantsExtraTurn').checked,extraTurnValues:extraTurnValues.length?extraTurnValues:[6]};
   }
+  function collectWhot(){
+    const playerCounts=[2,3,4].filter(n=>$('whot'+n).checked);
+    if(!playerCounts.length) throw new Error('Enable at least one Whot player mode.');
+    return {
+      enabled:$('whotEnabled').checked,
+      playerCounts,
+      handSize:Math.max(1,Math.min(12,Number($('whotHandSize').value||6))),
+      allowDrawWithPlayable:$('whotAllowDraw').checked,
+      stackPickTwo:$('whotStack2').checked,
+      stackPickThree:$('whotStack3').checked,
+      holdOnExtraTurn:$('whotHoldOn').checked,
+      suspensionSkipsNext:$('whotSuspension').checked,
+      generalMarketDrawsOthers:$('whotMarketDraw').checked,
+      generalMarketExtraTurn:$('whotMarketExtra').checked,
+      whotCallMode:$('whotCallMode').value==='number'?'number':'shape',
+      whotCanDefendPick:$('whotCanDefendPick').checked,
+      enforceLastCardCall:$('whotLastCall').checked,
+      starScoreMultiplier:Math.max(1,Math.min(5,Number($('whotStarMultiplier').value||2))),
+      whotScore:Math.max(0,Math.min(100,Number($('whotScore').value||20)))
+    };
+  }
   $('loginBtn').onclick=login; $('password').onkeydown=e=>{if(e.key==='Enter')login()};
   $('logoutBtn').onclick=()=>{sessionStorage.removeItem(KEY);location.reload()};
   document.querySelectorAll('.nav button').forEach(btn=>btn.onclick=()=>{
