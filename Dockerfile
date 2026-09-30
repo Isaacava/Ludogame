@@ -1,4 +1,4 @@
-FROM devlikeapro/waha:gows-2026.9.1
+FROM devlikeapro/waha:chrome
 
 WORKDIR /codeplay
 
@@ -10,6 +10,5 @@ COPY web ./web
 
 ENV NODE_ENV=production
 EXPOSE 3000 3001
-
 
 CMD ["node","/codeplay/server/runCombined.js"]
