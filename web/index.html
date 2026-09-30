@@ -79,10 +79,11 @@ const API_BASE=window.CODEPLAY_API_BASE||'';
 const PLAY_URL=window.CODEPLAY_PLAY_URL||'/play.html';
 const AVATAR_COLORS=['#e53e3e','#38a169','#d69e2e','#3182ce'];
 var session={token:localStorage.getItem('codeplay_token'),name:null,color:null};
-var botNumber=null;
+var botNumber=null,allowedPlayerCounts=[2,3,4];
 
 function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
-async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null}catch(e){}}
+function applyAllowedPlayerCounts(){document.querySelectorAll('.countBtn').forEach(function(b,i){var n=i+2;b.disabled=allowedPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===ludoCount&&!b.disabled)});if(allowedPlayerCounts.indexOf(ludoCount)===-1&&allowedPlayerCounts.length){setCount(allowedPlayerCounts[0])}}
+async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});applyAllowedPlayerCounts()}catch(e){}}
 function openWhatsApp(){var n=String(botNumber||'').replace(/\D/g,'');if(!n)return alert('WhatsApp bot is not configured yet.');window.open('https://wa.me/'+n,'_blank')}
 async function submitLoginCode(){
  const code=document.getElementById('loginCodeInput').value.trim(),errEl=document.getElementById('signinErr');
