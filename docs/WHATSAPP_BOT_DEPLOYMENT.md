@@ -15,6 +15,20 @@ The production WhatsApp bot is a standalone Node/Express service:
 
 The bot shares the same conversation logic used by the existing Ludo/Whot application. WhatsApp starts the game; the actual board opens on `/play.html` or `/whot.html`.
 
+The bot can also attach a signed WhatsApp identity token to a game-launch URL. The game server verifies the token and stores the player's WhatsApp number on their room seat without exposing the number in the URL.
+
+## Game-result notifications
+
+When a multiplayer Ludo or Whot game ends, CodePlay checks the room's WhatsApp-linked players.
+
+- Winners receive: `🏆 You won! You won against <opponent name>.`
+- Losers receive: `😔 You lost. You lost to <winner name>.`
+- In 3–4 player matches, the winner sees all opponents; each loser sees the winner.
+- Only players whose seat was created/reached through a verified WhatsApp identity receive the WhatsApp result message.
+- The game server marks a room after sending the result notification so a reconnect or duplicate game event does not send it twice.
+
+Game-page Invite buttons route friends to the CodePlay WhatsApp bot with a prefilled `JOIN LUDO <code>` or `JOIN WHOT <code>` command. This lets the bot identify the friend by their own WhatsApp number before returning the signed join link, so both players can receive result notifications.
+
 ## Render
 
 Create the web service from the `Isaacava/Ludogame` repository.
@@ -54,6 +68,7 @@ META_WHATSAPP_APP_SECRET=<Meta app secret>
 META_WHATSAPP_ACCESS_TOKEN=<WhatsApp Cloud API access token>
 META_WHATSAPP_PHONE_NUMBER_ID=<WhatsApp phone number ID>
 WHATSAPP_PUBLIC_NUMBER=+<bot number>
+WHATSAPP_GAME_LINK_SECRET=<long-random-private-secret>
 ```
 
 Do not put secrets in GitHub.
@@ -89,4 +104,6 @@ This means game access, WhatsApp identity, and optional web authentication are s
 
 The bot must have `SITE_URL` set to the actual deployed game URL. Do not leave the source default `https://codeplay.com` in production unless that domain is actually live.
 
-Graph API v26.0 is the current version used by this project as of September 2026. Meta webhook deliveries use the GET challenge flow and `X-Hub-Signature-256` verification.
+Graph API v26.0 is the version configured by this project. Meta webhook deliveries use the GET challenge flow and `X-Hub-Signature-256` verification.
+
+Keep `WHATSAPP_GAME_LINK_SECRET` private. Rotating it invalidates existing WhatsApp-to-game launch links.
