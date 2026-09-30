@@ -86,13 +86,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .card .shape{font-size:62px;line-height:1;text-align:center;color:var(--shape);text-shadow:0 6px 14px rgba(0,0,0,.10);position:relative;z-index:1}
 .card .tag{font-size:9px;font-weight:950;letter-spacing:.1em;text-transform:uppercase;text-align:right;opacity:.5;position:relative;z-index:1}
 .card.shape-circle{--shape:#ef4c63}.card.shape-triangle{--shape:#3485ed}.card.shape-cross{--shape:#f1b943}.card.shape-square{--shape:#2eb56a}.card.shape-star{--shape:#8a68e8}.card.whot{background:linear-gradient(145deg,#ffe47c 0,#ffbf45 40%,#e98b24 100%);color:#261d0c;border-color:#fff0ad}.card.whot .shape{color:#fff7cf;text-shadow:0 5px 14px rgba(89,54,4,.24)}
-.handPanel{position:relative;z-index:8;padding:8px 2px 2px}.handHint{text-align:center;color:var(--muted);font-size:10px;margin-bottom:3px}.hand{display:flex;justify-content:center;align-items:flex-end;min-height:158px;position:relative;padding:0 10px}
-.handCard{width:84px;height:118px;position:relative;flex:0 0 auto;margin:0 -6px;transition:transform .22s,filter .22s;cursor:default}.handCard .card{width:100%;height:100%;transform:rotate(var(--r)) translateY(var(--y));transition:transform .22s,box-shadow .22s,filter .22s}
+.handPanel{position:relative;z-index:8;padding:8px 2px 2px}.handHint{text-align:center;color:var(--muted);font-size:10px;margin-bottom:3px}.hand{display:flex;justify-content:flex-start;align-items:flex-end;min-height:158px;position:relative;padding:4px 18px 10px;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}.hand::-webkit-scrollbar{display:none}
+.handCard{width:84px;height:118px;position:relative;flex:0 0 auto;margin:0;transition:transform .22s,filter .22s;cursor:default;scroll-snap-align:center}.handCard .card{width:100%;height:100%;transform:none;transition:transform .22s,box-shadow .22s,filter .22s}
 .handCard.playable{cursor:pointer;z-index:5}.handCard.playable .card{box-shadow:0 0 0 2px var(--gold),0 18px 32px rgba(0,0,0,.4);filter:saturate(1.03);animation:handBreathe 1.7s ease-in-out infinite}
-.handCard.playable:hover .card,.handCard.playable:active .card{transform:rotate(var(--r)) translateY(calc(var(--y) - 14px)) scale(1.035)}
+.handCard.playable:hover .card,.handCard.playable:active .card{transform:translateY(-14px) scale(1.035)}
 @keyframes handBreathe{0%,100%{filter:saturate(1.02)}50%{filter:saturate(1.15)}}
 .handCard.unplayable .card{filter:saturate(.62) brightness(.82);opacity:.62}
-.handCard.enter{animation:dealIn .36s cubic-bezier(.18,.9,.26,1.2) both}
+.handCard.enter{animation:dealIn .36s cubic-bezier(.18,.9,.26,1.2) both}.handRailHint{display:flex;justify-content:center;align-items:center;gap:5px;color:var(--muted);font-size:10px;margin-top:1px}.handRailHint b{color:#d7e4df}.handRailHint:after{content:'→';font-size:13px;color:#ffe99a}
 @keyframes dealIn{from{opacity:0;transform:translateY(34px) scale(.75) rotate(7deg)}to{opacity:1;transform:none}}
 .flying{position:fixed;z-index:80;pointer-events:none;will-change:transform,opacity;transition:transform .46s cubic-bezier(.2,.8,.2,1),opacity .46s}
 .specialFx{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);opacity:0;z-index:15;pointer-events:none;padding:12px 18px;border-radius:16px;font-weight:1000;letter-spacing:.12em;background:rgba(7,18,14,.76);border:1px solid rgba(255,255,255,.1);box-shadow:0 14px 34px rgba(0,0,0,.28);backdrop-filter:blur(10px)}
@@ -113,12 +113,12 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
  .arena{min-height:calc(100vh - 74px);grid-template-rows:auto 1fr auto}.seats{grid-template-columns:repeat(2,1fr)}
  .table{border-radius:27px;max-height:none}.tableEdge{inset:9px;border-radius:20px}.centerCore{gap:10px}.stack{width:86px;height:122px}.topCard{width:96px;height:136px}
  .topCard .card{font-size:inherit}.card .num{font-size:23px}.card .shape{font-size:50px}
- .hand{min-height:135px;padding:0}.handCard{width:73px;height:102px;margin:0 -8px}.handCard .card{border-width:2px}.handCard .card .shape{font-size:38px}.handCard .card .num{font-size:21px}
+ .hand{min-height:135px;padding:4px 12px 10px;gap:7px}.handCard{width:73px;height:102px;margin:0}.handCard .card{border-width:2px}.handCard .card .shape{font-size:38px}.handCard .card .num{font-size:21px}
  .status{bottom:10px}.turnArc{width:175px;height:175px}.callPill{font-size:10px}
 }
 @media(max-width:430px){
  .seat{min-height:52px;padding:7px}.avatar{width:32px;height:32px;border-radius:10px}.seatName{font-size:11px}.seatMeta{font-size:9px}
- .handCard{width:67px;height:94px;margin:0 -9px}.hand{min-height:125px}.handHint{font-size:9px}
+ .handCard{width:67px;height:94px;margin:0}.hand{min-height:125px;padding:3px 10px 8px;gap:6px}.handHint{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 </style>
@@ -171,7 +171,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     </div>
 
     <div class="handPanel">
-      <div class="handHint">Tap a highlighted card to play • tap the market to draw</div>
+      <div class="handHint">Tap a highlighted card to play • tap <b>MARKET</b> anytime to draw</div>
       <div class="hand" id="hand"></div>
     </div>
 
@@ -312,7 +312,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       const animateNew=!!extra&&!extra.played&&!extra.drawn;
       wrap.className='handCard '+(playable?'playable':'unplayable')+(animateNew?' enter':'');
       wrap.style.setProperty('--r',rotation);wrap.style.setProperty('--y',lift);
-      wrap.style.zIndex=String(10-index);
+      wrap.style.zIndex='1';
       wrap.setAttribute('data-card-id',card.id);
       wrap.innerHTML=cardHtml(card,true);
       if(playable)wrap.onclick=()=>onCard(index,card);
@@ -325,8 +325,6 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     animateCall(prompt);
 
     const isTurn=state.turn===me&&!state.gameOver;
-    const hasPlayable=own.some(c=>canPlay(c,state));
-    const canDraw=isTurn&&(state.pendingPick?!hasPlayable:((state.rules&&state.rules.allowDrawWithPlayable)||!hasPlayable));
     e.market.classList.toggle('canDraw',!!canDraw);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=canDraw?onDraw:null;
 
     e.status.textContent=state.gameOver?'Round complete':isTurn?
