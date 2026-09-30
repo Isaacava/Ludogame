@@ -10,6 +10,7 @@ const {createBotApp,UserStore,SessionStore}=require('./whatsappBot');
 const {createWahaApp}=require('./bot/wahaAdapter');
 const {createMetaWhatsAppApp}=require('./bot/metaWhatsAppAdapter');
 const {MongoPersistence}=require('./db/mongoPersistence');
+const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
 
 const PORT=process.env.PORT||3001;
 const configStore=new ConfigStore();
@@ -99,14 +100,16 @@ const io=new Server(httpServer,{
 });
 
 io.on('connection',socket=>{
-  socket.on('create-room',({playerCount,name,color})=>{
+  socket.on('create-room',({playerCount,name,color,whatsappToken})=>{
+    const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
     if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
-    const room=rooms.createRoom(playerCount,socket.id,{name,color});socket.join(room.code);
+    const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});socket.join(room.code);
     socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room)});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
-  socket.on('join-room',({code,name,color,playerToken})=>{
+  socket.on('join-room',({code,name,color,playerToken,whatsappToken})=>{
+    const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const normalizedCode=String(code||'').trim().toUpperCase();
     const existingRoom=rooms.getRoom(normalizedCode);
     if(existingRoom&&playerToken){
@@ -121,7 +124,7 @@ io.on('connection',socket=>{
         return;
       }
     }
-    const result=rooms.joinRoom(normalizedCode,socket.id,{name,color});if(result.error)return socket.emit('error-msg',result.error);
+    const result=rooms.joinRoom(normalizedCode,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});if(result.error)return socket.emit('error-msg',result.error);
     const room=result.room;socket.join(room.code);
     const myIndex=rooms.playerIndexOf(room,socket.id);
     socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
@@ -153,12 +156,19 @@ io.on('connection',socket=>{
       const result=room.engine.applyMove(move,value,mode);
       io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});
       emitLudoResultAudio(room,pIdx,result);
+      if(result.gameOver){
+        const winnerIndex=Array.isArray(result.finishOrder)&&result.finishOrder.length?result.finishOrder[0]:pIdx;
+        notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
+      }
       const remaining=result.consumedDice||[];
       const allDiceConsumed=remaining.length>0&&remaining.every(v=>!v);
       if(allDiceConsumed||result.gameOver){
         const endResult=room.engine.endTurn();
         io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
-        if(!endResult.gameOver)emitGameAudio(room,endResult.nextTurn,'ludo-turn');
+        if(endResult.gameOver){
+          const winnerIndex=Array.isArray(endResult.finishOrder)&&endResult.finishOrder.length?endResult.finishOrder[0]:pIdx;
+          notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
+        }else emitGameAudio(room,endResult.nextTurn,'ludo-turn');
       }
     }catch(e){socket.emit('error-msg',e.message);}
   });
