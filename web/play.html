@@ -106,7 +106,7 @@ function initFriendsMode(action,existingCode,playerCount){
  GAME_MODE='friends';socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
  var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode);
  var sameTabRoom=!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID);
- var shouldReconnect=!!(sameTabRoom&&((requestedCode&&requestedCode===savedCode)||(action==='create'&&!requestedCode)||action==='reconnect'));
+ var shouldReconnect=!!(action==='reconnect'&&sameTabRoom&&requestedCode&&requestedCode===savedCode);
  if(shouldReconnect){ROOM_CODE=savedCode;playerToken=saved.playerToken;if(saved.playerCount)playerCount=saved.playerCount;}
  socket.on('connect_error',function(err){showWaitingRoom('<p>Could not reach the game server.</p><p class="legend">'+((err&&err.message)||'Connection failed')+'</p><button onclick="location.reload()">Retry</button>')});
  socket.on('reconnect_attempt',function(){wrText('Reconnecting to the game server…')});
