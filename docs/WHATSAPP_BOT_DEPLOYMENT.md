@@ -1,109 +1,129 @@
-# CodePlay WhatsApp Bot — production deployment
+# CodePlay WhatsApp Bot — WAHA + Railway deployment
 
-## Architecture
+## Current architecture
 
-The production WhatsApp bot is a standalone Node/Express service:
+CodePlay uses a single Railway service containing two processes:
 
-- Entry point: `node server/whatsappServer.js`
-- Meta webhook: `GET/POST /whatsapp/meta`
-- Health: `GET /health`
-- Web login verification: `POST /api/auth/verify`
-- Web session lookup: `GET /api/auth/session`
-- Persistent users/sessions: MongoDB Atlas when `MONGODB_URI` is set
-- WhatsApp transport: Meta WhatsApp Cloud API
-- Render blueprint: `render.yaml`
+- CodePlay Node/Express + Socket.IO on the Railway PORT (3000 in production).
+- WAHA GOWS on an internal-only port (3001).
+- WAHA sends message webhooks to CodePlay at http://127.0.0.1:3000/waha/webhook.
+- CodePlay sends replies back to WAHA at http://127.0.0.1:3001.
+- WAHA session data is persisted in /app/.sessions on a Railway Volume so the WhatsApp account does not need to be paired after every restart.
+- MongoDB Atlas remains the persistent application database.
 
-The bot shares the same conversation logic used by the existing Ludo/Whot application. WhatsApp starts the game; the actual board opens on `/play.html` or `/whot.html`.
+Railway private networking is not needed between the two processes because they share one container. The public Railway domain is for CodePlay only.
 
-The bot can also attach a signed WhatsApp identity token to a game-launch URL. The game server verifies the token and stores the player's WhatsApp number on their room seat without exposing the number in the URL.
+## Why WAHA
 
-## Game-result notifications
+WAHA is a self-hosted WhatsApp HTTP API. As of WAHA 2026.6.1, features previously split between Core and Plus are included in the free open-source WAHA Core image. The current release line includes 2026.9.1.
 
-When a multiplayer Ludo or Whot game ends, CodePlay checks the room's WhatsApp-linked players.
+This project uses the lightweight GOWS engine because it does not require Chromium. WAHA documents approximately 200 MB memory for one GOWS or NOWEB session versus about 400 MB for WEBJS. Railway Free is limited to 0.5 GB RAM per service, so GOWS is the practical choice for a single-session test bot.
 
-- Winners receive: `🏆 You won! You won against <opponent name>.`
-- Losers receive: `😔 You lost. You lost to <winner name>.`
-- In 3–4 player matches, the winner sees all opponents; each loser sees the winner.
-- Only players whose seat was created/reached through a verified WhatsApp identity receive the WhatsApp result message.
-- The game server marks a room after sending the result notification so a reconnect or duplicate game event does not send it twice.
+Sources:
+- https://github.com/devlikeapro/waha
+- https://waha.devlike.pro/docs/how-to/engines/
+- https://waha.devlike.pro/docs/overview/faq/
 
-Game-page Invite buttons route friends to the CodePlay WhatsApp bot with a prefilled `JOIN LUDO <code>` or `JOIN WHOT <code>` command. This lets the bot identify the friend by their own WhatsApp number before returning the signed join link, so both players can receive result notifications.
+## Railway service
 
-## Render
+The Railway codeplay-ludo service should use the repository Dockerfile.
 
-Create the web service from the `Isaacava/Ludogame` repository.
+Docker base image: devlikeapro/waha:gows-2026.9.1
 
-Build command:
+The container runs node /codeplay/server/runCombined.js. That supervisor starts both CodePlay and WAHA and shuts the sibling process down if either process exits.
 
-```
-npm install
-```
+## Required Railway variables
 
-Start command:
-
-```
-node server/whatsappServer.js
-```
-
-Health check:
-
-```
-/health
-```
-
-Required environment variables:
-
-```
+PORT=3000
 NODE_ENV=production
-MONGODB_URI=<MongoDB Atlas connection string>
+SITE_URL=https://<railway-domain>
+SITE_ORIGIN=https://<railway-domain>
+PUBLIC_BASE_URL=https://<railway-domain>
+CORS_ORIGIN=https://<railway-domain>
+ADMIN_PASSWORD=<long-random-secret>
+
+WAHA_URL=http://127.0.0.1:3001
+WAHA_API_PORT=3001
+WAHA_SESSION=default
+WHATSAPP_DEFAULT_ENGINE=GOWS
+WAHA_API_KEY=<long-random-secret>
+WAHA_WEBHOOK_SECRET=<long-random-secret>
+WAHA_PAIRING_PASSWORD=<long-random-secret>
+WAHA_DASHBOARD_ENABLED=false
+WHATSAPP_SWAGGER_ENABLED=false
+WAHA_WORKER_RESTART_SESSIONS=true
+WAHA_CLIENT_DEVICE_NAME=CodePlay
+WAHA_CLIENT_BROWSER_NAME=Chrome
+
+WHATSAPP_HOOK_URL=http://127.0.0.1:3000/waha/webhook
+WHATSAPP_HOOK_EVENTS=message
+WHATSAPP_HOOK_HMAC_KEY=<same value as WAHA_WEBHOOK_SECRET>
+WHATSAPP_HOOK_RETRIES_POLICY=exponential
+WHATSAPP_HOOK_RETRIES_DELAY_SECONDS=2
+WHATSAPP_HOOK_RETRIES_ATTEMPTS=8
+
+WHATSAPP_PUBLIC_NUMBER=<connected whatsapp number, international digits>
+WHATSAPP_GAME_LINK_SECRET=<long-random-secret>
+MONGODB_URI=<mongodb-atlas-uri>
 MONGODB_DB=codeplay
 
-SITE_URL=https://<your-live-game-site>
-SITE_ORIGIN=https://<your-live-game-site>
-PUBLIC_BASE_URL=https://<your-render-service>.onrender.com
+WAHA's API key is required for its REST API. WAHA hashes a plaintext key internally at startup; CodePlay keeps the plaintext in its own Railway variable so it can authenticate API requests.
 
-META_GRAPH_API_VERSION=v26.0
-META_WHATSAPP_VERIFY_TOKEN=<random webhook verification token>
-META_WHATSAPP_APP_SECRET=<Meta app secret>
-META_WHATSAPP_ACCESS_TOKEN=<WhatsApp Cloud API access token>
-META_WHATSAPP_PHONE_NUMBER_ID=<WhatsApp phone number ID>
-WHATSAPP_PUBLIC_NUMBER=+<bot number>
-WHATSAPP_GAME_LINK_SECRET=<long-random-private-secret>
-```
+WAHA webhook HMAC uses SHA-512 and the X-Webhook-Hmac header. CodePlay verifies that HMAC before processing incoming messages.
 
-Do not put secrets in GitHub.
+## Pairing the WhatsApp account
 
-## Meta webhook
+After deployment, open:
 
-Use:
+https://<railway-domain>/waha/pairing
 
-```
-https://<your-render-service>.onrender.com/whatsapp/meta
-```
+The route is protected with HTTP Basic Auth:
+- username: codeplay
+- password: the value of WAHA_PAIRING_PASSWORD
 
-Meta first performs the GET verification handshake. The service checks `hub.verify_token` and returns `hub.challenge`.
+CodePlay creates/starts the default WAHA session automatically.
 
-Incoming POST deliveries are verified with `X-Hub-Signature-256` using the Meta app secret before the JSON body is processed. The handler also deduplicates message IDs during the running process.
+When the page shows SCAN_QR_CODE, scan the displayed QR from WhatsApp on the phone that will act as the bot account: WhatsApp → Settings → Linked devices → Link a device.
 
-Subscribe the WhatsApp Business Account/app to the `messages` webhook field.
+The QR expires quickly, so the page refreshes it automatically. WAHA documents that QR challenges expire and should be refreshed when the session emits SCAN_QR_CODE.
 
-## User flow
+## How incoming messages work
 
-1. A WhatsApp user sends any message.
-2. The webhook gives the bot the sender's WhatsApp number; that number is the user's CodePlay identity.
-3. The bot stores/retrieves the user's record by normalized WhatsApp phone number.
-4. The bot asks for a display name once, then the user can play immediately — no CodePlay login is required for multiplayer.
-5. Ludo and Whot choices use native WhatsApp buttons/lists where supported.
-6. Friend mode returns a real room-creation URL.
-7. A player can join with `JOIN LUDO ABCD` or `JOIN WHOT ABCD`.
-8. Web login is optional. When the user types `CONNECT WEB` (or `LOGIN`), the bot creates a 6-digit one-time code. The web app consumes that code and creates a session tied to the same WhatsApp user record.
+1. A user sends a WhatsApp message to the paired bot number.
+2. WAHA receives the message from WhatsApp.
+3. WAHA posts a message event to /waha/webhook.
+4. CodePlay verifies the WAHA HMAC.
+5. CodePlay extracts the sender chat ID and normalizes the sender phone number.
+6. handleMessage() loads or creates the user's CodePlay record.
+7. The bot reply is sent through WAHA POST /api/sendText.
+8. When a game link is generated, CodePlay encrypts the WhatsApp phone identity into wa_token.
+9. The game backend decrypts wa_token when the player opens or joins a Ludo/Whot room.
 
-This means game access, WhatsApp identity, and optional web authentication are separate concerns: multiplayer is guest-first, while the WhatsApp number is the durable identity used to reconnect the user's data.
+## Game result notifications
 
-## Important deployment note
+Only room players linked to a WhatsApp identity receive WhatsApp game results.
 
-The bot must have `SITE_URL` set to the actual deployed game URL. Do not leave the source default `https://codeplay.com` in production unless that domain is actually live.
+Winner: 🏆 You won! — You won against <opponent name>.
+Loser: 😔 You lost. — You lost to <winner name>.
 
-Graph API v26.0 is the version configured by this project. Meta webhook deliveries use the GET challenge flow and `X-Hub-Signature-256` verification.
+The room tracks successful notifications separately so a failed send can be retried without re-sending to players whose delivery already succeeded.
 
-Keep `WHATSAPP_GAME_LINK_SECRET` private. Rotating it invalidates existing WhatsApp-to-game launch links.
+## Railway storage
+
+Attach one Railway Volume to the codeplay-ludo service and mount it at /app/.sessions. That directory is WAHA's persistent session storage.
+
+Railway's current Free/Trial volume limit is 0.5 GB. A single WAHA WhatsApp session is the intended scope here.
+
+## Important WhatsApp policy caveat
+
+WAHA automates WhatsApp through WhatsApp Web/linked-device mechanisms rather than Meta's official Cloud API. WhatsApp's published Terms and Business Terms restrict unauthorized automated use and can allow accounts to be suspended for violations.
+
+For a production/commercial deployment, the official WhatsApp Business Platform Cloud API is the Meta-supported integration. WAHA is appropriate here as a self-hosted test/experimental transport, but there is operational/account risk that is outside CodePlay's control.
+
+References:
+- https://www.whatsapp.com/legal/terms-of-service
+- https://www.whatsapp.com/legal/WhatsApp-Terms-for-WhatsApp-Business-App
+
+## Legacy files
+
+server/whatsappServer.js, server/bot/metaWhatsAppAdapter.js, and the old Render/Meta environment entries remain in the repository for compatibility/history. The active Railway bot transport is server/bot/wahaAdapter.js and the combined server/runCombined.js supervisor.
