@@ -82,7 +82,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
           <div class="row"><label>3-player games<small>Allow three-player Whot</small></label><label class="switch"><input id="whot3" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>4-player games<small>Allow four-player Whot</small></label><label class="switch"><input id="whot4" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Starting hand size<small>Cards dealt to each player</small></label><div class="field"><input id="whotHandSize" type="number" min="1" max="12"></div></div>
-          <div class="row"><label>Draw with a playable card<small>Allow drawing even when the player has a legal move</small></label><label class="switch"><input id="whotAllowDraw" type="checkbox"><span class="slider"></span></label></div>
+          <div class="notice good"><strong>Free Market choice</strong><small>Players may always draw from the Market. A card can only be played when it legally matches the active shape/number or is WHOT.</small></div>
           <div class="row"><label>Stack Pick 2<small>Another 2 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack2" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Stack Pick 3<small>Another 5 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack3" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Hold On extra turn<small>Playing 1 keeps the turn</small></label><label class="switch"><input id="whotHoldOn" type="checkbox"><span class="slider"></span></label></div>
@@ -200,7 +200,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
     checked('r2',(r.playerCounts||[]).includes(2)); checked('r3',(r.playerCounts||[]).includes(3)); checked('r4',(r.playerCounts||[]).includes(4));
     checked('safeZonesEnabled',r.safeZonesEnabled); checked('blockadesEnabled',r.blockadesEnabled); checked('captureSendsCapturerHome',r.captureSendsCapturerHome);
     checked('exactRollToFinish',r.exactRollToFinish); checked('doubleValueGrantsExtraTurn',r.doubleValueGrantsExtraTurn); checked('captureGrantsExtraTurn',r.captureGrantsExtraTurn); $('extraTurnValues').value=(Array.isArray(r.extraTurnValues)?r.extraTurnValues:[6]).join(', ');
-    checked('whotEnabled',w.enabled!==false); checked('whot2',(w.playerCounts||[]).includes(2)); checked('whot3',(w.playerCounts||[]).includes(3)); checked('whot4',(w.playerCounts||[]).includes(4)); $('whotHandSize').value=w.handSize??6; checked('whotAllowDraw',w.allowDrawWithPlayable); checked('whotStack2',w.stackPickTwo!==false); checked('whotStack3',w.stackPickThree!==false); checked('whotHoldOn',w.holdOnExtraTurn!==false); checked('whotSuspension',w.suspensionSkipsNext!==false); checked('whotMarketDraw',w.generalMarketDrawsOthers!==false); checked('whotMarketExtra',w.generalMarketExtraTurn!==false); $('whotCallMode').value=w.whotCallMode||'shape'; checked('whotCanDefendPick',w.whotCanDefendPick); checked('whotLastCall',w.enforceLastCardCall); $('whotStarMultiplier').value=w.starScoreMultiplier??2; $('whotScore').value=w.whotScore??20;
+    checked('whotEnabled',w.enabled!==false); checked('whot2',(w.playerCounts||[]).includes(2)); checked('whot3',(w.playerCounts||[]).includes(3)); checked('whot4',(w.playerCounts||[]).includes(4)); $('whotHandSize').value=w.handSize??6; checked('whotStack2',w.stackPickTwo!==false); checked('whotStack3',w.stackPickThree!==false); checked('whotHoldOn',w.holdOnExtraTurn!==false); checked('whotSuspension',w.suspensionSkipsNext!==false); checked('whotMarketDraw',w.generalMarketDrawsOthers!==false); checked('whotMarketExtra',w.generalMarketExtraTurn!==false); $('whotCallMode').value=w.whotCallMode||'shape'; checked('whotCanDefendPick',w.whotCanDefendPick); checked('whotLastCall',w.enforceLastCardCall); $('whotStarMultiplier').value=w.starScoreMultiplier??2; $('whotScore').value=w.whotScore??20;
 
     checked('adsEnabled',m.adsEnabled); checked('ad_homepageTop',m.adPlacements&&m.adPlacements.homepageTop); checked('ad_homepageSticky',m.adPlacements&&m.adPlacements.homepageSticky);
     checked('ad_waitingRoom',m.adPlacements&&m.adPlacements.waitingRoom); checked('ad_inGameSticky',m.adPlacements&&m.adPlacements.inGameSticky); checked('ad_winScreen',m.adPlacements&&m.adPlacements.winScreen);
@@ -242,7 +242,6 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
       enabled:$('whotEnabled').checked,
       playerCounts,
       handSize:Math.max(1,Math.min(12,Number($('whotHandSize').value||6))),
-      allowDrawWithPlayable:$('whotAllowDraw').checked,
       stackPickTwo:$('whotStack2').checked,
       stackPickThree:$('whotStack3').checked,
       holdOnExtraTurn:$('whotHoldOn').checked,
