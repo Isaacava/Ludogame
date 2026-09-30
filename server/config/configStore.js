@@ -25,7 +25,24 @@ const DEFAULTS = {
     gameMenuHeader: 'Which game do you want to play?',
     whatsappNumber: '+1234567890'
   },
-  maintenance: { siteEnabled: true, maintenanceMessage: 'CodePlay is down for maintenance — back soon!' }
+  maintenance: { siteEnabled: true, maintenanceMessage: 'CodePlay is down for maintenance — back soon!' },
+  whot: {
+    enabled: true,
+    playerCounts: [2, 3, 4],
+    handSize: 6,
+    allowDrawWithPlayable: false,
+    stackPickTwo: true,
+    stackPickThree: true,
+    holdOnExtraTurn: true,
+    suspensionSkipsNext: true,
+    generalMarketDrawsOthers: true,
+    generalMarketExtraTurn: true,
+    whotCallMode: 'shape',
+    whotCanDefendPick: false,
+    enforceLastCardCall: false,
+    starScoreMultiplier: 2,
+    whotScore: 20
+  }
 };
 
 function deepMerge(base, patch) {
