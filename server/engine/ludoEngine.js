@@ -105,7 +105,22 @@ class LudoEngine {
       let captured=[];
       if(newPos<=50&&!(this.rules.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,move.color)))){
         const g=pathIdx(newPos,move.color);
-        this.players.forEach((opp,oi)=>{if(oi===this.turn)return;opp.colors.forEach(oc=>opp.tokens[oc].forEach((t,ti)=>{if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});}}));});
+        let capturedOne=false;
+        for(const [oi,opp] of this.players.entries()){
+          if(capturedOne||oi===this.turn)continue;
+          for(const oc of opp.colors){
+            for(let ti=0;ti<opp.tokens[oc].length;ti++){
+              const t=opp.tokens[oc][ti];
+              if(t>=0&&t<=50&&pathIdx(t,oc)===g){
+                opp.tokens[oc][ti]=-1;
+                captured.push({player:oi,color:oc,idx:ti});
+                capturedOne=true;
+                break;
+              }
+            }
+            if(capturedOne)break;
+          }
+        }
         if(captured.length&&this.rules.captureSendsCapturerHome){arr[move.idx]=56;newPos=56;}
         if(captured.length&&this.rules.captureGrantsExtraTurn)this.captureBonusPending=true;
       }
@@ -143,7 +158,23 @@ class LudoEngine {
     let captured=[];
     if(newPos<=50&&!(this.rules.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,move.color)))){
       const g=pathIdx(newPos,move.color);
-      this.players.forEach((opp,oi)=>{if(oi===this.turn)return;opp.colors.forEach(oc=>opp.tokens[oc].forEach((t,ti)=>{if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});this._log(`${p.name} captured ${oc}`);}}));});
+      let capturedOne=false;
+      for(const [oi,opp] of this.players.entries()){
+        if(capturedOne||oi===this.turn)continue;
+        for(const oc of opp.colors){
+          for(let ti=0;ti<opp.tokens[oc].length;ti++){
+            const t=opp.tokens[oc][ti];
+            if(t>=0&&t<=50&&pathIdx(t,oc)===g){
+              opp.tokens[oc][ti]=-1;
+              captured.push({player:oi,color:oc,idx:ti});
+              this._log(p.name+' captured '+oc);
+              capturedOne=true;
+              break;
+            }
+          }
+          if(capturedOne)break;
+        }
+      }
       if(captured.length&&this.rules.captureSendsCapturerHome){arr[move.idx]=56;newPos=56;this._log(`${p.name}'s ${move.color} token was removed after the capture!`);}
       if(captured.length&&this.rules.captureGrantsExtraTurn)this.captureBonusPending=true;
     }
