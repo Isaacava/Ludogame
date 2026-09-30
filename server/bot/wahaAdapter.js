@@ -80,8 +80,51 @@ img{width:320px;max-width:100%;border:1px solid #ddd;border-radius:16px}
 <p id="status" class="muted">Checking session…</p>
 <img id="qr" alt="WhatsApp QR code" style="display:none">
 <p id="help" class="muted"></p>
+<div style="margin-top:20px;text-align:left">
+<label for="phone"><strong>Pair with phone number</strong></label>
+<p class="muted" style="margin:6px 0 10px">Enter the bot WhatsApp number in international digits, without +, spaces or dashes.</p>
+<input id="phone" inputmode="numeric" autocomplete="tel" placeholder="2348012345678" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:10px">
+<button id="pair" onclick="requestCode()" style="margin-top:10px;width:100%;padding:12px;border:0;border-radius:10px;background:#111;color:#fff;font-weight:700">Get pairing code</button>
+<p id="codeBox" style="display:none;margin:14px 0 0;text-align:center;font-size:28px;letter-spacing:4px;font-weight:800"></p>
+<p id="codeHelp" class="muted" style="display:none;text-align:center"></p>
+</div>
 </div>
 <script>
+async function requestCode(){
+  const phone=document.getElementById('phone').value.replace(/\D/g,'');
+  const pair=document.getElementById('pair');
+  const box=document.getElementById('codeBox');
+  const help=document.getElementById('codeHelp');
+  box.style.display='none';
+  help.style.display='none';
+  if(!phone){
+    help.textContent='Enter the bot phone number first.';
+    help.style.display='block';
+    return;
+  }
+  pair.disabled=true;
+  pair.textContent='Generating code…';
+  try{
+    const r=await fetch('/waha/pairing-code',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',
+      body:JSON.stringify({phoneNumber:phone})
+    });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||data.message||('Request failed: '+r.status));
+    box.textContent=data.code||'';
+    box.style.display='block';
+    help.textContent='On the bot phone: WhatsApp → Settings → Linked Devices → Link with phone number instead, then enter this code.';
+    help.style.display='block';
+  }catch(e){
+    help.textContent=e.message||'Could not generate pairing code.';
+    help.style.display='block';
+  }finally{
+    pair.disabled=false;
+    pair.textContent='Get pairing code';
+  }
+}
 async function refresh(){
   try{
     const s=await fetch('/waha/status',{credentials:'same-origin'}).then(r=>r.json());
@@ -172,6 +215,24 @@ function createWahaApp(opts={}){
         }
       }
 
+      return res.json(data);
+    }catch(e){
+      return res.status(502).json({error:'waha-unavailable',message:e.message});
+    }
+  });
+
+  app.post('/waha/pairing-code',pairingAuth,express.json(),async(req,res)=>{
+    try{
+      const raw=String(req.body?.phoneNumber||'');
+      const phone=raw.replace(/\D/g,'');
+      if(phone.length<8||phone.length>15)return res.status(400).json({error:'invalid-phone-number'});
+      const response=await wahaRequest(`/api/${encodeURIComponent(getWahaSession())}/auth/request-code`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({phoneNumber:phone})
+      },fetchImpl);
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)return res.status(response.status).json(data);
       return res.json(data);
     }catch(e){
       return res.status(502).json({error:'waha-unavailable',message:e.message});
