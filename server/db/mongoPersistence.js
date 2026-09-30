@@ -23,7 +23,8 @@ class MongoPersistence {
       this.db.collection('sessions').createIndex({ token: 1 }, { unique: true, name: 'token_unique' }),
       this.db.collection('sessions').createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60, name: 'created_at_ttl' }),
       this.db.collection('matches').createIndex({ roomCode: 1, createdAt: -1 }, { name: 'room_created' }),
-      this.db.collection('matches').createIndex({ createdAt: -1 }, { name: 'created_at' })
+      this.db.collection('matches').createIndex({ createdAt: -1 }, { name: 'created_at' }),
+      this.db.collection('settings').createIndex({ key: 1 }, { unique: true, name: 'settings_key_unique' })
     ]);
     return true;
   }
@@ -73,6 +74,16 @@ class MongoPersistence {
     const col = this._collection('matches'); if (!col) return null;
     const result = await col.insertOne({ ...match, createdAt: new Date(match.createdAt || Date.now()) });
     return String(result.insertedId);
+  }
+  async saveConfig(config) {
+    const col = this._collection('settings'); if (!col) return false;
+    await col.updateOne({ key: 'config' }, { $set: { key: 'config', value: config, updatedAt: new Date() } }, { upsert: true });
+    return true;
+  }
+  async loadConfig() {
+    const col = this._collection('settings'); if (!col) return null;
+    const doc = await col.findOne({ key: 'config' });
+    return doc && doc.value ? doc.value : null;
   }
 }
 module.exports = { MongoPersistence };
