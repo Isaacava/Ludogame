@@ -147,9 +147,13 @@ function interactiveForState(userBefore, result) {
   if (!stage) return null;
 
   if (stage === 'game_menu') {
+    const reply = String(result.reply || '');
     return {
       kind: 'buttons',
-      body: String(result.reply || 'Choose a game to start.').slice(0, 1024),
+      body: (/https?:\/\//i.test(reply)
+        ? 'Your game link is above. Choose another game any time.'
+        : reply || 'Choose a game to start.'
+      ).slice(0, 1024),
       buttons: [
         { id: 'game_ludo', title: '🎲 Ludo' },
         { id: 'game_whot', title: '🃏 Whot' },
@@ -217,6 +221,9 @@ function interactiveForState(userBefore, result) {
 async function sendInteractiveOrText(to, result, userBefore, fetchImpl = global.fetch) {
   const interactive = interactiveForState(userBefore, result);
   if (!interactive) return sendWhatsAppText(to, result.reply, fetchImpl);
+
+  const reply = String(result.reply || '');
+  if (/https?:\/\//i.test(reply)) await sendWhatsAppText(to, reply, fetchImpl);
 
   if (interactive.kind === 'buttons') {
     return sendWhatsAppButtonMessage(to, interactive.body, interactive.buttons, fetchImpl);
