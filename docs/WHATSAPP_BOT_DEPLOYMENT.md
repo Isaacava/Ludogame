@@ -127,3 +127,10 @@ References:
 ## Legacy files
 
 server/whatsappServer.js, server/bot/metaWhatsAppAdapter.js, and the old Render/Meta environment entries remain in the repository for compatibility/history. The active Railway bot transport is server/bot/wahaAdapter.js and the combined server/runCombined.js supervisor.
+## Phone-number pairing
+
+The pairing page also supports WAHA's phone-number pairing code. Enter the bot WhatsApp number in international digits and click **Get pairing code**. Then on that phone use WhatsApp → Settings → Linked Devices → Link with phone number instead and enter the 8-character code returned by WAHA. WAHA documents this endpoint for WEBJS, WPP and the other supported engines.
+
+Do not set a custom WAHA device name for pairing-code authentication; WAHA documents that custom device names can cause pairing-code authentication to fail.
+
+Reference: https://waha.devlike.pro/docs/how-to/sessions/
