@@ -30,7 +30,7 @@ function scheduleBot(room){
         emitState(room,{drawn:result.cards.map(c=>c.id),bot:true});
       }else{
         const cardIndex=room.engine.players[index].cards.findIndex(c=>c.id===action.cardId);
-        const result=room.engine.playCard(index,cardIndex,action.call);
+        const result=room.engine.playCard(index,cardIndex,action.call,action.lastCall);
         emitState(room,{played:result.card.id,resolution:result.resolution,bot:true});
       }
     }catch(err){emitState(room,{botError:err.message});}
@@ -40,8 +40,10 @@ function scheduleBot(room){
 
 io.on('connection',socket=>{
   socket.on('whot:create-room',({playerCount,name,mode})=>{
-    const count=Number(playerCount);
-    if(![2,3,4].includes(count))return socket.emit('whot:error',{message:'player-count-invalid'});
+    const count=Number(playerCount),cfg=configStore.get('whot')||{};
+    if(cfg.enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
+    const allowed=Array.isArray(cfg.playerCounts)&&cfg.playerCounts.length?cfg.playerCounts:[2,3,4];
+    if(!allowed.includes(count))return socket.emit('whot:error',{message:'player-count-disabled'});
     if(mode==='computer'&&count!==2)return socket.emit('whot:error',{message:'computer-mode-supports-2-players'});
     const room=rooms.createRoom(count,socket.id,{name},mode==='computer'?'computer':'friends');
     socket.join(`WHOT_${room.code}`);
@@ -49,6 +51,7 @@ io.on('connection',socket=>{
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:join-room',({code,name})=>{
+    if((configStore.get('whot')||{}).enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
     const result=rooms.joinRoom(code,socket.id,{name});
     if(result.error)return socket.emit('whot:error',{message:result.error});
     const room=result.room,index=rooms.playerIndexOf(room,socket.id);socket.join(`WHOT_${room.code}`);
@@ -62,12 +65,12 @@ io.on('connection',socket=>{
     socket.emit('whot:joined',{code:room.code,index,playerToken:result.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true});
     emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);
   });
-  socket.on('whot:play-card',({code,cardId,call})=>{
+  socket.on('whot:play-card',({code,cardId,call,lastCall})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('whot:error',{message:'room-not-ready'});
     const index=rooms.playerIndexOf(room,socket.id);if(index<0)return socket.emit('whot:error',{message:'not-in-room'});
     if(index!==room.engine.turn)return socket.emit('whot:error',{message:'not-your-turn'});
     const cardIndex=room.engine.players[index].cards.findIndex(c=>c.id===cardId);if(cardIndex<0)return socket.emit('whot:error',{message:'card-not-found'});
-    try{const result=room.engine.playCard(index,cardIndex,call);emitState(room,{played:result.card.id,resolution:result.resolution});if(!room.engine.gameOver)scheduleBot(room)}catch(err){socket.emit('whot:error',{message:err.message})}
+    try{const result=room.engine.playCard(index,cardIndex,call,!!lastCall);emitState(room,{played:result.card.id,resolution:result.resolution});if(!room.engine.gameOver)scheduleBot(room)}catch(err){socket.emit('whot:error',{message:err.message})}
   });
   socket.on('whot:draw',({code})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('whot:error',{message:'room-not-ready'});
