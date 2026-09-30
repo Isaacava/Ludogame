@@ -35,6 +35,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
     <nav class="nav">
       <button data-section="overview" class="active">Overview</button>
       <button data-section="rules">Ludo rules</button>
+      <button data-section="whot">Whot rules</button>
       <button data-section="monetization">Monetization</button>
       <button data-section="season">Season</button>
       <button data-section="bot">WhatsApp / Bot</button>
@@ -52,7 +53,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
           </div>
         </div>
         <div class="card" style="margin-top:16px">
-          <h3>Naija Ludo profile</h3><p class="desc">Choose the capture behavior used by the server. The special capture-removal rule is off by default, so a capturing piece stays on the board after sending an opponent home.</p>
+          <h3>Naija Ludo profile</h3><p class="desc">Choose the capture behavior used by the server. The capture-removal behavior is configurable and is applied by the server to new Ludo games.</p>
           <div id="naijaHint" class="notice">Loading current rule…</div>
           <div class="actions"><button id="enableNaijaCapture">Enable Naija capture-removal</button><button id="disableNaijaCapture" class="secondary">Use normal capture</button></div>
         </div>
@@ -70,6 +71,30 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
           <div class="row"><label>Exact roll to finish<small>Final home position requires the exact number</small></label><label class="switch"><input id="exactRollToFinish" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Double value gives another turn<small>Currently applies to double six</small></label><label class="switch"><input id="doubleValueGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div><div class="row"><label>Double-roll values<small>Comma-separated values that grant another turn when rolled as doubles</small></label><div class="field"><input id="extraTurnValues" type="text" placeholder="6"></div></div>
           <div class="actions"><button id="saveRules">Save rules</button><button class="secondary" data-reset="rules">Reset rules</button></div>
+        </div>
+      </section>
+
+      <section id="whot" class="section">
+        <div class="hero"><h1>Whot rules</h1><p>Configure Nigerian Whot variants used by new rooms. Changes are persisted to MongoDB when persistence is enabled.</p></div>
+        <div class="card">
+          <div class="row"><label>Whot enabled<small>Allow Whot rooms and the public game entry</small></label><label class="switch"><input id="whotEnabled" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>2-player games<small>Allow two-player Whot</small></label><label class="switch"><input id="whot2" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>3-player games<small>Allow three-player Whot</small></label><label class="switch"><input id="whot3" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>4-player games<small>Allow four-player Whot</small></label><label class="switch"><input id="whot4" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Starting hand size<small>Cards dealt to each player</small></label><div class="field"><input id="whotHandSize" type="number" min="1" max="12"></div></div>
+          <div class="row"><label>Draw with a playable card<small>Allow drawing even when the player has a legal move</small></label><label class="switch"><input id="whotAllowDraw" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Stack Pick 2<small>Another 2 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack2" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Stack Pick 3<small>Another 5 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack3" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Hold On extra turn<small>Playing 1 keeps the turn</small></label><label class="switch"><input id="whotHoldOn" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>8 skips next player<small>Playing 8 suspends the next turn</small></label><label class="switch"><input id="whotSuspension" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>General Market draws others<small>14 makes the other players take one card</small></label><label class="switch"><input id="whotMarketDraw" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>General Market extra turn<small>14 lets the player continue</small></label><label class="switch"><input id="whotMarketExtra" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>WHOT call mode<small>Choose shape or number after playing 20</small></label><div class="field"><select id="whotCallMode"><option value="shape">Shape</option><option value="number">Number</option></select></div></div>
+          <div class="row"><label>WHOT can defend Pick<small>Allow a WHOT card to answer a pending Pick 2/Pick 3</small></label><label class="switch"><input id="whotCanDefendPick" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Require last-card call<small>When reducing to one card, the player must explicitly announce it</small></label><label class="switch"><input id="whotLastCall" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Star score multiplier<small>Star cards are worth their number multiplied by this value</small></label><div class="field"><input id="whotStarMultiplier" type="number" min="1" max="5"></div></div>
+          <div class="row"><label>WHOT card score<small>Penalty value of a WHOT 20 card</small></label><div class="field"><input id="whotScore" type="number" min="0" max="100"></div></div>
+          <div class="actions"><button id="saveWhot">Save Whot settings</button><button class="secondary" data-reset="whot">Reset Whot</button></div>
         </div>
       </section>
 
@@ -171,10 +196,12 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
   }
   function checked(id,val){$(id).checked=!!val}
   function renderAll(){
-    const r=config.rules||{}, m=config.monetization||{}, s=config.season||{}, b=config.bot||{}, mt=config.maintenance||{};
+    const r=config.rules||{}, w=config.whot||{}, m=config.monetization||{}, s=config.season||{}, b=config.bot||{}, mt=config.maintenance||{};
     checked('r2',(r.playerCounts||[]).includes(2)); checked('r3',(r.playerCounts||[]).includes(3)); checked('r4',(r.playerCounts||[]).includes(4));
     checked('safeZonesEnabled',r.safeZonesEnabled); checked('blockadesEnabled',r.blockadesEnabled); checked('captureSendsCapturerHome',r.captureSendsCapturerHome);
     checked('exactRollToFinish',r.exactRollToFinish); checked('doubleValueGrantsExtraTurn',r.doubleValueGrantsExtraTurn); checked('captureGrantsExtraTurn',r.captureGrantsExtraTurn); $('extraTurnValues').value=(Array.isArray(r.extraTurnValues)?r.extraTurnValues:[6]).join(', ');
+    checked('whotEnabled',w.enabled!==false); checked('whot2',(w.playerCounts||[]).includes(2)); checked('whot3',(w.playerCounts||[]).includes(3)); checked('whot4',(w.playerCounts||[]).includes(4)); $('whotHandSize').value=w.handSize??6; checked('whotAllowDraw',w.allowDrawWithPlayable); checked('whotStack2',w.stackPickTwo!==false); checked('whotStack3',w.stackPickThree!==false); checked('whotHoldOn',w.holdOnExtraTurn!==false); checked('whotSuspension',w.suspensionSkipsNext!==false); checked('whotMarketDraw',w.generalMarketDrawsOthers!==false); checked('whotMarketExtra',w.generalMarketExtraTurn!==false); $('whotCallMode').value=w.whotCallMode||'shape'; checked('whotCanDefendPick',w.whotCanDefendPick); checked('whotLastCall',w.enforceLastCardCall); $('whotStarMultiplier').value=w.starScoreMultiplier??2; $('whotScore').value=w.whotScore??20;
+
     checked('adsEnabled',m.adsEnabled); checked('ad_homepageTop',m.adPlacements&&m.adPlacements.homepageTop); checked('ad_homepageSticky',m.adPlacements&&m.adPlacements.homepageSticky);
     checked('ad_waitingRoom',m.adPlacements&&m.adPlacements.waitingRoom); checked('ad_inGameSticky',m.adPlacements&&m.adPlacements.inGameSticky); checked('ad_winScreen',m.adPlacements&&m.adPlacements.winScreen);
     $('maxAdsPerPage').value=m.maxAdsPerPage??3;
@@ -215,6 +242,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
     document.querySelectorAll('.section').forEach(x=>x.classList.remove('active')); $(btn.dataset.section).classList.add('active');
   });
   $('saveRules').onclick=()=>{try{save('rules',collectRules())}catch(e){showToast(e.message,true)}};
+  $('saveWhot').onclick=()=>{try{save('whot',collectWhot())}catch(e){showToast(e.message,true)}};
   $('enableNaijaCapture').onclick=()=>save('rules',{...config.rules,captureSendsCapturerHome:true});
   $('disableNaijaCapture').onclick=()=>save('rules',{...config.rules,captureSendsCapturerHome:false});
   $('saveMonetization').onclick=()=>save('monetization',{adsEnabled:$('adsEnabled').checked,adPlacements:{homepageTop:$('ad_homepageTop').checked,homepageSticky:$('ad_homepageSticky').checked,waitingRoom:$('ad_waitingRoom').checked,inGameSticky:$('ad_inGameSticky').checked,winScreen:$('ad_winScreen').checked},maxAdsPerPage:Number($('maxAdsPerPage').value||0)});
