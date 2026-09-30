@@ -96,7 +96,7 @@ async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
         const opponents=won
           ? room.players.filter((p,i)=>i!==playerIndex&&p.name).map(p=>p.name)
           : [winner.name||'the winner'];
-        const message=gameResultMessage({won,playerName:player.name,opponents})+`\\n\\n— CodePlay ${gameName}`;
+        const message=gameResultMessage({won,playerName:player.name,opponents})+`\n\n— CodePlay ${gameName}`;
         await sendWhatsAppText(player.whatsappPhone,message);
         room.whatsappNotifiedPhones.add(player.whatsappPhone);
       });
