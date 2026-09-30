@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 const { LudoEngine } = require('../engine/ludoEngine');
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const RECONNECT_GRACE_MS = 2 * 60 * 1000;
 const normCode = c => String(c || '').trim().toUpperCase();
 function generateCode() { let c=''; for(let i=0;i<4;i++) c += CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return c; }
 class RoomManager {
@@ -13,12 +14,22 @@ class RoomManager {
   }
   joinRoom(code, socketId, profile = {}) {
     const room = this.rooms.get(normCode(code)); if(!room) return {error:'room-not-found'}; if(room.engine) return {error:'room-full'};
-    const seat = room.players.find(p=>!p.socketId);
-    if(room.players.length >= room.playerCount && !seat) return {error:'room-full'};
-    const player = seat || {socketId:null,playerToken:crypto.randomBytes(16).toString('hex'),connected:false};
-    if(seat) player.playerToken = crypto.randomBytes(16).toString('hex');
-    player.socketId=socketId; player.connected=true; player.name=profile.name||player.name||`Player ${room.players.length+1}`; player.color=profile.color||player.color||null;
-    if(!seat) room.players.push(player);
+
+    // A disconnected player keeps their seat during the short reconnect grace
+    // window so a browser refresh/network blip cannot be replaced by someone else.
+    const now = Date.now();
+    room.players = room.players.filter(p => p.socketId || !p.disconnectedAt || now - p.disconnectedAt <= RECONNECT_GRACE_MS);
+
+    if(room.players.length >= room.playerCount) return {error:'room-full'};
+    const player = {
+      socketId,
+      playerToken: crypto.randomBytes(16).toString('hex'),
+      connected:true,
+      disconnectedAt:null,
+      name:profile.name||`Player ${room.players.length+1}`,
+      color:profile.color||null
+    };
+    room.players.push(player);
     if(room.players.length===room.playerCount && room.players.every(p=>p.socketId)) {
       const rules=this.configStore?this.configStore.get('rules'):undefined;
       room.engine=new LudoEngine(room.playerCount,undefined,rules);
@@ -34,13 +45,17 @@ class RoomManager {
     if(index===-1) return {error:'invalid-reconnect-token'};
     const player=room.players[index];
     if(player.connected && player.socketId && player.socketId!==socketId) return {error:'seat-already-connected'};
-    player.socketId=socketId; player.connected=true;
+    player.socketId=socketId; player.connected=true; player.disconnectedAt=null;
     return {index,playerToken:player.playerToken,room};
   }
   removeSocket(socketId){
     for(const room of this.rooms.values()){
       const player=room.players.find(p=>p.socketId===socketId);
-      if(player){ player.socketId=null; player.connected=false; }
+      if(player){
+        player.socketId=null;
+        player.connected=false;
+        player.disconnectedAt=Date.now();
+      }
     }
   }
   sweepExpired(maxAgeMs=30*60*1000){
@@ -48,4 +63,4 @@ class RoomManager {
     for(const [code,room] of this.rooms){ if(!room.engine && now-room.createdAt>maxAgeMs) this.rooms.delete(code); }
   }
 }
-module.exports = {RoomManager};
+module.exports = {RoomManager, RECONNECT_GRACE_MS};
