@@ -19,6 +19,11 @@ user = { phone: '+2348000000000', stage: result.patch.stage, name: null };
 result = handleMessage(user, 'Isaac', cfg);
 assert.equal(result.patch.stage, 'game_menu');
 assert.equal(result.patch.name, 'Isaac');
+assert.equal(result.patch.loginCode, undefined);
+
+user = { ...user, ...result.patch };
+result = handleMessage(user, 'connect web', cfg);
+assert.equal(result.patch.stage, 'game_menu');
 assert(result.patch.loginCode && /^\d{6}$/.test(result.patch.loginCode));
 
 user = { ...user, ...result.patch };
