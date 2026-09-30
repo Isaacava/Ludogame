@@ -108,7 +108,7 @@ function initFriendsMode(action,existingCode,playerCount){
  socket.on('connect_error',function(err){showWaitingRoom('<p>Could not reach the game server.</p><p class="legend">'+((err&&err.message)||'Connection failed')+'</p><button onclick="location.reload()">Retry</button>')});
  socket.on('reconnect_attempt',function(){wrText('Reconnecting to the game server…')});
  socket.on('reconnect_failed',function(){showWaitingRoom('<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
- socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='room-not-found'||msg==='room-full'||msg==='invalid-reconnect-token'){clearActiveRoom();showWaitingRoom('<p>'+ (msg==='room-full'?'That room is already full.':'That room session is no longer active — create or join again.')+'</p><button onclick="history.back()">Back</button>')}});
+ socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='room-full'||msg==='invalid-reconnect-token'){clearActiveRoom();showWaitingRoom('<p>'+ (msg==='room-full'?'That room is already full.':'That room session is no longer active — create or join again.')+'</p><button onclick="history.back()">Back</button>')}});
  socket.on('you-are-player',function(x){HUMAN_INDEX=x.index;if(x.playerToken){playerToken=x.playerToken;saveActiveRoom()}});
  socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed)});
  socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;renderWaiting(x.joined,x.needed);if(x.started)hideWaitingRoom()});
@@ -136,8 +136,11 @@ async function loadPublicRules(){
 }
 (async function boot(){
   await loadPublicRules();
-  if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),Number(params.get('players'))||4);
-  else startGame(Number(params.get('players'))||4);
+  var requestedPlayers=Number(params.get('players'))||4;
+  var allowed=Array.isArray(RULES.playerCounts)&&RULES.playerCounts.length?RULES.playerCounts:[2,3,4];
+  var playerCount=allowed.indexOf(requestedPlayers)!==-1?requestedPlayers:allowed[0];
+  if(params.get('mode')==='friends')initFriendsMode(params.get('action')||'create',params.get('code'),playerCount);
+  else startGame(playerCount);
 })();
 </script>
 </body>
