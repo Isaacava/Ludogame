@@ -84,8 +84,10 @@ async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
   const humanPlayers=room.players.filter(p=>!p.bot);
   const tasks=humanPlayers.filter(p=>p.whatsappPhone).map(player=>{
     const playerIndex=room.players.indexOf(player);
-    const opponents=room.players.filter((p,i)=>i!==playerIndex&&p.name).map(p=>p.name);
     const won=player===winner;
+    const opponents=won
+      ? room.players.filter((p,i)=>i!==playerIndex&&p.name).map(p=>p.name)
+      : [winner.name||'the winner'];
     return sendWhatsAppText(player.whatsappPhone,
       gameResultMessage({won,playerName:player.name,opponents})
         +`\\n\\n— CodePlay ${gameName}`
