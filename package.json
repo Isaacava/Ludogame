@@ -5,7 +5,7 @@
   "description": "CodePlay real-time Ludo backend: pure rules engine + Socket.io hub + room manager.",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
+    "start": "node server/startAll.js",
     "test": "node server/test/runAll.js"
   },
   "dependencies": {
