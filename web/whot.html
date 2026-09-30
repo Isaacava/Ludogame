@@ -39,6 +39,7 @@ function tabId(){let x=sessionStorage.getItem('codeplay_whot_tab_id');if(!x){x=c
 function activeKey(){return 'codeplay_active_whot_room:'+tabId()}
 function saveRoom(){if(roomCode&&playerToken)localStorage.setItem(activeKey(),JSON.stringify({code:roomCode,playerToken,savedAt:Date.now()}))}
 function loadRoom(){try{return JSON.parse(localStorage.getItem(activeKey())||'null')}catch(e){return null}}
+function loadSavedRoomForCode(code){const target=String(code||'').trim().toUpperCase(),prefix='codeplay_active_whot_room:',best=null;let out=null;for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(!key||key.indexOf(prefix)!==0)continue;try{const item=JSON.parse(localStorage.getItem(key)||'null');if(item&&String(item.code||'').toUpperCase()===target&&item.playerToken&&(!out||Number(item.savedAt||0)>Number(out.savedAt||0)))out=item}catch(e){}}return out}
 function cap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1)}
 function showWaiting(t){e.waiting.style.display='block';e.game.style.display='none';e.waitingText.textContent=t||'Waiting for players…'}
 function showGame(){e.waiting.style.display='none';e.game.style.display='block'}
@@ -60,12 +61,14 @@ function showGameOver(){const winner=state.winner!=null&&state.players[state.win
 async function loadWhotConfig(){try{const r=await fetch('/api/config/public',{cache:'no-store'});const d=await r.json();if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(n=>[2,3,4].indexOf(n)!==-1)}if(!whotEnabled){showWaiting('Whot is currently disabled by the admin.');return false}}catch(e){}return true}
 function connect(){
   socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10});
-  const saved=loadRoom();if(!roomCode&&saved){roomCode=saved.code;playerToken=saved.playerToken}
+  const saved=loadRoom(),savedCode=String(saved&&saved.code||'').toUpperCase(),requestedCode=String(roomCode||'').toUpperCase(),crossTabSaved=(!savedCode||savedCode!==requestedCode)?loadSavedRoomForCode(requestedCode):null,sameTabRoom=!!(saved&&saved.playerToken&&savedCode),resumeAcrossTabs=!!(!sameTabRoom&&requestedCode&&crossTabSaved&&crossTabSaved.playerToken);
+  if(!roomCode&&saved){roomCode=saved.code;playerToken=saved.playerToken}
+  else if(resumeAcrossTabs){roomCode=requestedCode;playerToken=crossTabSaved.playerToken}
   socket.on('connect',function(){
     if(playerToken&&roomCode){socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
     if(mode==='computer'){socket.emit('whot:create-room',{playerCount:2,name:profileName,mode:'computer'});showWaiting('Starting your game…');return}
     if(action==='create'){const requested=Number(params.get('players'))||2, count=allowedWhotPlayerCounts.indexOf(requested)!==-1?requested:allowedWhotPlayerCounts[0]||2;socket.emit('whot:create-room',{playerCount:count,name:profileName,mode:'friends'});showWaiting('Creating room…');return}
-    socket.emit('whot:join-room',{code:roomCode,name:profileName});showWaiting('Joining room '+roomCode+'…');
+    socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:resumeAcrossTabs?playerToken:null});showWaiting(resumeAcrossTabs?'Returning to room '+roomCode+'…':'Joining room '+roomCode+'…');
   });
   socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;if(x.started)setState(x.state);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
   socket.on('whot:joined',x=>{roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;if(x.started)setState(x.state);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
