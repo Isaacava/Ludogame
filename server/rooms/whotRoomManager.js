@@ -28,7 +28,9 @@ class WhotRoomManager{
   resetEngine(room){
     room.engine=new WhotEngine(room.playerCount,undefined,this.configStore&&this.configStore.get('whot'));
     room.players.forEach((p,i)=>room.engine.players[i].name=p.name||`Player ${i+1}`);
-    room.rematchVotes=new Set();return room.engine;
+    room.rematchVotes=new Set();
+    room.engine.start();
+    return room.engine;
   }
   getRoom(code){return this.rooms.get(normCode(code))}
   playerIndexOf(room,socketId){return room.players.findIndex(p=>p.socketId===socketId&&!p.bot)}
