@@ -32,7 +32,9 @@ class RoomManager {
   reconnect(room,socketId,playerToken){
     const index=room.players.findIndex(p=>p.playerToken===playerToken);
     if(index===-1) return {error:'invalid-reconnect-token'};
-    const player=room.players[index]; player.socketId=socketId; player.connected=true;
+    const player=room.players[index];
+    if(player.connected && player.socketId && player.socketId!==socketId) return {error:'seat-already-connected'};
+    player.socketId=socketId; player.connected=true;
     return {index,playerToken:player.playerToken,room};
   }
   removeSocket(socketId){
