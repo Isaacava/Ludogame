@@ -50,7 +50,16 @@ io.on('connection',socket=>{
     socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null});
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
-  socket.on('whot:join-room',({code,name})=>{
+  socket.on('whot:join-room',({code,name,playerToken})=>{
+    const existing=rooms.getRoom(code);
+    if(existing&&playerToken){
+      const resumed=rooms.reconnect(existing,socket.id,playerToken);
+      if(!resumed.error){
+        const room=existing,index=resumed.index;socket.join(`WHOT_${room.code}`);
+        socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true});
+        emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);return;
+      }
+    }
     if((configStore.get('whot')||{}).enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
     const result=rooms.joinRoom(code,socket.id,{name});
     if(result.error)return socket.emit('whot:error',{message:result.error});
