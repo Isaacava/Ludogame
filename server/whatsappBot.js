@@ -99,15 +99,13 @@ function handleMessage(user,text,configStore=botConfig){
   if(!user||user.stage==='new')return{reply:configStore.get('bot').welcomeMessage,patch:{stage:'awaiting_name'}};
   if(user.stage==='awaiting_name'){
     const name=text.trim().slice(0,40);if(!name)return{reply:'Just your name is fine — what should we call you?',patch:{}};
+    return{reply:`Nice to meet you, ${name}! 🎉\\n\\nYour WhatsApp number is your CodePlay identity, so there is no login needed to play.\\n\\nYou can play multiplayer immediately. Later, type CONNECT WEB if you want to link this WhatsApp identity to your web account.\\n\\n${GAME_MENU}`,patch:{stage:'game_menu',name}};
+  }
+  if(user.stage==='game_menu' && /^(connect|login)(?:\\s+web)?$/.test(t)){
     const loginCode=generateLoginCode();
-    return{reply:`Nice to meet you, ${name}! 🎉\n\nYour CodePlay login code: *${loginCode}* (valid 10 minutes)\n\nGo to ${SITE_URL}/signin and enter this code to connect your WhatsApp — or just keep playing right here.\n\n${GAME_MENU}`,patch:{stage:'game_menu',name,loginCode,loginCodeExpiresAt:Date.now()+LOGIN_CODE_TTL_MS}};
+    return{reply:`Here is your CodePlay web login code: *${loginCode}*\\n\\nIt is valid for 10 minutes. Open ${SITE_URL}/signin and enter the code to connect your WhatsApp identity to the web account.`,patch:{stage:'game_menu',loginCode,loginCodeExpiresAt:Date.now()+LOGIN_CODE_TTL_MS}};
   }
   if(user.stage==='game_menu'){
-    if(t==='1'||t.includes('ludo'))return{reply:MODE_MENU,patch:{stage:'ludo_mode_menu'}};
-    if(t==='2'||t.includes('whot')){if(getWhotConfig(configStore).enabled===false)return{reply:`Whot is temporarily disabled.\n\n${GAME_MENU}`,patch:{}};return{reply:WHOT_MODE_MENU,patch:{stage:'whot_mode_menu'}};}
-    if(t==='3'||t.includes('chess'))return{reply:`Chess is coming soon! ♟️ Want to play Ludo instead?\n\n${GAME_MENU}`,patch:{}};
-    return{reply:`Didn't catch that.\n\n${GAME_MENU}`,patch:{}};
-  }
   if(user.stage==='whot_mode_menu'){
     if(t==='1'||t.includes('computer')){const cfg=getWhotConfig(configStore);if(cfg.enabled===false)return{reply:'Whot is currently disabled.',patch:{stage:'game_menu'}};return{reply:'How many players should be in the computer match?\n\n'+getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'computer'}};}
     if(t==='2'||t.includes('friend'))return{reply:getWhotCountMenu(configStore),patch:{stage:'whot_count',pendingMode:'friends'}};
