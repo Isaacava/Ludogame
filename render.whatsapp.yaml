@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: codeplay-whatsapp-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/whatsappServer.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: codeplay
+      - key: SITE_URL
+        sync: false
+      - key: SITE_ORIGIN
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: META_GRAPH_API_VERSION
+        value: v26.0
+      - key: META_WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: META_WHATSAPP_APP_SECRET
+        sync: false
+      - key: META_WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: META_WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_PUBLIC_NUMBER
+        sync: false
