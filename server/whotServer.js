@@ -84,7 +84,7 @@ io.on('connection',socket=>{
   socket.on('whot:rematch',({code})=>{
     const result=rooms.requestRematch(code,socket.id);if(result.error)return socket.emit('whot:error',{message:result.error});
     io.to(`WHOT_${result.room.code}`).emit('whot:rematch-status',{requested:result.requested,needed:result.room.players.filter(p=>!p.bot).length});
-    if(result.started){emitState(result.room);scheduleBot(result.room);io.to(`WHOT_${result.room.code}`).emit('whot:rematch',{state:result.room.engine.toJSON()})}
+    if(result.started){emitState(result.room);scheduleBot(result.room)}
   });
   socket.on('disconnect',()=>{
     const removed=rooms.removeSocket(socket.id);if(!removed)return;
