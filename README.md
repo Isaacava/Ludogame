@@ -62,3 +62,12 @@ The landing page now offers "Continue as Guest — no registration". Guests can 
 ### Whot
 
 `server/engine/whotEngine.js` implements the 54-card Nigerian deck, hidden hands, shape/number matching, WHOT calls, Pick 2/Pick 3 stacking, Hold On, Suspension, General Market, scoring, draw-pile recycling, last-card enforcement, and round-end state. `server/whotServer.js` adds friends rooms, reconnect, cross-tab seat recovery, a two-player computer mode, reactions, and rematches. Open `/whot.html` from the site game selector.
+
+
+## WhatsApp bot service
+
+A standalone WhatsApp service entrypoint is available for Render or another web host:
+
+`node server/whatsappServer.js`
+
+It exposes Meta Cloud API webhook verification at `/whatsapp/meta` and `/health`, and uses the same MongoDB-backed user/session stores as the main server.
