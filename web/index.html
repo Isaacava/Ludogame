@@ -98,11 +98,12 @@ const PLAY_URL=window.CODEPLAY_PLAY_URL||'/play.html';
 const WHOT_URL=window.CODEPLAY_WHOT_URL||'/whot.html';
 const AVATAR_COLORS=['#e53e3e','#38a169','#d69e2e','#3182ce'];
 var session={token:localStorage.getItem('codeplay_token'),name:null,color:null};
-var botNumber=null,allowedPlayerCounts=[2,3,4];
+var botNumber=null,allowedPlayerCounts=[2,3,4],whotEnabled=true,allowedWhotPlayerCounts=[2,3,4];
 
 function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
 function applyAllowedPlayerCounts(){document.querySelectorAll('.countBtn').forEach(function(b,i){var n=i+2;b.disabled=allowedPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===ludoCount&&!b.disabled)});if(allowedPlayerCounts.indexOf(ludoCount)===-1&&allowedPlayerCounts.length){setCount(allowedPlayerCounts[0])}}
-async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});applyAllowedPlayerCounts()}catch(e){}}
+function applyWhotConfig(){var buttons=document.querySelectorAll('#whotCountRow .countBtn');buttons.forEach(function(b,i){var n=i+2;b.disabled=allowedWhotPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===whotCount&&!b.disabled)});if(allowedWhotPlayerCounts.indexOf(whotCount)===-1&&allowedWhotPlayerCounts.length)setWhotCount(allowedWhotPlayerCounts[0]);var btn=document.querySelector("button.btn-game[onclick=\"chooseGame('whot')\"]");if(btn){btn.disabled=!whotEnabled;btn.style.opacity=whotEnabled?'1':'.45';btn.querySelector('.tag').textContent=whotEnabled?'2-4 players':'disabled'}}
+async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1})}applyAllowedPlayerCounts();applyWhotConfig()}catch(e){}}
 function openWhatsApp(){var n=String(botNumber||'').replace(/\D/g,'');if(!n)return alert('WhatsApp bot is not configured yet.');window.open('https://wa.me/'+n,'_blank')}
 async function submitLoginCode(){
  const code=document.getElementById('loginCodeInput').value.trim(),errEl=document.getElementById('signinErr');
@@ -140,9 +141,9 @@ function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest'
 function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
 function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+profileQuery())}
 function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code+profileQuery())}
-function playWhotComputer(){navigate(WHOT_URL+'?mode=computer&players=2&'+profileQuery().slice(1))}
-function createWhotRoom(){navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+profileQuery())}
-function joinWhotRoom(){var code=document.getElementById('whotJoinCode').value.trim().toUpperCase(),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+code+profileQuery())}
+function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players=2&'+profileQuery().slice(1))}
+function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+profileQuery())}
+function joinWhotRoom(){if(!whotEnabled)return;var code=document.getElementById('whotJoinCode').value.trim().toUpperCase(),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+code+profileQuery())}
 function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
 (function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null}}catch(e){}})();loadPublicConfig();restoreSession();
 </script>
