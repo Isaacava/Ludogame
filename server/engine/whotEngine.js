@@ -12,7 +12,8 @@ const DEFAULT_RULES = Object.freeze({
   enabled: true,
   playerCounts: [2, 3, 4],
   handSize: 6,
-  allowDrawWithPlayable: false,
+  // Drawing is always a legal strategic choice on your turn, even when a playable card exists.
+  allowDrawWithPlayable: true,
   stackPickTwo: true,
   stackPickThree: true,
   holdOnExtraTurn: true,
@@ -136,7 +137,7 @@ class WhotEngine{
   }
   draw(playerIndex){
     if(this.gameOver)throw new Error('game-over'); if(!this.started)throw new Error('game-not-started'); if(playerIndex!==this.turn)throw new Error('not-your-turn');
-    if(!this.rules.allowDrawWithPlayable&&this.playableCards(playerIndex).length)throw new Error('playable-card-exists');
+    // Market is always available on a player's turn. Playing a card remains fully validated by canPlay().
     const count=this.pendingPick?this.pendingPick.amount:1; this.pendingPick=null; const cards=this._takeFromMarket(playerIndex,count); this._nextTurn(); return {cards,state:this.toJSON()};
   }
   stateFor(playerIndex){
