@@ -48,7 +48,7 @@
       4
     ],
     "handSize": 6,
-    "allowDrawWithPlayable": false,
+    "allowDrawWithPlayable": true,
     "stackPickTwo": true,
     "stackPickThree": true,
     "holdOnExtraTurn": true,
