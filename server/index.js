@@ -28,12 +28,44 @@ app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/config/public',(req,res)=>{
   const cfg=configStore.getAll();
-  res.json({bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},maintenance:cfg.maintenance,monetization:cfg.monetization,rules:{playerCounts:cfg.rules.playerCounts,captureSendsCapturerHome:!!cfg.rules.captureSendsCapturerHome}});
+  const railwayDomain=process.env.RAILWAY_PUBLIC_DOMAIN||'codeplay-ludo-production.up.railway.app';
+  res.json({
+    bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},
+    maintenance:cfg.maintenance,
+    monetization:cfg.monetization,
+    socketUrl:`https://${railwayDomain}`,
+    rules:{
+      playerCounts:cfg.rules.playerCounts,
+      safeZonesEnabled:!!cfg.rules.safeZonesEnabled,
+      blockadesEnabled:!!cfg.rules.blockadesEnabled,
+      extraTurnValues:Array.isArray(cfg.rules.extraTurnValues)?cfg.rules.extraTurnValues:[6],
+      doubleValueGrantsExtraTurn:!!cfg.rules.doubleValueGrantsExtraTurn,
+      captureSendsCapturerHome:!!cfg.rules.captureSendsCapturerHome,
+      captureGrantsExtraTurn:!!cfg.rules.captureGrantsExtraTurn,
+      exactRollToFinish:cfg.rules.exactRollToFinish!==false
+    }
+  });
 });
 
 const httpServer=http.createServer(app);
-const allowedOrigins=(process.env.CORS_ORIGIN||'*').split(',').map(s=>s.trim()).filter(Boolean);
-const io=new Server(httpServer,{cors:{origin:allowedOrigins.length===1?allowedOrigins[0]:allowedOrigins}});
+const allowedOrigins=(process.env.CORS_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean);
+const io=new Server(httpServer,{
+  cors:{
+    origin:(origin,callback)=>{
+      if(!origin || allowedOrigins.includes('*') || allowedOrigins.length===0) return callback(null,true);
+      if(allowedOrigins.includes(origin)) return callback(null,true);
+      const siteOrigins=[process.env.SITE_URL,process.env.SITE_ORIGIN].filter(Boolean).map(v=>String(v).replace(/\/$/,''));
+      if(siteOrigins.includes(origin)) return callback(null,true);
+      if(origin.endsWith('.vercel.app')) return callback(null,true);
+      return callback(new Error('CORS origin not allowed'));
+    },
+    methods:['GET','POST'],
+    credentials:false
+  },
+  transports:['websocket','polling'],
+  pingTimeout:20000,
+  pingInterval:25000
+});
 
 io.on('connection',socket=>{
   socket.on('create-room',({playerCount,name,color})=>{
@@ -74,8 +106,11 @@ io.on('connection',socket=>{
       const result=room.engine.applyMove(move,value,mode);
       io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});
       const remaining=result.consumedDice||[];
-      const allDiceConsumed=remaining.length===2&&remaining.every(v=>!v);
-      if(allDiceConsumed||isLastMoveThisTurn||result.gameOver){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});}
+      const allDiceConsumed=remaining.length>0&&remaining.every(v=>!v);
+      if(allDiceConsumed||result.gameOver){
+        const endResult=room.engine.endTurn();
+        io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
+      }
     }catch(e){socket.emit('error-msg',e.message);}
   });
   socket.on('end-turn',({code})=>{
