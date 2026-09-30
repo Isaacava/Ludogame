@@ -9,6 +9,8 @@ const NON_WHOT_DECK = Object.freeze([
   ['star',[1,2,3,4,5,7,8]]
 ]);
 const DEFAULT_RULES = Object.freeze({
+  enabled: true,
+  playerCounts: [2, 3, 4],
   handSize: 6,
   allowDrawWithPlayable: false,
   stackPickTwo: true,
@@ -23,10 +25,10 @@ const DEFAULT_RULES = Object.freeze({
   starScoreMultiplier: 2,
   whotScore: 20
 });
-function makeDeck(){
+function makeDeck(rules=DEFAULT_RULES){
   const deck=[];
-  for(const [shape,numbers] of NON_WHOT_DECK) for(const number of numbers) deck.push({id:`${shape}-${number}`,shape,number,isWhot:false,score:shape==='star'?number*2:number});
-  for(let i=1;i<=5;i++) deck.push({id:`whot-${i}`,shape:'whot',number:20,isWhot:true,score:20});
+  for(const [shape,numbers] of NON_WHOT_DECK) for(const number of numbers) deck.push({id:`${shape}-${number}`,shape,number,isWhot:false,score:shape==='star'?number*(Number(rules.starScoreMultiplier)||2):number});
+  for(let i=1;i<=5;i++) deck.push({id:`whot-${i}`,shape:'whot',number:20,isWhot:true,score:Number(rules.whotScore)||20});
   return deck;
 }
 const cloneCard=card=>card?{...card}:null;
@@ -42,7 +44,7 @@ class WhotEngine{
   _log(msg){this.log.push(msg)}
   _shuffle(cards){for(let i=cards.length-1;i>0;i--){const j=Math.floor(this.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]]}return cards}
   start(){
-    if(this.started) throw new Error('game already started'); this.started=true; this.market=this._shuffle(makeDeck());
+    if(this.started) throw new Error('game already started'); this.started=true; this.market=this._shuffle(makeDeck(this.rules));
     const handSize=Math.max(1,Number(this.rules.handSize)||6);
     for(let r=0;r<handSize;r++) for(let i=0;i<this.playerCount;i++) this._takeFromMarket(i,1);
     let opener=this._takeFromMarketRaw();
@@ -115,15 +117,17 @@ class WhotEngine{
     return this._botActionFor(legal[0]);
   }
   _botActionFor(move){
-    if(!move.card.isWhot)return {type:'play',cardId:move.card.id};
+    const lastCall=this.rules.enforceLastCardCall&&this.players[this.turn].cards.length===2;
+    if(!move.card.isWhot)return {type:'play',cardId:move.card.id,lastCall};
     const counts={}; for(const c of this.players[this.turn].cards) if(!c.isWhot)counts[c.shape]=(counts[c.shape]||0)+1;
     const call=Object.keys(counts).sort((a,b)=>(counts[b]||0)-(counts[a]||0))[0]||'circle';
-    return {type:'play',cardId:move.card.id,call};
+    return {type:'play',cardId:move.card.id,call,lastCall};
   }
-  playCard(playerIndex,cardIndex,call){
+  playCard(playerIndex,cardIndex,call,lastCall=false){
     if(this.gameOver)throw new Error('game-over'); if(!this.started)throw new Error('game-not-started'); if(playerIndex!==this.turn)throw new Error('not-your-turn');
     const card=this.players[playerIndex].cards[cardIndex]; if(!card)throw new Error('card-not-found'); if(!this.canPlay(playerIndex,cardIndex))throw new Error('illegal-card');
     this._validateWhotCall(card,call);
+    if(this.rules.enforceLastCardCall&&this.players[playerIndex].cards.length===2&&!lastCall)throw new Error('last-card-call-required');
     this.players[playerIndex].cards.splice(cardIndex,1); this.played.push(card); this.activeShape=card.isWhot?this.activeShape:card.shape;
     const wasPending=!!this.pendingPick,resolution=this._resolveSpecial(card,playerIndex,call);
     const gameOver=this._finishRoundIfNeeded(playerIndex);
@@ -142,7 +146,7 @@ class WhotEngine{
       players:this.players.map((p,index)=>({index,name:p.name,handCount:p.cards.length,cards:index===playerIndex?p.cards.map(cloneCard):undefined})),
       turn:this.turn,activeShape:this.activeShape,whotCall:this.whotCall?{...this.whotCall}:null,top:this._top()?cloneCard(this._top()):null,
       pendingPick:this.pendingPick?{...this.pendingPick}:null,gameOver:this.gameOver,winner:this.winner,roundScores:this.roundScores?[...this.roundScores]:null,
-      marketCount:this.market.length,ownHandCount:own?own.cards.length:0,rules:{...this.rules}
+      marketCount:this.market.length,ownHandCount:own?own.cards.length:0,lastCallRequired:!!(own&&this.rules.enforceLastCardCall&&own.cards.length===2&&this.turn===playerIndex&&!this.gameOver),rules:{...this.rules}
     };
   }
   toJSON(){return this.stateFor(-1)}
