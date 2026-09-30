@@ -117,6 +117,23 @@ io.on('connection',socket=>{
       }
     }catch(e){socket.emit('error-msg',e.message);}
   });
+  socket.on('send-reaction',({code,reaction})=>{
+    const room=rooms.getRoom(code);
+    if(!room)return socket.emit('error-msg','room-not-found');
+    if(!SAFE_REACTIONS.has(reaction))return;
+    const pIdx=rooms.playerIndexOf(room,socket.id);
+    if(pIdx<0)return;
+    const now=Date.now();
+    if(socket.data.lastReactionAt&&now-socket.data.lastReactionAt<500)return;
+    socket.data.lastReactionAt=now;
+    io.to(room.code).emit('reaction',{playerIndex:pIdx,name:room.players[pIdx].name||`Player ${pIdx+1}`,reaction});
+  });
+  socket.on('rematch',({code})=>{
+    const result=rooms.requestRematch(code,socket.id);
+    if(result.error)return socket.emit('error-msg',result.error);
+    io.to(result.room.code).emit('rematch-status',{requested:result.requested,needed:result.room.playerCount});
+    if(result.started)io.to(result.room.code).emit('game-rematch',{code:result.room.code,state:result.room.engine.toJSON()});
+  });
   socket.on('end-turn',({code})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
     const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
