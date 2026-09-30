@@ -1,9 +1,15 @@
 {
   "rules": {
-    "playerCounts": [2, 3, 4],
+    "playerCounts": [
+      2,
+      3,
+      4
+    ],
     "safeZonesEnabled": false,
     "blockadesEnabled": false,
-    "extraTurnValues": [6],
+    "extraTurnValues": [
+      6
+    ],
     "doubleValueGrantsExtraTurn": true,
     "captureSendsCapturerHome": true,
     "captureGrantsExtraTurn": false,
@@ -33,5 +39,26 @@
   "maintenance": {
     "siteEnabled": true,
     "maintenanceMessage": "CodePlay is down for maintenance — back soon!"
+  },
+  "whot": {
+    "enabled": true,
+    "playerCounts": [
+      2,
+      3,
+      4
+    ],
+    "handSize": 6,
+    "allowDrawWithPlayable": false,
+    "stackPickTwo": true,
+    "stackPickThree": true,
+    "holdOnExtraTurn": true,
+    "suspensionSkipsNext": true,
+    "generalMarketDrawsOthers": true,
+    "generalMarketExtraTurn": true,
+    "whotCallMode": "shape",
+    "whotCanDefendPick": false,
+    "enforceLastCardCall": false,
+    "starScoreMultiplier": 2,
+    "whotScore": 20
   }
 }
