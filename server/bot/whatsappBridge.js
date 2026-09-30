@@ -72,8 +72,8 @@ function gameResultMessage({won,playerName,opponents}){
   const names=(opponents||[]).filter(Boolean);
   const opponentText=names.length===1?names[0]:names.length===2?`${names[0]} and ${names[1]}`:names.length?`${names.slice(0,-1).join(', ')}, and ${names[names.length-1]}`:'your opponents';
   return won
-    ? `🏆 You won!\\n\\nYou beat ${opponentText}.`
-    : `😔 You lost.\\n\\n${opponentText} beat you.`;
+    ? `🏆 You won!\\n\\nYou won against ${opponentText}.`
+    : `😔 You lost.\\n\\nYou lost to ${opponentText}.`;
 }
 
 async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
