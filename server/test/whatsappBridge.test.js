@@ -15,8 +15,8 @@ assert.deepEqual(resolveWhatsAppGameToken(token),{phone:'+2348000000000'});
 assert.equal(resolveWhatsAppGameToken(token+'.tampered'),null);
 
 assert.equal(gameResultMessage({won:true,opponents:['Musa']}),
-  '🏆 You won!\\n\\nYou beat Musa.');
+  '🏆 You won!\\n\\nYou won against Musa.');
 assert.equal(gameResultMessage({won:false,opponents:['Isaac']}),
-  '😔 You lost.\\n\\nIsaac beat you.');
+  '😔 You lost.\\n\\nYou lost to Isaac.');
 
 console.log('whatsappBridge.test.js passed');
