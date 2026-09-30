@@ -27,7 +27,7 @@ async function start() {
     app.get('/health', (req, res) => res.json({ ok: true, service: 'codeplay-whatsapp-bot' }));
 
     const server = http.createServer(app);
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`CodePlay WhatsApp bot listening on :${PORT}`);
     });
 
