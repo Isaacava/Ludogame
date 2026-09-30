@@ -80,6 +80,21 @@ const rnd=(()=>{let n=0;return()=>((n=n+0.61803398875)%1)})();
   assert.equal(g.players[0].cards.length,3);
   assert.equal(g.turn,1);
 })();
+
+(function(){
+  const g=new WhotEngine(2,rnd(),{handSize:1,whotCallMode:'number'});
+  g.started=true;
+  g.players=[
+    {name:'A',cards:[{id:'whot-1',shape:'whot',number:20,isWhot:true,score:20}]},
+    {name:'B',cards:[{id:'circle-7',shape:'circle',number:7,isWhot:false,score:7},{id:'triangle-3',shape:'triangle',number:3,isWhot:false,score:3}]}
+  ];
+  g.played=[{id:'circle-20',shape:'circle',number:20,isWhot:false,score:20}];
+  g.activeShape='circle';
+  g.playCard(0,0,7);
+  assert.equal(g.whotCall.mode,'number');
+  assert.equal(g.canPlay(1,0),true,'Called number must be playable after WHOT');
+  assert.equal(g.canPlay(1,1),false,'A different number must not be playable after number-call WHOT');
+})();
 console.log('whotEngine.test.js passed');
 
 (function(){
