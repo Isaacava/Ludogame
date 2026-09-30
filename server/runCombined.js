@@ -97,14 +97,11 @@ async function ensureSession(){
       headers:{'X-Api-Key':apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({
         name:session,
-        start:true,
-        config:{
-          client:{deviceName:'CodePlay',browserName:'Chrome'}
-        }
+        start:true
       })
     });
     if(!create.ok&&create.status!==409){
-      console.error('WAHA session creation failed:',create.status,await create.text().catch(()=>'')); 
+      console.error('WAHA session creation failed:',create.status,await create.text().catch(()=>''));
       return;
     }
     console.log(`WAHA session "${session}" is ready for pairing.`);
