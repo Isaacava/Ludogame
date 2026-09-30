@@ -32,9 +32,20 @@ assert.equal(normalizeInteractiveCommand('game_whot'), '2');
 assert.equal(normalizeInteractiveCommand('whot_count_4'), '4');
 assert.equal(normalizeInteractiveCommand('JOIN WHOT R3HT'), 'JOIN WHOT R3HT');
 
-let ui = interactiveForState({}, { patch: { stage: 'game_menu' } });
+let ui = interactiveForState({}, {
+  patch: { stage: 'game_menu' },
+  reply: 'Nice to meet you, Isaac! 🎉\\n\\nYour CodePlay login code: *123456* (valid 10 minutes)\\n\\nGo to https://codeplay.example/signin',
+});
 assert.equal(ui.kind, 'buttons');
 assert.equal(ui.buttons.length, 3);
+assert(ui.body.includes('123456'), 'interactive game menu must preserve the login code in its body');
+
+ui = interactiveForState({}, {
+  patch: { stage: 'game_menu' },
+  reply: 'Tap to create your room: ' + 'https' + '://game.test/whot.html?mode=friends&action=create&players=4',
+});
+assert.equal(ui.kind, 'buttons');
+assert.equal(ui.body, 'Your game link is above. Choose another game any time.');
 
 ui = interactiveForState({ pendingMode: 'friends' }, { patch: { stage: 'whot_count' }, allowedWhotCounts: [2, 3, 4] });
 assert.equal(ui.kind, 'list');

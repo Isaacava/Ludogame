@@ -32,3 +32,5 @@ services:
         sync: false
       - key: WHATSAPP_PUBLIC_NUMBER
         sync: false
+      - key: WHATSAPP_GAME_LINK_SECRET
+        sync: false

@@ -115,7 +115,7 @@ rollBtn.onclick=function(){if(!players.length||gameOver)return;if(GAME_MODE==='c
 function wrText(t){statusEl.textContent=t}
 function setRoomRoster(list){if(!Array.isArray(list))return;connectionStates=list.map(function(p){return p.connected!==false});list.forEach(function(p,i){if(players[i]&&p.name)players[i].name=p.name});renderPlayerPanel()}
 function renderSocialBar(){socialBarEl.style.display=GAME_MODE==='friends'?'flex':'none'}
-function inviteFriend(){if(!ROOM_CODE)return;var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE;var msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);window.open('https://wa.me/?text='+msg,'_blank','noopener')}
+function inviteFriend(){if(!ROOM_CODE)return;var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE;if(WHATSAPP_BOT_NUMBER){var msg=encodeURIComponent('JOIN LUDO '+ROOM_CODE);window.open('https://wa.me/'+WHATSAPP_BOT_NUMBER+'?text='+msg,'_blank','noopener')}else{var msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);window.open('https://wa.me/?text='+msg,'_blank','noopener')}}
 function showReaction(name,reaction){reactionBubbleEl.textContent=(name||'Player')+' '+reaction;reactionBubbleEl.classList.remove('show');void reactionBubbleEl.offsetWidth;reactionBubbleEl.classList.add('show')}
 function sendReaction(reaction){if(GAME_MODE==='friends'&&socket&&ROOM_CODE){socket.emit('send-reaction',{code:ROOM_CODE,reaction:reaction})}else showReaction('You',reaction)}
 function getResultText(){return finishOrder.map(function(i,rank){return(rank+1)+'. '+cap(players[i]&&players[i].name||('Player '+(i+1)))}).join(' • ')}
@@ -197,8 +197,8 @@ function initFriendsMode(action,existingCode,playerCount){
      socket.emit('reconnect-player',{code:ROOM_CODE,playerToken:playerToken});
      return;
    }
-   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Creating room...</p>')}
-   else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR,playerToken:resumeAcrossTabs?playerToken:null});showWaitingRoom(resumeAcrossTabs?'<p>Returning to room '+ROOM_CODE+'...</p>':'<p>Joining room '+ROOM_CODE+'...</p>')}
+   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR,whatsappToken:WHATSAPP_GAME_TOKEN});showWaitingRoom('<p>Creating room...</p>')}
+   else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR,playerToken:resumeAcrossTabs?playerToken:null,whatsappToken:resumeAcrossTabs?'':WHATSAPP_GAME_TOKEN});showWaitingRoom(resumeAcrossTabs?'<p>Returning to room '+ROOM_CODE+'...</p>':'<p>Joining room '+ROOM_CODE+'...</p>')}
  });
 }
 const params=new URLSearchParams(location.search);
@@ -210,6 +210,7 @@ async function loadPublicRules(){
     const cfg=await res.json();
     if(cfg&&cfg.rules)RULES=Object.assign(RULES,cfg.rules);
     if(cfg&&cfg.socketUrl)SOCKET_URL=cfg.socketUrl;
+    if(cfg&&cfg.bot&&cfg.bot.whatsappNumber)WHATSAPP_BOT_NUMBER=String(cfg.bot.whatsappNumber).replace(/\D/g,'');
   }catch(e){}
 }
 (async function boot(){

@@ -292,6 +292,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   const API_BASE=window.CODEPLAY_API_BASE||'';
   const SOCKET_DEFAULT='https://codeplay-ludo-production.up.railway.app';
   const profileName=(params.get('name')||'Guest').slice(0,40)||'Guest';
+  const whatsappGameToken=(params.get('wa_token')||'').trim();
+  let whatsappBotNumber='';
   const SHAPE_GLYPHS={circle:'●',triangle:'▲',cross:'✚',square:'■',star:'★',whot:'W'};
   const SHAPE_LABEL={circle:'Circle',triangle:'Triangle',cross:'Cross',square:'Square',star:'Star'};
   const REACTIONS=['😂','🔥','👏','😭','Omo!','Sharp!'];
@@ -521,6 +523,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   async function loadWhotConfig(){
     try{
       const r=await fetch((API_BASE||'')+'/api/config/public',{cache:'no-store'}),d=await r.json();
+      if(d.bot&&d.bot.whatsappNumber)whatsappBotNumber=String(d.bot.whatsappNumber).replace(/\D/g,'');
       if(d.whot&&d.whot.enabled===false){showWaiting('Whot is currently disabled by the admin.');return false}
     }catch(err){}
     return true;
@@ -531,10 +534,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
     if(!creating&&requestedCode){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
     socket.on('connect',()=>{
-      if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer'});showWaiting('Starting your computer match…');return}
-      if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends'});showWaiting('Creating your Whot room…');return}
+      if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer',whatsappToken:whatsappGameToken});showWaiting('Starting your computer match…');return}
+      if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends',whatsappToken:whatsappGameToken});showWaiting('Creating your Whot room…');return}
       if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
-      reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null});showWaiting('Joining room '+roomCode+'…');
+      reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null,whatsappToken:whatsappGameToken});showWaiting('Joining room '+roomCode+'…');
     });
     socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
@@ -556,7 +559,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function setState(s,extra){state=s;render(extra);if(state&&state.gameOver)showGameOver()}
 
   e.homeBtn.onclick=()=>location.href='/';
-  e.inviteBtn.onclick=()=>{if(roomCode){const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}};
+  e.inviteBtn.onclick=()=>{if(roomCode){if(whatsappBotNumber){window.open('https://wa.me/'+whatsappBotNumber+'?text='+encodeURIComponent('JOIN WHOT '+roomCode),'_blank','noopener')}else{const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}}};
   e.rematchBtn.onclick=()=>{e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
   e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
   REACTIONS.forEach(r=>{const b=document.createElement('button');b.className='react';b.textContent=r;b.onclick=()=>socket.emit('whot:reaction',{code:roomCode,reaction:r});e.reactions.appendChild(b)});
