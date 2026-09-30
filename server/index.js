@@ -209,6 +209,9 @@ async function startServer(){
   }
   httpServer.listen(PORT,()=>console.log(`CodePlay Ludo server listening on :${PORT}`));
 }
-startServer();
-
 module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,startServer};
+
+// Register Whot Socket.IO handlers only after index exports are initialized.
+require('./whotServer');
+
+startServer();
