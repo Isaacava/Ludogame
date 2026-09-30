@@ -24,7 +24,8 @@ const DEFAULT_RULES = {
   blockadesEnabled:false,
   extraTurnValues:[6],
   doubleValueGrantsExtraTurn:true,
-  captureSendsCapturerHome:false, // Naija Ludo variant: a capturing token may be removed/finished as the capture reward
+  captureSendsCapturerHome:true, // Naija Ludo default: the capturing token is removed/finished after a capture
+  captureGrantsExtraTurn:false, // Optional Naija variant: a successful capture grants another turn
   exactRollToFinish:true
 };
 function pathIdx(rel,color){ return (START_INDEX[color]+rel)%52; }
@@ -35,7 +36,7 @@ class LudoEngine {
     this.rollD6=diceRoller||(()=>1+Math.floor(Math.random()*6));
     this.rules={...DEFAULT_RULES,...(rules||{})};
     this.players=TEAM_SETUPS[playerCount].map(p=>({name:p.name,colors:p.colors,tokens:Object.fromEntries(p.colors.map(c=>[c,[-1,-1,-1,-1]]))}));
-    this.turn=0; this.dice=null; this.remainingDice=null; this.finishOrder=[]; this.gameOver=false; this.log=[];
+    this.turn=0; this.dice=null; this.remainingDice=null; this.finishOrder=[]; this.gameOver=false; this.log=[]; this.captureBonusPending=false;
   }
   _log(msg){this.log.push(msg);}
   _ensureDiceState(){if(this.dice&&!this.remainingDice)this.remainingDice=[true,true];}
@@ -98,11 +99,15 @@ class LudoEngine {
       if(arr[move.idx]===-1)throw new Error('illegal move');
       if(!this._canUseValue(arr[move.idx],value,false,move.color))throw new Error('illegal move');
       arr[move.idx]+=value;
-      let newPos=arr[move.idx],captured=[];
+      let newPos=arr[move.idx];
+      if(newPos>56 && !this.rules.exactRollToFinish)newPos=56;
+      arr[move.idx]=newPos;
+      let captured=[];
       if(newPos<=50&&!(this.rules.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,move.color)))){
         const g=pathIdx(newPos,move.color);
         this.players.forEach((opp,oi)=>{if(oi===this.turn)return;opp.colors.forEach(oc=>opp.tokens[oc].forEach((t,ti)=>{if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});}}));});
         if(captured.length&&this.rules.captureSendsCapturerHome){arr[move.idx]=56;newPos=56;}
+        if(captured.length&&this.rules.captureGrantsExtraTurn)this.captureBonusPending=true;
       }
       const finishedNow=newPos===56,teamFinished=this._checkWinner(this.turn);
       return {captured,finishedNow,teamFinished,gameOver:this.gameOver,newPos,mode:'direct',consumedDice:null};
@@ -132,11 +137,15 @@ class LudoEngine {
     if(resolvedMode==='combine'){this.remainingDice[0]=false;this.remainingDice[1]=false;}
     else this.remainingDice[dieIndex]=false;
     arr[move.idx]=arr[move.idx]===-1?0:arr[move.idx]+value;
-    let newPos=arr[move.idx],captured=[];
+    let newPos=arr[move.idx];
+    if(newPos>56 && !this.rules.exactRollToFinish)newPos=56;
+    arr[move.idx]=newPos;
+    let captured=[];
     if(newPos<=50&&!(this.rules.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,move.color)))){
       const g=pathIdx(newPos,move.color);
       this.players.forEach((opp,oi)=>{if(oi===this.turn)return;opp.colors.forEach(oc=>opp.tokens[oc].forEach((t,ti)=>{if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});this._log(`${p.name} captured ${oc}`);}}));});
-      if(captured.length&&this.rules.captureSendsCapturerHome){arr[move.idx]=56;newPos=56;this._log(`${p.name}'s ${move.color} token rushed home after the capture!`);}
+      if(captured.length&&this.rules.captureSendsCapturerHome){arr[move.idx]=56;newPos=56;this._log(`${p.name}'s ${move.color} token was removed after the capture!`);}
+      if(captured.length&&this.rules.captureGrantsExtraTurn)this.captureBonusPending=true;
     }
     const finishedNow=newPos===56;
     if(finishedNow&&!(captured.length&&this.rules.captureSendsCapturerHome))this._log(`${p.name}'s ${move.color} token reached home`);
@@ -158,11 +167,13 @@ class LudoEngine {
   endTurn(){
     this._ensureDiceState();
     const [d1,d2]=this.dice||[0,0];
-    const doubleSix=this.rules.doubleValueGrantsExtraTurn&&d1===d2&&this.rules.extraTurnValues.includes(d1);
-    this.dice=null;this.remainingDice=null;
-    if(this.gameOver)return {doubleSix:false,nextTurn:this.turn,gameOver:true,finishOrder:this.finishOrder};
-    if(!doubleSix){do{this.turn=(this.turn+1)%this.players.length;}while(this.finishOrder.includes(this.turn));}
-    return {doubleSix,nextTurn:this.turn,gameOver:this.gameOver,finishOrder:this.finishOrder};
+    const doubleValueExtra=this.rules.doubleValueGrantsExtraTurn&&d1===d2&&this.rules.extraTurnValues.includes(d1);
+    const captureExtra=!!this.captureBonusPending;
+    const extraTurn=doubleValueExtra||captureExtra;
+    this.dice=null;this.remainingDice=null;this.captureBonusPending=false;
+    if(this.gameOver)return {doubleSix:doubleValueExtra,captureExtra,extraTurn:false,nextTurn:this.turn,gameOver:true,finishOrder:this.finishOrder};
+    if(!extraTurn){do{this.turn=(this.turn+1)%this.players.length;}while(this.finishOrder.includes(this.turn));}
+    return {doubleSix:doubleValueExtra,captureExtra,extraTurn,nextTurn:this.turn,gameOver:this.gameOver,finishOrder:this.finishOrder};
   }
   chooseAiMoves(){
     const [d1,d2]=this.dice,opts=this.legalOptions();
@@ -177,6 +188,6 @@ class LudoEngine {
     }else if(opts.combine.length)plan.push({move:pick(opts.combine),value:d1+d2,mode:'combine'});
     return plan;
   }
-  toJSON(){return {players:this.players.map(p=>({name:p.name,colors:p.colors,tokens:p.tokens})),turn:this.turn,dice:this.dice,remainingDice:this.remainingDice,finishOrder:this.finishOrder,gameOver:this.gameOver};}
+  toJSON(){return {players:this.players.map(p=>({name:p.name,colors:p.colors,tokens:p.tokens})),turn:this.turn,dice:this.dice,remainingDice:this.remainingDice,finishOrder:this.finishOrder,gameOver:this.gameOver,rules:this.rules};}
 }
 module.exports={LudoEngine,PATH,HOME_COLS,START_INDEX,pathIdx,SAFE_CELLS,DEFAULT_RULES};
