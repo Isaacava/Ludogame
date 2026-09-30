@@ -68,7 +68,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
           <div class="row"><label>Blockades<small>Two opposing tokens can block passage</small></label><label class="switch"><input id="blockadesEnabled" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Capture-removal rule<small>Capturing token is also removed/finished after a capture</small></label><label class="switch"><input id="captureSendsCapturerHome" type="checkbox"><span class="slider"></span></label></div><div class="row"><label>Capture grants another turn<small>Successful captures keep the turn with the capturing player</small></label><label class="switch"><input id="captureGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div>
           <div class="row"><label>Exact roll to finish<small>Final home position requires the exact number</small></label><label class="switch"><input id="exactRollToFinish" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Double value gives another turn<small>Currently applies to double six</small></label><label class="switch"><input id="doubleValueGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div>
+          <div class="row"><label>Double value gives another turn<small>Currently applies to double six</small></label><label class="switch"><input id="doubleValueGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div><div class="row"><label>Double-roll values<small>Comma-separated values that grant another turn when rolled as doubles</small></label><div class="field"><input id="extraTurnValues" type="text" placeholder="6"></div></div>
           <div class="actions"><button id="saveRules">Save rules</button><button class="secondary" data-reset="rules">Reset rules</button></div>
         </div>
       </section>
@@ -174,7 +174,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
     const r=config.rules||{}, m=config.monetization||{}, s=config.season||{}, b=config.bot||{}, mt=config.maintenance||{};
     checked('r2',(r.playerCounts||[]).includes(2)); checked('r3',(r.playerCounts||[]).includes(3)); checked('r4',(r.playerCounts||[]).includes(4));
     checked('safeZonesEnabled',r.safeZonesEnabled); checked('blockadesEnabled',r.blockadesEnabled); checked('captureSendsCapturerHome',r.captureSendsCapturerHome);
-    checked('exactRollToFinish',r.exactRollToFinish); checked('doubleValueGrantsExtraTurn',r.doubleValueGrantsExtraTurn); checked('captureGrantsExtraTurn',r.captureGrantsExtraTurn);
+    checked('exactRollToFinish',r.exactRollToFinish); checked('doubleValueGrantsExtraTurn',r.doubleValueGrantsExtraTurn); checked('captureGrantsExtraTurn',r.captureGrantsExtraTurn); $('extraTurnValues').value=(Array.isArray(r.extraTurnValues)?r.extraTurnValues:[6]).join(', ');
     checked('adsEnabled',m.adsEnabled); checked('ad_homepageTop',m.adPlacements&&m.adPlacements.homepageTop); checked('ad_homepageSticky',m.adPlacements&&m.adPlacements.homepageSticky);
     checked('ad_waitingRoom',m.adPlacements&&m.adPlacements.waitingRoom); checked('ad_inGameSticky',m.adPlacements&&m.adPlacements.inGameSticky); checked('ad_winScreen',m.adPlacements&&m.adPlacements.winScreen);
     $('maxAdsPerPage').value=m.maxAdsPerPage??3;
@@ -206,7 +206,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
   function collectRules(){
     const playerCounts=[2,3,4].filter(n=>$('r'+n).checked);
     if(!playerCounts.length) throw new Error('Enable at least one player mode.');
-    return {playerCounts,safeZonesEnabled:$('safeZonesEnabled').checked,blockadesEnabled:$('blockadesEnabled').checked,captureSendsCapturerHome:$('captureSendsCapturerHome').checked,captureGrantsExtraTurn:$('captureGrantsExtraTurn').checked,exactRollToFinish:$('exactRollToFinish').checked,doubleValueGrantsExtraTurn:$('doubleValueGrantsExtraTurn').checked};
+    const extraTurnValues=$('extraTurnValues').value.split(',').map(function(v){return Number(v.trim())}).filter(function(v){return Number.isInteger(v)&&v>=1&&v<=6}); return {playerCounts,safeZonesEnabled:$('safeZonesEnabled').checked,blockadesEnabled:$('blockadesEnabled').checked,captureSendsCapturerHome:$('captureSendsCapturerHome').checked,captureGrantsExtraTurn:$('captureGrantsExtraTurn').checked,exactRollToFinish:$('exactRollToFinish').checked,doubleValueGrantsExtraTurn:$('doubleValueGrantsExtraTurn').checked,extraTurnValues:extraTurnValues.length?extraTurnValues:[6]};
   }
   $('loginBtn').onclick=login; $('password').onkeydown=e=>{if(e.key==='Enter')login()};
   $('logoutBtn').onclick=()=>{sessionStorage.removeItem(KEY);location.reload()};
