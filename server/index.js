@@ -78,8 +78,22 @@ io.on('connection',socket=>{
     socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room)});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
-  socket.on('join-room',({code,name,color})=>{
-    const result=rooms.joinRoom(code,socket.id,{name,color});if(result.error)return socket.emit('error-msg',result.error);
+  socket.on('join-room',({code,name,color,playerToken})=>{
+    const normalizedCode=String(code||'').trim().toUpperCase();
+    const existingRoom=rooms.getRoom(normalizedCode);
+    if(existingRoom&&playerToken){
+      const resumed=rooms.reconnect(existingRoom,socket.id,playerToken);
+      if(!resumed.error){
+        const room=existingRoom;
+        socket.join(room.code);
+        socket.emit('you-are-player',{index:resumed.index,playerToken:resumed.playerToken,reconnected:true});
+        io.to(room.code).emit('player-connection',{index:resumed.index,name:room.players[resumed.index].name||`Player ${resumed.index+1}`,connected:true,players:roomPlayers(room)});
+        socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room)});
+        if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
+        return;
+      }
+    }
+    const result=rooms.joinRoom(normalizedCode,socket.id,{name,color});if(result.error)return socket.emit('error-msg',result.error);
     const room=result.room;socket.join(room.code);
     const myIndex=rooms.playerIndexOf(room,socket.id);
     socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
