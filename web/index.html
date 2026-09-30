@@ -74,9 +74,28 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   <div class="linkRow"><a onclick="go('select')">Back</a></div>
 </div>
 
+<div class="screen" id="whotMode">
+  <h2>🃏 Whot</h2>
+  <p class="sub" style="margin-bottom:10px;">How many players?</p>
+  <div class="countRow" id="whotCountRow">
+    <button class="countBtn" onclick="setWhotCount(2)">2</button>
+    <button class="countBtn selected" onclick="setWhotCount(3)">3</button>
+    <button class="countBtn" onclick="setWhotCount(4)">4</button>
+  </div>
+  <p class="hint" id="whotCountHint">3 players — classic multiplayer.</p>
+  <button class="btn-primary" onclick="playWhotComputer()">🤖 vs Computer</button>
+  <button class="btn-outline" onclick="createWhotRoom()">👥 Create a room (play with friends)</button>
+  <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
+  <input id="whotJoinCode" placeholder="e.g. K7QP" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;">
+  <div class="err" id="whotJoinErr"></div>
+  <button class="btn-outline" onclick="joinWhotRoom()">Join with code</button>
+  <div class="linkRow"><a onclick="go('select')">Back</a></div>
+</div>
+
 <script>
 const API_BASE=window.CODEPLAY_API_BASE||'';
 const PLAY_URL=window.CODEPLAY_PLAY_URL||'/play.html';
+const WHOT_URL=window.CODEPLAY_WHOT_URL||'/whot.html';
 const AVATAR_COLORS=['#e53e3e','#38a169','#d69e2e','#3182ce'];
 var session={token:localStorage.getItem('codeplay_token'),name:null,color:null};
 var botNumber=null,allowedPlayerCounts=[2,3,4];
@@ -113,14 +132,18 @@ function finishOnboarding(){
  if(!name){errEl.textContent='Pick a display name.';return} if(!session.color){errEl.textContent='Pick a color.';return}
  errEl.textContent='';session.name=name;localStorage.setItem('codeplay_guest_profile',JSON.stringify({name:name,color:session.color}));document.getElementById('welcomeMsg').textContent=(session.guest?'Playing as guest, ':'Hey ')+name+' — choose a game';go('select')
 }
-let ludoCount=4;
+let ludoCount=4,whotCount=3;
 function navigate(url){location.href=url}
-function setCount(n){ludoCount=n;document.querySelectorAll('.countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
+function setCount(n){ludoCount=n;document.querySelectorAll('#countRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
+function setWhotCount(n){whotCount=n;document.querySelectorAll('#whotCountRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('whotCountHint').textContent=n+' players — Nigerian Whot multiplayer.'}
 function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest')+'&color='+encodeURIComponent(session.color||'')}
 function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
 function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+profileQuery())}
 function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code+profileQuery())}
-function chooseGame(game){if(game==='ludo'){go('ludoMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
+function playWhotComputer(){navigate(WHOT_URL+'?mode=computer&players=2&'+profileQuery().slice(1))}
+function createWhotRoom(){navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+profileQuery())}
+function joinWhotRoom(){var code=document.getElementById('whotJoinCode').value.trim().toUpperCase(),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+code+profileQuery())}
+function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
 (function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null}}catch(e){}})();loadPublicConfig();restoreSession();
 </script>
 </body>
