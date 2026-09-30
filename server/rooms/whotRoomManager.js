@@ -9,7 +9,7 @@ class WhotRoomManager{
   constructor(configStore){this.rooms=new Map();this.configStore=configStore;}
   createRoom(playerCount,hostSocketId,profile={},mode='friends'){
     let code;do{code=generateCode()}while(this.rooms.has(code));
-    const room={code,playerCount,mode,players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',bot:false}],engine:null,rematchVotes:new Set(),createdAt:Date.now(),botTimer:null};
+    const room={code,playerCount,mode,players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',whatsappPhone:profile.whatsappPhone||null,bot:false}],engine:null,rematchVotes:new Set(),createdAt:Date.now(),botTimer:null};
     if(mode==='computer'){
       for(let i=1;i<playerCount;i++)room.players.push({socketId:null,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:`CPU ${i}`,bot:true});
       this.resetEngine(room);
@@ -21,7 +21,7 @@ class WhotRoomManager{
     const now=Date.now();
     room.players=room.players.filter(p=>p.bot||p.socketId||!p.disconnectedAt||now-p.disconnectedAt<=RECONNECT_GRACE_MS);
     if(room.engine||room.players.length>=room.playerCount)return {error:'room-full'};
-    room.players.push({socketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||`Player ${room.players.length+1}`,bot:false});
+    room.players.push({socketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||`Player ${room.players.length+1}`,whatsappPhone:profile.whatsappPhone||null,bot:false});
     if(room.players.filter(p=>!p.bot).length===room.playerCount)this.resetEngine(room);
     return {room};
   }
