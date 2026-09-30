@@ -17,6 +17,9 @@ const rooms=new RoomManager(configStore);
 const persistence=new MongoPersistence();
 const users=new UserStore(persistence);
 const sessions=new SessionStore(persistence);
+const roomPlayers=(room)=>room.players.map((p,index)=>({index,name:p.name||`Player ${index+1}`,color:p.color||null,connected:!!p.socketId}));
+const SAFE_REACTIONS=new Set(['😂','🔥','👏','😭','😎','😳','Omo!','Sharp!']);
+
 
 const app=express();
 const {router:adminRouter}=createAdminRoutes(configStore);
@@ -72,7 +75,7 @@ io.on('connection',socket=>{
     const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
     if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
     const room=rooms.createRoom(playerCount,socket.id,{name,color});socket.join(room.code);
-    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken});
+    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room)});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
   socket.on('join-room',({code,name,color})=>{
@@ -80,14 +83,14 @@ io.on('connection',socket=>{
     const room=result.room;socket.join(room.code);
     const myIndex=rooms.playerIndexOf(room,socket.id);
     socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
-    io.to(room.code).emit('player-joined',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount});
+    io.to(room.code).emit('player-joined',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,players:roomPlayers(room)});
     if(room.engine)io.to(room.code).emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
   socket.on('reconnect-player',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
-    socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});
-    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine});
+    socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
+    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room)});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
   socket.on('roll-dice',({code})=>{
@@ -121,7 +124,12 @@ io.on('connection',socket=>{
     if(room.engine.dice&&(options.canSplit||options.canCombine))return socket.emit('error-msg','cannot-end-turn-yet');
     const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
   });
-  socket.on('disconnect',()=>rooms.removeSocket(socket.id));
+  socket.on('disconnect',()=>{
+    const removed=rooms.removeSocket(socket.id);
+    if(removed){
+      io.to(removed.room.code).emit('player-connection',{index:removed.index,name:removed.player.name||`Player ${removed.index+1}`,connected:false,players:roomPlayers(removed.room)});
+    }
+  });
 });
 setInterval(()=>rooms.sweepExpired(),60*1000);
 
