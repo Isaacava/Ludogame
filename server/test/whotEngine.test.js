@@ -4,10 +4,12 @@ const {WhotEngine,makeDeck}=require('../engine/whotEngine');
 const rnd=(()=>{let n=0;return()=>((n=n+0.61803398875)%1)})();
 
 (function(){
-  const deck=makeDeck();
+  const deck=makeDeck({starScoreMultiplier:3,whotScore:25});
   assert.equal(deck.length,54);
   assert.equal(new Set(deck.map(c=>c.id)).size,54);
   assert.equal(deck.filter(c=>c.isWhot).length,5);
+  assert.equal(deck.find(c=>c.id==='star-5').score,15);
+  assert.equal(deck.find(c=>c.id==='whot-1').score,25);
 })();
 
 (function(){
@@ -62,3 +64,15 @@ const rnd=(()=>{let n=0;return()=>((n=n+0.61803398875)%1)})();
 })();
 
 console.log('whotEngine.test.js passed');
+
+(function(){
+  const g=new WhotEngine(2,rnd(),{handSize:1,enforceLastCardCall:true});
+  g.started=true;
+  g.players=[{name:'A',cards:[{id:'circle-7',shape:'circle',number:7,isWhot:false,score:7},{id:'circle-9',shape:'circle',number:9,isWhot:false,score:9}]},{name:'B',cards:[{id:'triangle-9',shape:'triangle',number:9,isWhot:false,score:9}]}];
+  g.played=[{id:'circle-2',shape:'circle',number:2,isWhot:false,score:2}];g.activeShape='circle';
+  assert.throws(()=>g.playCard(0,0),/last-card-call-required/);
+  const result=g.playCard(0,0,null,true);
+  assert.equal(result.gameOver,false);
+  assert.equal(g.players[0].cards.length,1);
+  assert.equal(g.stateFor(1).lastCallRequired,false);
+})();
