@@ -38,24 +38,41 @@ function deepMerge(base, patch) {
 }
 
 class ConfigStore {
-  constructor(filePath = FILE) { this.filePath = filePath; this.config = this._load(); }
+  constructor(filePath = FILE) { this.filePath = filePath; this.config = this._load(); this.persistence = null; }
   _load() {
     try { return deepMerge(DEFAULTS, JSON.parse(fs.readFileSync(this.filePath, 'utf8'))); }
     catch { return { ...DEFAULTS }; }
   }
   _persist() { fs.writeFileSync(this.filePath, JSON.stringify(this.config, null, 2)); }
+  async hydrateFromPersistence(persistence) {
+    this.persistence = persistence || null;
+    if (!this.persistence || !this.persistence.enabled) return this.config;
+    const stored = await this.persistence.loadConfig();
+    if (stored && typeof stored === 'object') {
+      this.config = deepMerge(DEFAULTS, stored);
+      this._persist();
+    }
+    return this.config;
+  }
+  _persistMongo() {
+    if (this.persistence && this.persistence.enabled) {
+      this.persistence.saveConfig(this.config).catch(err => console.error('Config persistence failed:', err.message));
+    }
+  }
   getAll() { return this.config; }
   get(section) { return this.config[section]; }
   patchSection(section, patch) {
     if (!DEFAULTS[section]) throw new Error(`unknown config section: ${section}`);
     this.config[section] = deepMerge(this.config[section], patch);
     this._persist();
+    this._persistMongo();
     return this.config[section];
   }
   resetSection(section) {
     if (!DEFAULTS[section]) throw new Error(`unknown config section: ${section}`);
     this.config[section] = { ...DEFAULTS[section] };
     this._persist();
+    this._persistMongo();
     return this.config[section];
   }
 }
