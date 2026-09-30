@@ -89,6 +89,7 @@ function wrText(t){statusEl.textContent=t}
 function showWaitingRoom(html){document.getElementById('waitingRoom').style.display='block';document.getElementById('waitingRoom').innerHTML=html;document.getElementById('wrap').style.display='none';document.getElementById('diceArea').style.display='none';document.querySelectorAll('.row').forEach(function(r){r.style.display='none'})}
 function hideWaitingRoom(){document.getElementById('waitingRoom').style.display='none';document.getElementById('wrap').style.display='block';document.getElementById('diceArea').style.display='flex';document.querySelectorAll('.row').forEach(function(r){r.style.display='flex'})}
 var ROOM_TAB_ID=(function(){var k='codeplay_ludo_tab_id',v=sessionStorage.getItem(k);if(!v){v=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);sessionStorage.setItem(k,v)}return v})();
+var playerToken=null, seatEstablished=false;
 function activeRoomKey(){return 'codeplay_active_ludo_room:'+ROOM_TAB_ID}
 function saveActiveRoom(){if(ROOM_CODE&&playerToken){localStorage.setItem(activeRoomKey(),JSON.stringify({code:ROOM_CODE,playerToken:playerToken,playerCount:players.length||0,tabId:ROOM_TAB_ID,savedAt:Date.now()}))}}
 function loadActiveRoom(){try{var raw=localStorage.getItem(activeRoomKey());return raw?JSON.parse(raw):null}catch(e){return null}}
@@ -105,15 +106,23 @@ function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(H
 function initFriendsMode(action,existingCode,playerCount){
  GAME_MODE='friends';socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
  var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode);
- var sameTabRoom=!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID);
- var shouldReconnect=!!(action==='reconnect'&&sameTabRoom&&requestedCode&&requestedCode===savedCode);
- if(shouldReconnect){ROOM_CODE=savedCode;playerToken=saved.playerToken;if(saved.playerCount)playerCount=saved.playerCount;}
- socket.on('connect_error',function(err){showWaitingRoom('<p>Could not reach the game server.</p><p class="legend">'+((err&&err.message)||'Connection failed')+'</p><button onclick="location.reload()">Retry</button>')});
- socket.on('reconnect_attempt',function(){wrText('Reconnecting to the game server…')});
- socket.on('reconnect_failed',function(){showWaitingRoom('<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
- socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='room-full'||msg==='invalid-reconnect-token'){clearActiveRoom();showWaitingRoom('<p>'+ (msg==='room-full'?'That room is already full.':'That room session is no longer active — create or join again.')+'</p><button onclick="history.back()">Back</button>')}});
- socket.on('you-are-player',function(x){HUMAN_INDEX=x.index;if(x.playerToken){playerToken=x.playerToken;saveActiveRoom()}});
- socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed)});
+ var sameTabRoom=!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
+ if(sameTabRoom){ROOM_CODE=savedCode;playerToken=saved.playerToken;seatEstablished=true;if(saved.playerCount)playerCount=saved.playerCount;}
+ socket.on('connect_error',function(err){
+   if(seatEstablished&&ROOM_CODE&&playerToken){wrText('Connection lost — reconnecting to your Ludo room…');return;}
+   showWaitingRoom('<p>Could not reach the game server.</p><p class="legend">'+((err&&err.message)||'Connection failed')+'</p><button onclick="location.reload()">Retry</button>');
+ });
+ socket.on('reconnect_attempt',function(){if(seatEstablished&&ROOM_CODE)wrText('Reconnecting to your Ludo room…');else wrText('Reconnecting to the game server…')});
+ socket.on('reconnect_failed',function(){showWaitingRoom(seatEstablished?'<p>Could not reconnect to your Ludo room.</p><p class="legend">Your game seat was kept briefly. Tap Retry to reconnect.</p><button onclick="location.reload()">Retry</button>':'<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
+ socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
+ socket.on('you-are-player',function(x){
+   HUMAN_INDEX=x.index;seatEstablished=true;
+   if(x.playerToken){playerToken=x.playerToken;saveActiveRoom();}
+   if(ROOM_CODE&&new URLSearchParams(location.search).get('action')!=='reconnect'){
+     history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+(players.length?'&players='+players.length:''));
+   }
+ });
+ socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;seatEstablished=true;saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed)});
  socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;renderWaiting(x.joined,x.needed);if(x.started)hideWaitingRoom()});
  socket.on('player-joined',function(x){renderWaiting(x.joined,x.needed)});
  socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});
@@ -121,7 +130,13 @@ function initFriendsMode(action,existingCode,playerCount){
  socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture('💥 '+cap(c.color)+' SENT HOME!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)cb()});
  socket.on('turn-passed',function(x){window._netAfterMove=null;window._netPending=null;applyServerState(x.state);currentValid=[];modeRow.innerHTML='';beginNetTurn()});
  socket.on('connect',function(){
-   if(shouldReconnect){showWaitingRoom('<p>Reconnecting to room '+ROOM_CODE+'...</p>');socket.emit('reconnect-player',{code:ROOM_CODE,playerToken:playerToken});return;}
+   // A seat that already exists in this browser tab always reconnects.
+   // This covers refreshes as well as Socket.IO transport reconnects after a blip.
+   if(seatEstablished&&ROOM_CODE&&playerToken){
+     showWaitingRoom('<p>Reconnecting to room '+ROOM_CODE+'...</p>');
+     socket.emit('reconnect-player',{code:ROOM_CODE,playerToken:playerToken});
+     return;
+   }
    if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Creating room...</p>')}
    else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR});showWaitingRoom('<p>Joining room '+ROOM_CODE+'...</p>')}
  });
