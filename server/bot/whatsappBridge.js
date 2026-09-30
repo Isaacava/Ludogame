@@ -4,36 +4,41 @@ const crypto=require('crypto');
 
 const IDENTITY_SECRET=process.env.WHATSAPP_GAME_LINK_SECRET||'';
 
+function key(){
+  return crypto.createHash('sha256').update(IDENTITY_SECRET,'utf8').digest();
+}
 function base64url(value){
-  return Buffer.from(value,'utf8').toString('base64')
-    .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  return Buffer.from(value).toString('base64').replace(/=/g,'').replace(/\\+/g,'-').replace(/\\//g,'_');
 }
 function fromBase64url(value){
   const normalized=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
   const padded=normalized+'='.repeat((4-normalized.length%4)%4);
-  return Buffer.from(padded,'base64').toString('utf8');
-}
-function sign(value){
-  return crypto.createHmac('sha256',IDENTITY_SECRET).update(value).digest('base64url');
+  return Buffer.from(padded,'base64');
 }
 function createWhatsAppGameToken(phone){
-  if(!IDENTITY_SECRET) return '';
+  if(!IDENTITY_SECRET)return '';
+  const iv=crypto.randomBytes(12);
+  const cipher=crypto.createCipheriv('aes-256-gcm',key(),iv);
   const payload=JSON.stringify({phone:String(phone),iat:Date.now()});
-  const body=base64url(payload);
-  return body+'.'+sign(body);
+  const ciphertext=Buffer.concat([cipher.update(payload,'utf8'),cipher.final()]);
+  const tag=cipher.getAuthTag();
+  return [iv,ciphertext,tag].map(base64url).join('.');
 }
 function resolveWhatsAppGameToken(token){
   if(!IDENTITY_SECRET||!token)return null;
-  const [body,signature]=String(token).split('.');
-  if(!body||!signature)return null;
-  const expected=sign(body);
-  const a=Buffer.from(expected),b=Buffer.from(signature);
-  if(a.length!==b.length||!crypto.timingSafeEqual(a,b))return null;
+  const parts=String(token).split('.');
+  if(parts.length!==3)return null;
   try{
-    const payload=JSON.parse(fromBase64url(body));
+    const iv=fromBase64url(parts[0]);
+    const ciphertext=fromBase64url(parts[1]);
+    const tag=fromBase64url(parts[2]);
+    if(iv.length!==12||tag.length!==16)return null;
+    const decipher=crypto.createDecipheriv('aes-256-gcm',key(),iv);
+    decipher.setAuthTag(tag);
+    const payload=JSON.parse(Buffer.concat([decipher.update(ciphertext),decipher.final()]).toString('utf8'));
     const phone=String(payload.phone||'');
     const issued=Number(payload.iat||0);
-    if(!/^\+\d{7,15}$/.test(phone))return null;
+    if(!/^\\+\\d{7,15}$/.test(phone))return null;
     if(!Number.isFinite(issued)||Date.now()-issued>7*24*60*60*1000)return null;
     return {phone};
   }catch{return null}
@@ -77,9 +82,9 @@ function gameResultMessage({won,playerName,opponents}){
 }
 
 async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
-  if(!room||!Array.isArray(room.players)||room.whatsappResultsSent)return;
+  if(!room||!Array.isArray(room.players)||room.whatsappResultsSent||room.whatsappResultsPromise)return;
   if(winnerIndex==null||!room.players[winnerIndex])return;
-  room.whatsappResultsSent=true;
+  room.whatsappResultsPromise=(async()=>{
   const winner=room.players[winnerIndex];
   const humanPlayers=room.players.filter(p=>!p.bot);
   const tasks=humanPlayers.filter(p=>p.whatsappPhone).map(player=>{
@@ -94,6 +99,9 @@ async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
     ).catch(err=>console.error('WhatsApp result notification failed:',err.message));
   });
   await Promise.all(tasks);
+  room.whatsappResultsSent=true;
+})().catch(err=>{room.whatsappResultsPromise=null;throw err;});
+  return room.whatsappResultsPromise;
 }
 
 module.exports={createWhatsAppGameToken,resolveWhatsAppGameToken,sendWhatsAppText,buildGameIdentityQuery,notifyGameResults,gameResultMessage};
