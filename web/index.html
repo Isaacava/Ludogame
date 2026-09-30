@@ -83,7 +83,7 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
     <button class="countBtn" onclick="setWhotCount(4)">4</button>
   </div>
   <p class="hint" id="whotCountHint">3 players — classic multiplayer.</p>
-  <button class="btn-primary" onclick="playWhotComputer()">🤖 vs Computer</button>
+  <button class="btn-primary" onclick="playWhotComputer()">🤖 Play vs Computer</button>
   <button class="btn-outline" onclick="createWhotRoom()">👥 Create a room (play with friends)</button>
   <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
   <input id="whotJoinCode" placeholder="e.g. K7QP" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;">
@@ -141,7 +141,7 @@ function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest'
 function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
 function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+profileQuery())}
 function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code+profileQuery())}
-function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players=2&'+profileQuery().slice(1))}
+function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players='+whotCount+profileQuery())}
 function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+profileQuery())}
 function joinWhotRoom(){if(!whotEnabled)return;var code=document.getElementById('whotJoinCode').value.trim().toUpperCase(),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+code+profileQuery())}
 function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
