@@ -63,6 +63,23 @@ const rnd=(()=>{let n=0;return()=>((n=n+0.61803398875)%1)})();
   assert.equal(result.cards.length,2);assert.equal(g.players[1].cards.length,3);assert.equal(g.turn,0);
 })();
 
+
+(function(){
+  const g=new WhotEngine(2,rnd(),{handSize:1});
+  g.started=true;
+  g.players=[
+    {name:'A',cards:[{id:'circle-7',shape:'circle',number:7,isWhot:false,score:7},{id:'triangle-9',shape:'triangle',number:9,isWhot:false,score:9}]},
+    {name:'B',cards:[{id:'square-4',shape:'square',number:4,isWhot:false,score:4}]}
+  ];
+  g.market=[{id:'triangle-1',shape:'triangle',number:1,isWhot:false,score:1},{id:'square-3',shape:'square',number:3,isWhot:false,score:3}];
+  g.played=[{id:'circle-2',shape:'circle',number:2,isWhot:false,score:2}];
+  g.activeShape='circle';
+  assert(g.playableCards(0).some(m=>m.card.id==='circle-7'),'A must have a playable card');
+  const result=g.draw(0);
+  assert.equal(result.cards.length,1,'Market must remain a strategic choice when a playable card exists');
+  assert.equal(g.players[0].cards.length,3);
+  assert.equal(g.turn,1);
+})();
 console.log('whotEngine.test.js passed');
 
 (function(){
