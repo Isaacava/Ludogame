@@ -46,6 +46,11 @@ app.get('/api/config/public',(req,res)=>{
       captureSendsCapturerHome:!!cfg.rules.captureSendsCapturerHome,
       captureGrantsExtraTurn:!!cfg.rules.captureGrantsExtraTurn,
       exactRollToFinish:cfg.rules.exactRollToFinish!==false
+    },
+    whot:{
+      enabled:cfg.whot?.enabled!==false,
+      playerCounts:Array.isArray(cfg.whot?.playerCounts)?cfg.whot.playerCounts:[2,3,4],
+      handSize:Number(cfg.whot?.handSize)||6
     }
   });
 });
