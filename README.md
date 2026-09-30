@@ -57,3 +57,4 @@ For sending messages, configure a WhatsApp Business Account phone number, its Ph
 ## Guest mode
 
 The landing page now offers "Continue as Guest — no registration". Guests can choose a display name/colour, play against the computer, create friend rooms, or join an existing room. The guest profile stays only in the browser unless the player later chooses WhatsApp login.
+\n\n### Whot\n\n`server/engine/whotEngine.js` implements the 54-card Nigerian deck, hidden hands, shape/number matching, WHOT calls, Pick 2/Pick 3 stacking, Hold On, Suspension, General Market, scoring, draw-pile recycling, and round-end state. `server/whotServer.js` adds friends rooms, reconnect, a two-player computer mode, reactions, and rematches. Open `/whot.html` from the site game selector.\n
