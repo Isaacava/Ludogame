@@ -309,7 +309,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(!state)return;
     const oldHand={};e.hand.querySelectorAll('[data-card-id]').forEach(n=>{oldHand[n.getAttribute('data-card-id')]=n.getBoundingClientRect()});
     const oldMarket=e.market.getBoundingClientRect();
-    const oldSeat={};e.players.querySelectorAll('.seat').forEach(n=>{const idx=n.querySelector('.miniHand')?.getAttribute('data-mini-index');if(idx!=null)oldSeat[idx]=n.getBoundingClientRect()});
+    const oldSeat={};e.players.querySelectorAll('.seat').forEach(n=>{const mini=n.querySelector('.miniHand'),idx=mini?.getAttribute('data-mini-index');if(idx!=null&&mini)oldSeat[idx]=mini.getBoundingClientRect()});
     const previousCounts=window.__whotHandCounts||{};
     showGame();
     if(!window.__whotHandCounts)window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
