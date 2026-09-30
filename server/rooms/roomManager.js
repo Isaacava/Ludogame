@@ -9,7 +9,7 @@ class RoomManager {
   constructor(configStore) { this.rooms = new Map(); this.configStore = configStore; }
   createRoom(playerCount, hostSocketId, profile = {}) {
     let code; do { code = generateCode(); } while (this.rooms.has(code));
-    const room = { code, playerCount, players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,name:profile.name||'Player 1',color:profile.color||null}], engine:null, createdAt:Date.now() };
+    const room = { code, playerCount, players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',color:profile.color||null}], engine:null, rematchVotes:new Set(), createdAt:Date.now() };
     this.rooms.set(code, room); return room;
   }
   joinRoom(code, socketId, profile = {}) {
@@ -31,13 +31,36 @@ class RoomManager {
     };
     room.players.push(player);
     if(room.players.length===room.playerCount && room.players.every(p=>p.socketId)) {
-      const rules=this.configStore?this.configStore.get('rules'):undefined;
-      room.engine=new LudoEngine(room.playerCount,undefined,rules);
-      room.engine.players.forEach((enginePlayer, index) => { enginePlayer.name = room.players[index].name || `Player ${index+1}`; enginePlayer.profileColor = room.players[index].color || null; });
+      this.resetEngine(room);
     }
     return {room};
   }
-  getRoom(code){ return this.rooms.get(normCode(code)); }
+  resetEngine(room){
+    const rules=this.configStore?this.configStore.get('rules'):undefined;
+    room.engine=new LudoEngine(room.playerCount,undefined,rules);
+    room.rematchVotes=new Set();
+    room.engine.players.forEach((enginePlayer,index)=>{
+      enginePlayer.name=room.players[index].name||`Player ${index+1}`;
+      enginePlayer.profileColor=room.players[index].color||null;
+    });
+    return room.engine;
+  }
+  requestRematch(code,socketId){
+    const room=this.getRoom(code);
+    if(!room||!room.engine)return {error:'room-not-found'};
+    if(!room.engine.gameOver)return {error:'game-not-over'};
+    const index=this.playerIndexOf(room,socketId);
+    if(index<0)return {error:'not-in-room'};
+    if(!room.players.every(p=>!!p.socketId))return {error:'players-disconnected'};
+    room.rematchVotes=room.rematchVotes||new Set();
+    room.rematchVotes.add(index);
+    if(room.rematchVotes.size===room.playerCount){
+      this.resetEngine(room);
+      return {room,started:true,requested:room.playerCount};
+    }
+    return {room,started:false,requested:room.rematchVotes.size};
+  }
+    getRoom(code){ return this.rooms.get(normCode(code)); }
   playerIndexOf(room,socketId){ return room.players.findIndex(p=>p.socketId===socketId); }
   playerTokenAt(room,index){ return room.players[index]?room.players[index].playerToken:null; }
   reconnect(room,socketId,playerToken){
@@ -50,13 +73,16 @@ class RoomManager {
   }
   removeSocket(socketId){
     for(const room of this.rooms.values()){
-      const player=room.players.find(p=>p.socketId===socketId);
-      if(player){
+      const index=room.players.findIndex(p=>p.socketId===socketId);
+      if(index!==-1){
+        const player=room.players[index];
         player.socketId=null;
         player.connected=false;
         player.disconnectedAt=Date.now();
+        return {room,index,player};
       }
     }
+    return null;
   }
   sweepExpired(maxAgeMs=30*60*1000){
     const now=Date.now();
