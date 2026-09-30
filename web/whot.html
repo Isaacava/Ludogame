@@ -32,6 +32,7 @@
 (function(){
 const params=new URLSearchParams(location.search),API_BASE=window.CODEPLAY_API_BASE||'',profileName=(params.get('name')||'Guest').slice(0,40)||'Guest',SOCKET_DEFAULT='https://codeplay-ludo-production.up.railway.app';
 const SHAPE_GLYPHS={circle:'●',triangle:'▲',cross:'✚',square:'■',star:'★',whot:'W'},SHAPE_LABEL={circle:'Circle',triangle:'Triangle',cross:'Cross',square:'Square',star:'Star'},REACTIONS=['😂','🔥','👏','😭','Omo!','Sharp!'];
+let whotEnabled=true,allowedWhotPlayerCounts=[2,3,4];
 let socket=null,roomCode=(params.get('code')||'').trim().toUpperCase(),playerToken=null,me=0,state=null,mode=params.get('mode')||'friends',action=params.get('action')||'create';
 const e={roomLabel:document.getElementById('roomLabel'),waiting:document.getElementById('waiting'),roomCode:document.getElementById('roomCode'),waitingText:document.getElementById('waitingText'),game:document.getElementById('game'),players:document.getElementById('players'),topSlot:document.getElementById('topSlot'),marketCount:document.getElementById('marketCount'),status:document.getElementById('status'),hand:document.getElementById('hand'),drawBtn:document.getElementById('drawBtn'),whotModal:document.getElementById('whotModal'),shapeGrid:document.getElementById('shapeGrid'),gameOver:document.getElementById('gameOver'),winnerTitle:document.getElementById('winnerTitle'),winnerSub:document.getElementById('winnerSub'),results:document.getElementById('results'),rematchBtn:document.getElementById('rematchBtn'),shareBtn:document.getElementById('shareBtn'),callLabel:document.getElementById('callLabel'),reactions:document.getElementById('reactions'),homeBtn:document.getElementById('homeBtn'),inviteBtn:document.getElementById('inviteBtn')};
 function tabId(){let x=sessionStorage.getItem('codeplay_whot_tab_id');if(!x){x=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random();sessionStorage.setItem('codeplay_whot_tab_id',x)}return x}
@@ -55,13 +56,14 @@ function render(){
 function onCard(index,card){if(card.isWhot)openWhotCall(index);else socket.emit('whot:play-card',{code:roomCode,cardId:card.id})}
 function openWhotCall(index){e.shapeGrid.innerHTML='';['circle','triangle','cross','square','star'].forEach(shape=>{const b=document.createElement('button');b.className='shapeBtn';b.textContent=SHAPE_GLYPHS[shape]+' '+SHAPE_LABEL[shape];b.onclick=()=>{e.whotModal.classList.remove('show');socket.emit('whot:play-card',{code:roomCode,cardId:state.players[me].cards[index].id,call:shape})};e.shapeGrid.appendChild(b)});e.whotModal.classList.add('show')}
 function showGameOver(){const winner=state.winner!=null&&state.players[state.winner]?state.players[state.winner].name:'Winner';e.winnerTitle.textContent='🏆 '+winner+' wins!';e.winnerSub.textContent='Penalty points remaining in each hand';e.results.innerHTML='';(state.players||[]).forEach((p,i)=>{const row=document.createElement('div');row.className='resultRow'+(i===state.winner?' winner':'');row.innerHTML='<span>'+esc(p.name)+'</span><span>'+(state.roundScores?state.roundScores[i]:'—')+' pts</span>';e.results.appendChild(row)})}
+async function loadWhotConfig(){try{const r=await fetch('/api/config/public',{cache:'no-store'});const d=await r.json();if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(n=>[2,3,4].indexOf(n)!==-1)}if(!whotEnabled){showWaiting('Whot is currently disabled by the admin.');return false}}catch(e){}return true}
 function connect(){
   socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10});
   const saved=loadRoom();if(!roomCode&&saved){roomCode=saved.code;playerToken=saved.playerToken}
   socket.on('connect',function(){
     if(playerToken&&roomCode){socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
     if(mode==='computer'){socket.emit('whot:create-room',{playerCount:2,name:profileName,mode:'computer'});showWaiting('Starting your game…');return}
-    if(action==='create'){const count=Math.min(4,Math.max(2,Number(params.get('players'))||2));socket.emit('whot:create-room',{playerCount:count,name:profileName,mode:'friends'});showWaiting('Creating room…');return}
+    if(action==='create'){const requested=Number(params.get('players'))||2, count=allowedWhotPlayerCounts.indexOf(requested)!==-1?requested:allowedWhotPlayerCounts[0]||2;socket.emit('whot:create-room',{playerCount:count,name:profileName,mode:'friends'});showWaiting('Creating room…');return}
     socket.emit('whot:join-room',{code:roomCode,name:profileName});showWaiting('Joining room '+roomCode+'…');
   });
   socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;if(x.started)setState(x.state);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
@@ -81,7 +83,7 @@ e.inviteBtn.onclick=()=>{if(roomCode){const u=location.origin+location.pathname+
 e.rematchBtn.onclick=()=>{e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
 e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
 REACTIONS.forEach(r=>{const b=document.createElement('button');b.className='react';b.textContent=r;b.onclick=()=>socket.emit('whot:reaction',{code:roomCode,reaction:r});e.reactions.appendChild(b)});
-connect();
+loadWhotConfig().then(function(ok){if(ok)connect()});
 })();
 </script>
 </body>
