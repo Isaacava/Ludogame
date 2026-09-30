@@ -1,0 +1,29 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+      - name: Compile server entrypoints
+        run: |
+          node --check server/index.js
+          node --check server/startAll.js
+          node --check server/whotServer.js
+          node --check server/engine/whotEngine.js
+          node --check server/rooms/whotRoomManager.js
+          node --check server/whatsappBot.js
+          node --check server/bot/metaWhatsAppAdapter.js
