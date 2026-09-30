@@ -11,6 +11,7 @@ const {
 
 const token=createWhatsAppGameToken('+2348000000000');
 assert(token);
+assert(!token.includes('+2348000000000'), 'game identity token must not expose the WhatsApp number');
 assert.deepEqual(resolveWhatsAppGameToken(token),{phone:'+2348000000000'});
 assert.equal(resolveWhatsAppGameToken(token+'.tampered'),null);
 
