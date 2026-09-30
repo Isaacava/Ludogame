@@ -59,10 +59,21 @@ function normalizePhone(raw){const digits=String(raw||'').replace(/\D/g,'');retu
 function generateLoginCode(){return Math.floor(100000+Math.random()*900000).toString();}
 const GAME_MENU=`Which game do you want to play?
 1. 🎲 Ludo
-2. 🃏 Whot (coming soon)
+2. 🃏 Whot
 3. ♟️ Chess (coming soon)
 
 Reply with a number.`;
+const WHOT_MODE_MENU=`Whot — how do you want to play?
+1. 🤖 vs Computer
+2. 👥 vs Friends (create a room & get a code)
+
+Reply with a number.`;
+const WHOT_COUNT_MENU=`How many players?
+2 — classic 2-player game
+3 — 3 players
+4 — 4 players
+
+Reply 2, 3 or 4.`;
 const MODE_MENU=`Ludo — how do you want to play?
 1. 🤖 vs Computer
 2. 👥 vs Friends (create a room & get a code)
@@ -91,9 +102,19 @@ function handleMessage(user,text){
   }
   if(user.stage==='game_menu'){
     if(t==='1'||t.includes('ludo'))return{reply:MODE_MENU,patch:{stage:'ludo_mode_menu'}};
-    if(t==='2'||t.includes('whot'))return{reply:`Whot is coming soon! 🃏 Want to play Ludo instead?\n\n${GAME_MENU}`,patch:{}};
+    if(t==='2'||t.includes('whot'))return{reply:WHOT_MODE_MENU,patch:{stage:'whot_mode_menu'}};
     if(t==='3'||t.includes('chess'))return{reply:`Chess is coming soon! ♟️ Want to play Ludo instead?\n\n${GAME_MENU}`,patch:{}};
     return{reply:`Didn't catch that.\n\n${GAME_MENU}`,patch:{}};
+  }
+  if(user.stage==='whot_mode_menu'){
+    if(t==='1'||t.includes('computer'))return{reply:'Whot vs Computer is a 2-player game.\n\nTap to play:\n'+SITE_URL+'/whot.html?mode=computer&players=2&name='+encodeURIComponent(user.name||'Guest'),patch:{stage:'game_menu'}};
+    if(t==='2'||t.includes('friend'))return{reply:WHOT_COUNT_MENU,patch:{stage:'whot_count',pendingMode:'friends'}};
+    return{reply:`Didn't catch that.\n\n${WHOT_MODE_MENU}`,patch:{stage:'whot_mode_menu'}};
+  }
+  if(user.stage==='whot_count'){
+    if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\n\n${WHOT_COUNT_MENU}`,patch:{stage:'whot_count'}};
+    const link=`${SITE_URL}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}`;
+    return{reply:`Tap to create your Whot room — you'll get a 4-letter code:\n${link}\n\nShare the code with your friends.`,patch:{stage:'game_menu',pendingMode:null}};
   }
   if(user.stage==='ludo_mode_menu'){
     if(t==='1'||t.includes('computer'))return{reply:COUNT_MENU,patch:{stage:'ludo_count',pendingMode:'computer'}};
