@@ -6,7 +6,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/startAll.js",
-    "test": "node server/test/runAll.js"
+    "test": "node server/test/runAll.js",
+    "start:bot": "node server/whatsappServer.js"
   },
   "dependencies": {
     "express": "^5.2.1",
