@@ -5,30 +5,27 @@
 CodePlay uses a single Railway service containing two processes:
 
 - CodePlay Node/Express + Socket.IO on the Railway PORT (3000 in production).
-- WAHA GOWS on an internal-only port (3001).
+- WAHA NOWEB on an internal-only port (3001).
 - WAHA sends message webhooks to CodePlay at http://127.0.0.1:3000/waha/webhook.
 - CodePlay sends replies back to WAHA at http://127.0.0.1:3001.
-- WAHA session data is persisted in /app/.sessions on a Railway Volume so the WhatsApp account does not need to be paired after every restart.
+- WAHA session data should be persisted in /app/.sessions on a Railway Volume so the WhatsApp account does not need to be paired after every restart.
 - MongoDB Atlas remains the persistent application database.
 
 Railway private networking is not needed between the two processes because they share one container. The public Railway domain is for CodePlay only.
 
-## Why WAHA
+## Why WAHA NOWEB
 
-WAHA is a self-hosted WhatsApp HTTP API. As of WAHA 2026.6.1, features previously split between Core and Plus are included in the free open-source WAHA Core image. The current release line includes 2026.9.1.
+WAHA NOWEB communicates directly with WhatsApp over WebSocket and does not run Chromium/Chrome, which saves CPU and memory. WAHA documents NOWEB as a lightweight engine and supports session creation, QR authentication, phone-number pairing code, sendText, and message webhooks. citeturn421684search0turn421684search1
 
-This project uses the lightweight GOWS engine because it does not require Chromium. WAHA documents approximately 200 MB memory for one GOWS or NOWEB session versus about 400 MB for WEBJS. Railway Free is limited to 0.5 GB RAM per service, so GOWS is the practical choice for a single-session test bot.
+This project uses NOWEB because Railway Free is memory constrained and the previous WEBJS configuration was killed by memory pressure. NOWEB removes the browser process entirely.
 
-Sources:
-- https://github.com/devlikeapro/waha
-- https://waha.devlike.pro/docs/how-to/engines/
-- https://waha.devlike.pro/docs/overview/faq/
+The Docker image is devlikeapro/waha:noweb, which WAHA documents as the browserless image for NOWEB. citeturn421684search1
 
 ## Railway service
 
 The Railway codeplay-ludo service should use the repository Dockerfile.
 
-Docker base image: devlikeapro/waha:gows-2026.9.1
+Docker base image: devlikeapro/waha:noweb
 
 The container runs node /codeplay/server/runCombined.js. That supervisor starts both CodePlay and WAHA and shuts the sibling process down if either process exits.
 
@@ -45,15 +42,15 @@ ADMIN_PASSWORD=<long-random-secret>
 WAHA_URL=http://127.0.0.1:3001
 WAHA_API_PORT=3001
 WAHA_SESSION=default
-WHATSAPP_DEFAULT_ENGINE=GOWS
+WHATSAPP_DEFAULT_ENGINE=NOWEB
+WAHA_NOWEB_WA_VERSION=auto-web
+WAHA_NOWEB_WA_VERSION_FORCE=False
 WAHA_API_KEY=<long-random-secret>
 WAHA_WEBHOOK_SECRET=<long-random-secret>
 WAHA_PAIRING_PASSWORD=<long-random-secret>
 WAHA_DASHBOARD_ENABLED=false
 WHATSAPP_SWAGGER_ENABLED=false
 WAHA_WORKER_RESTART_SESSIONS=true
-WAHA_CLIENT_DEVICE_NAME=CodePlay
-WAHA_CLIENT_BROWSER_NAME=Chrome
 
 WHATSAPP_HOOK_URL=http://127.0.0.1:3000/waha/webhook
 WHATSAPP_HOOK_EVENTS=message
@@ -85,7 +82,13 @@ CodePlay creates/starts the default WAHA session automatically.
 
 When the page shows SCAN_QR_CODE, scan the displayed QR from WhatsApp on the phone that will act as the bot account: WhatsApp → Settings → Linked devices → Link a device.
 
-The QR expires quickly, so the page refreshes it automatically. WAHA documents that QR challenges expire and should be refreshed when the session emits SCAN_QR_CODE.
+The QR expires quickly, so the page refreshes it automatically.
+
+The pairing page also supports WAHA's phone-number pairing code. Enter the bot WhatsApp number in international digits and click Get pairing code. Then on that phone use WhatsApp → Settings → Linked Devices → Link with phone number instead and enter the code returned by WAHA.
+
+WAHA currently documents POST /api/{session}/auth/request-code for NOWEB as well as the other supported engines. citeturn421684search1
+
+Do not set a custom WAHA device name in the session creation request.
 
 ## How incoming messages work
 
@@ -112,8 +115,6 @@ The room tracks successful notifications separately so a failed send can be retr
 
 Attach one Railway Volume to the codeplay-ludo service and mount it at /app/.sessions. That directory is WAHA's persistent session storage.
 
-Railway's current Free/Trial volume limit is 0.5 GB. A single WAHA WhatsApp session is the intended scope here.
-
 ## Important WhatsApp policy caveat
 
 WAHA automates WhatsApp through WhatsApp Web/linked-device mechanisms rather than Meta's official Cloud API. WhatsApp's published Terms and Business Terms restrict unauthorized automated use and can allow accounts to be suspended for violations.
@@ -126,11 +127,4 @@ References:
 
 ## Legacy files
 
-server/whatsappServer.js, server/bot/metaWhatsAppAdapter.js, and the old Render/Meta environment entries remain in the repository for compatibility/history. The active Railway bot transport is server/bot/wahaAdapter.js and the combined server/runCombined.js supervisor.
-## Phone-number pairing
-
-The pairing page also supports WAHA's phone-number pairing code. Enter the bot WhatsApp number in international digits and click **Get pairing code**. Then on that phone use WhatsApp → Settings → Linked Devices → Link with phone number instead and enter the 8-character code returned by WAHA. WAHA documents this endpoint for WEBJS, WPP and the other supported engines.
-
-Do not set a custom WAHA device name for pairing-code authentication; WAHA documents that custom device names can cause pairing-code authentication to fail.
-
-Reference: https://waha.devlike.pro/docs/how-to/sessions/
+server/whatsappServer.js, server/bot/metaWhatsAppAdapter.js, and the old Render/Meta environment entries remain in the repository for compatibility/history. The active Railway bot transport is server/bot/wahaAdapter.js and the combined server/runCombined.js.
