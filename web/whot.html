@@ -62,9 +62,14 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .tableEdge{position:absolute;inset:12px;border-radius:26px;border:1px solid rgba(255,255,255,.07);pointer-events:none}
 .turnArc{position:absolute;width:220px;height:220px;border-radius:50%;border:2px solid rgba(255,215,90,.17);box-shadow:0 0 50px rgba(255,215,90,.08);pointer-events:none;animation:arcPulse 1.8s ease-in-out infinite}
 @keyframes arcPulse{0%,100%{transform:scale(.96);opacity:.65}50%{transform:scale(1);opacity:1}}
-.tableTop{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:4}
-.callPill{padding:7px 12px;border-radius:999px;background:rgba(4,16,12,.54);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:900;color:#ffe99a;backdrop-filter:blur(10px);white-space:nowrap}
-.callPill.bump{animation:callBump .28s ease-out}
+.tableTop{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:20;width:min(430px,calc(100% - 24px));justify-content:center}
+.ruleBanner{padding:8px 14px;border-radius:16px;background:linear-gradient(180deg,rgba(4,22,16,.84),rgba(3,14,11,.78));border:1px solid rgba(255,215,90,.30);box-shadow:0 8px 24px rgba(0,0,0,.22),0 0 20px rgba(255,215,90,.08);backdrop-filter:blur(12px);text-align:center;display:grid;gap:1px;min-width:0;max-width:100%;transition:transform .22s,box-shadow .22s}
+.ruleBanner.bump{animation:callBump .28s ease-out}
+.ruleEyebrow{font-size:8px;font-weight:950;letter-spacing:.14em;color:#9fc4b5;text-transform:uppercase}
+#ruleMain{font-size:13px;line-height:1.15;color:#fff1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ruleSub{font-size:9px;color:#b9ccc5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ruleBanner.whotActive{border-color:rgba(255,215,90,.72);box-shadow:0 0 0 1px rgba(255,215,90,.16),0 0 26px rgba(255,215,90,.18)}
+.ruleBanner.whotActive #ruleMain{color:#ffe680}.ruleBanner.whotActive #ruleSub{color:#edf4ef}
 @keyframes callBump{0%{transform:scale(1)}45%{transform:scale(1.13)}100%{transform:scale(1)}}
 .center{position:absolute;inset:0;display:grid;place-items:center;z-index:3}
 .centerCore{position:relative;display:flex;align-items:center;justify-content:center;gap:18px}
@@ -106,7 +111,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .specialFx.show{animation:specialPop .85s ease-out forwards}
 .specialFx.pick2{color:#ffca63;box-shadow:0 0 30px rgba(255,173,62,.26)}.specialFx.pick3{color:#ff6f7c;box-shadow:0 0 30px rgba(255,86,98,.28)}.specialFx.market{color:#8de9bf;box-shadow:0 0 30px rgba(40,216,109,.22)}.specialFx.whot{color:#ffe680;box-shadow:0 0 30px rgba(255,215,90,.32)}
 @keyframes specialPop{0%{opacity:0;transform:translate(-50%,-42%) scale(.72)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}72%{opacity:1;transform:translate(-50%,-56%) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.94)}}
-.status{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(4,16,12,.46);border:1px solid rgba(255,255,255,.07);font-size:11px;color:#d7e4df;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(10px)}
+.status{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:19;padding:8px 12px;border-radius:999px;background:rgba(4,16,12,.46);border:1px solid rgba(255,255,255,.07);font-size:11px;color:#d7e4df;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(10px)}
 .reactions{position:absolute;left:10px;right:10px;bottom:5px;z-index:21;display:flex;gap:5px;overflow:auto;padding:0 3px;justify-content:center}.react{padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:12px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}.modal.show{display:flex}.modal.show .modalCard{animation:modalIn .22s ease-out}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
@@ -117,14 +122,22 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:59}.confetti span{position:absolute;top:-12px;font-size:18px;animation:fall linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(420deg);opacity:.1}}
 @media(max-width:720px){
  .app{width:100%;padding:0}.topbar{position:absolute;left:0;right:0;top:env(safe-area-inset-top);height:52px;z-index:30;padding:6px 10px}.logoMark{width:34px;height:34px}.brand{font-size:14px}.room{font-size:10px}.iconBtn{background:rgba(4,16,12,.45);backdrop-filter:blur(10px)}
- .arena{min-height:100svh;padding-top:0}.table{border-radius:0;border-left:0;border-right:0}.tableEdge{inset:8px;border-radius:22px}.centerCore{gap:10px}.stack{width:86px;height:122px}.topCard{width:96px;height:136px}
+ .arena{height:100dvh;min-height:100dvh;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:0;padding-top:0}
+ .tableWrap{grid-row:1;position:relative;inset:auto;min-height:0;height:100%}
+ .table{height:100%;border-radius:0;border-left:0;border-right:0}.tableEdge{inset:8px;border-radius:22px}.centerCore{gap:10px}.stack{width:82px;height:116px}.topCard{width:92px;height:130px}
  .topCard .card{font-size:inherit}.card .num{font-size:23px}.card .shape{font-size:50px}
+ .tableTop{top:60px}.ruleBanner{padding:7px 11px;border-radius:14px}.ruleEyebrow{font-size:7px}#ruleMain{font-size:12px}#ruleSub{font-size:8px}
+ .status{top:112px;bottom:auto;font-size:9px;max-width:72%;padding:6px 9px}
+ .handPanel{grid-row:2;position:relative;left:auto;right:auto;bottom:auto;z-index:18;padding:2px 0 0;background:linear-gradient(180deg,rgba(3,15,11,.08),rgba(3,10,8,.78))}
+ .reactions{grid-row:3;position:relative;left:auto;right:auto;bottom:auto;z-index:21;height:34px;padding:3px 8px 6px;justify-content:flex-start;background:rgba(3,10,8,.88)}
+ .handHint{padding:0 24px;margin-bottom:1px}
+
  .hand{min-height:135px;padding:4px 12px 10px;gap:7px}.handCard{width:73px;height:102px;margin:0}.handCard .card{border-width:2px}.handCard .card .shape{font-size:38px}.handCard .card .num{font-size:21px}
  .status{bottom:148px;font-size:10px}.turnArc{width:175px;height:175px}.callPill{font-size:10px}.tableTop{top:60px}.handPanel{bottom:33px}.handHint{padding:0 34px}
 }
 @media(max-width:430px){
- .seat{width:142px;min-height:50px;padding:6px 7px}.seat.seat-rel-0{left:50%;bottom:145px;transform:translateX(-50%)}.seat.seat-count-3.seat-rel-1,.seat.seat-count-4.seat-rel-1{left:6px}.seat.seat-count-3.seat-rel-2,.seat.seat-count-4.seat-rel-3{right:6px}.seat.seat-count-2.seat-rel-1,.seat.seat-count-4.seat-rel-2{left:50%;right:auto;transform:translateX(-50%)}.avatar{width:30px;height:30px;border-radius:9px}.seatName{font-size:10px}.seatMeta{font-size:8px}.miniHand{margin-top:2px}
- .handCard{width:67px;height:94px;margin:0}.hand{min-height:125px;padding:3px 10px 8px;gap:6px}.handHint{font-size:9px}
+ .seat{width:128px;min-height:48px;padding:6px 7px}.seat.seat-rel-0{left:50%;bottom:132px;transform:translateX(-50%)}.seat.seat-count-3.seat-rel-1,.seat.seat-count-4.seat-rel-1{left:4px;top:27%}.seat.seat-count-3.seat-rel-2,.seat.seat-count-4.seat-rel-3{right:4px;left:auto;top:27%;transform:none}.seat.seat-count-2.seat-rel-1,.seat.seat-count-4.seat-rel-2{left:50%;right:auto;top:68px;transform:translateX(-50%)}.seat.seat-count-4.seat-rel-1{top:34%;transform:translateY(-50%)}.seat.seat-count-4.seat-rel-3{top:34%;transform:translateY(-50%)}.avatar{width:29px;height:29px;border-radius:9px}.seatName{font-size:10px}.seatMeta{font-size:8px}.miniHand{margin-top:2px}
+ .handCard{width:64px;height:90px;margin:0}.hand{min-height:104px;height:104px;padding:2px 10px 7px;gap:6px}.handHint{font-size:8px;line-height:1.15}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 </style>
@@ -158,7 +171,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       <div class="table" id="table">
         <div class="tableEdge"></div>
         <div class="turnArc"></div>
-        <div class="tableTop"><div class="callPill" id="callLabel">Match by shape or number</div></div>
+        <div class="tableTop">
+  <div class="ruleBanner" id="ruleBanner">
+    <span class="ruleEyebrow">PLAY</span>
+    <strong id="ruleMain">Match the shape or number</strong>
+    <span id="ruleSub">20 WHOT can change the call</span>
+  </div>
+</div>
 
         <div class="center">
           <div class="centerCore">
@@ -229,7 +248,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     gameOver:document.getElementById('gameOver'),winnerTitle:document.getElementById('winnerTitle'),
     winnerSub:document.getElementById('winnerSub'),results:document.getElementById('results'),
     rematchBtn:document.getElementById('rematchBtn'),shareBtn:document.getElementById('shareBtn'),
-    callLabel:document.getElementById('callLabel'),reactions:document.getElementById('reactions'),
+    callLabel:document.getElementById('callLabel'),ruleBanner:document.getElementById('ruleBanner'),ruleMain:document.getElementById('ruleMain'),ruleSub:document.getElementById('ruleSub'),reactions:document.getElementById('reactions'),
     homeBtn:document.getElementById('homeBtn'),inviteBtn:document.getElementById('inviteBtn'),
     callTitle:document.getElementById('callTitle'),callHelp:document.getElementById('callHelp'),
     specialFx:document.getElementById('specialFx')
@@ -300,9 +319,16 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const bits=['🎉','✨','🏆','🎊'];for(let i=0;i<30;i++){const s=document.createElement('span');s.textContent=bits[i%bits.length];s.style.left=(Math.random()*100)+'%';s.style.animationDuration=(1.7+Math.random()*1.3)+'s';s.style.fontSize=(14+Math.random()*17)+'px';wrap.appendChild(s)}
     setTimeout(()=>wrap.remove(),3200);
   }
-  function animateCall(text){
-    if(e.callLabel.textContent===text)return;
-    e.callLabel.textContent=text;e.callLabel.classList.remove('bump');void e.callLabel.offsetWidth;e.callLabel.classList.add('bump');
+  function animateCall(text,whotActive){
+    if(!e.ruleBanner)return;
+    const normalized=String(text||'');
+    const isWhot=!!whotActive;
+    e.ruleBanner.classList.toggle('whotActive',isWhot);
+    const main=isWhot?normalized:'PLAY '+normalized.replace(/^Match /,'');
+    const sub=isWhot?'Play the called shape/number or 20 WHOT • MARKET is available anytime':'20 WHOT can change the call again';
+    if(e.ruleMain.textContent===main&&e.ruleSub.textContent===sub)return;
+    e.ruleMain.textContent=main;e.ruleSub.textContent=sub;
+    e.ruleBanner.classList.remove('bump');void e.ruleBanner.offsetWidth;e.ruleBanner.classList.add('bump');
   }
 
   function render(extra){
@@ -366,16 +392,21 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     });
 
     let prompt='Match '+cap(state.activeShape||'shape')+' or '+(state.top?state.top.number:'number');
+    let whotActive=false;
     if(state.pendingPick)prompt='Pick '+state.pendingPick.amount+' • defend with '+state.pendingPick.number;
-    if(state.whotCall)prompt='Call: '+(state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value);
-    animateCall(prompt);
+    if(state.whotCall){
+      const called=state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value;
+      prompt='WHOT CALL: '+called+' • play '+called+' or 20 WHOT';
+      whotActive=true;
+    }
+    animateCall(prompt,whotActive);
 
     const isTurn=state.turn===me&&!state.gameOver;
     const canDraw=isTurn;
     e.market.classList.toggle('canDraw',!!canDraw);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=canDraw?onDraw:null;
 
     e.status.textContent=state.gameOver?'Round complete':isTurn?
-      (state.pendingPick?'Tap your matching penalty card, or tap MARKET to take the penalty.':'Your move • tap a highlighted card or MARKET'):
+      (state.pendingPick?'Tap your matching penalty card, or tap MARKET to take the penalty.':state.whotCall?'Play '+(state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value)+' or 20 WHOT • MARKET remains available':'Your move • tap a highlighted card or MARKET'):
       (state.players[state.turn]?state.players[state.turn].name:'Opponent')+' is thinking…';
 
     if(extra&&extra.played&&oldHand[extra.played]){
