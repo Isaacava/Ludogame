@@ -8,7 +8,7 @@ function key(){
   return crypto.createHash('sha256').update(IDENTITY_SECRET,'utf8').digest();
 }
 function base64url(value){
-  return Buffer.from(value).toString('base64').replace(/=/g,'').replace(/\\+/g,'-').replace(/\\//g,'_');
+  return Buffer.from(value).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
 }
 function fromBase64url(value){
   const normalized=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
@@ -38,7 +38,7 @@ function resolveWhatsAppGameToken(token){
     const payload=JSON.parse(Buffer.concat([decipher.update(ciphertext),decipher.final()]).toString('utf8'));
     const phone=String(payload.phone||'');
     const issued=Number(payload.iat||0);
-    if(!/^\\+\\d{7,15}$/.test(phone))return null;
+    if(!/^\+\d{7,15}$/.test(phone))return null;
     if(!Number.isFinite(issued)||Date.now()-issued>7*24*60*60*1000)return null;
     return {phone};
   }catch{return null}
@@ -77,8 +77,8 @@ function gameResultMessage({won,playerName,opponents}){
   const names=(opponents||[]).filter(Boolean);
   const opponentText=names.length===1?names[0]:names.length===2?`${names[0]} and ${names[1]}`:names.length?`${names.slice(0,-1).join(', ')}, and ${names[names.length-1]}`:'your opponents';
   return won
-    ? `🏆 You won!\\n\\nYou won against ${opponentText}.`
-    : `😔 You lost.\\n\\nYou lost to ${opponentText}.`;
+    ? `🏆 You won!\n\nYou won against ${opponentText}.`
+    : `😔 You lost.\n\nYou lost to ${opponentText}.`;
 }
 
 async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
@@ -95,7 +95,7 @@ async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
       : [winner.name||'the winner'];
     return sendWhatsAppText(player.whatsappPhone,
       gameResultMessage({won,playerName:player.name,opponents})
-        +`\\n\\n— CodePlay ${gameName}`
+        +`\n\n— CodePlay ${gameName}`
     ).catch(err=>console.error('WhatsApp result notification failed:',err.message));
   });
   await Promise.all(tasks);
