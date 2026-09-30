@@ -297,6 +297,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   const REACTIONS=['😂','🔥','👏','😭','Omo!','Sharp!'];
 
   let socket=null,roomCode=(params.get('code')||'').trim().toUpperCase(),playerToken=null,me=0,state=null;
+  let reconnectTries=0,reconnecting=false;
   let mode=params.get('mode')||'friends',action=params.get('action')||'create',pendingCardId=null;
 
   const e={
@@ -321,12 +322,19 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     return x;
   }
   function activeKey(){return 'codeplay_active_whot_room:'+tabId()}
+  const ALIVE='codeplay_whot_alive:',ALIVE_MS=8000;
+  function beat(){try{localStorage.setItem(ALIVE+tabId(),String(Date.now()))}catch(err){}}
+  beat();setInterval(beat,2000);
+  addEventListener('pagehide',()=>{try{localStorage.removeItem(ALIVE+tabId())}catch(err){}});
+  addEventListener('pageshow',beat);
+  function tabAlive(id){try{const t=Number(localStorage.getItem(ALIVE+id)||0);return t&&Date.now()-t<ALIVE_MS}catch(err){return false}}
   function saveRoom(){if(roomCode&&playerToken)localStorage.setItem(activeKey(),JSON.stringify({code:roomCode,playerToken,savedAt:Date.now()}))}
   function loadRoom(){try{return JSON.parse(localStorage.getItem(activeKey())||'null')}catch(err){return null}}
   function loadSavedRoomForCode(code){
     const target=String(code||'').trim().toUpperCase(),prefix='codeplay_active_whot_room:';let out=null;
     for(let i=0;i<localStorage.length;i++){
       const key=localStorage.key(i);if(!key||!key.startsWith(prefix))continue;
+      if(key===activeKey()||tabAlive(key.slice(prefix.length)))continue; /* never take a seat from a tab that is still open */
       try{const item=JSON.parse(localStorage.getItem(key)||'null');if(item&&String(item.code||'').toUpperCase()===target&&item.playerToken&&(!out||Number(item.savedAt||0)>Number(out.savedAt||0)))out=item}catch(err){}
     }
     return out;
@@ -525,14 +533,20 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     socket.on('connect',()=>{
       if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer'});showWaiting('Starting your computer match…');return}
       if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends'});showWaiting('Creating your Whot room…');return}
-      if(playerToken&&roomCode){socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
-      socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null});showWaiting('Joining room '+roomCode+'…');
+      if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
+      reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null});showWaiting('Joining room '+roomCode+'…');
     });
     socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
-    socket.on('whot:joined',x=>{roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+    socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:state',x=>{if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state,x)});
     socket.on('whot:status',x=>{if(x.roomCode)roomCode=x.roomCode;if(x.waiting===true)showWaiting(x.text||'Waiting for players…');else if(x.text)e.status.textContent=x.text});
-    socket.on('whot:error',x=>{const msg=x.message||String(x);e.status.textContent=msg;if(['room-full','room-not-found','room-ready','whot-disabled','player-count-disabled'].includes(msg))showWaiting(msg)});
+    socket.on('whot:error',x=>{const msg=x.message||String(x);
+      if(reconnecting&&(msg==='seat-already-connected'||msg==='invalid-reconnect-token')){
+        if(msg==='seat-already-connected'&&reconnectTries<3){reconnectTries++;showWaiting('Reconnecting to room '+roomCode+'…');setTimeout(()=>socket.emit('whot:reconnect',{code:roomCode,playerToken}),1500);return}
+        /* that seat belongs to someone else (or is gone) — join as a new player instead of hanging */
+        reconnecting=false;playerToken=null;try{localStorage.removeItem(activeKey())}catch(err){}
+        showWaiting('Joining room '+roomCode+'…');socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null});return}
+      e.status.textContent=msg;if(['room-full','room-not-found','room-ready','whot-disabled','player-count-disabled'].includes(msg))showWaiting(msg)});
     socket.on('game-audio',x=>{if(x&&x.game==='whot'&&window.CodePlayAudio)CodePlayAudio.play(x.cue)});
     socket.on('whot:reaction',x=>{e.status.textContent=(x.name||'Player')+' '+x.reaction});
     socket.on('whot:rematch-status',x=>{e.status.textContent=x.requested+' / '+x.needed+' players ready for a rematch.'});
