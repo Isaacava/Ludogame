@@ -12,7 +12,7 @@ function getGameSiteUrl(){
     process.env.SITE_ORIGIN,
     ...(String(process.env.CORS_ORIGIN||'').split(',').map(v=>v.trim())),
     process.env.SITE_URL
-  ].map(v=>String(v||'').replace(/\\/+$/,'')).filter(v=>/^https?:\\/\\//i.test(v)&&!/railway\\.app(?:\\/|$)/i.test(v));
+  ].map(v=>String(v||'').replace(/\/+$/,'')).filter(v=>/^https?:\/\//i.test(v)&&!/railway\.app(?:\/|$)/i.test(v));
   return candidates[0]||'https://codeplay.com';
 }
 const LOGIN_CODE_TTL_MS=10*60*1000;
