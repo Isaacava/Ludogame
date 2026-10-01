@@ -69,9 +69,9 @@ waha.on('exit',(code,signal)=>{
 });
 
 function buildSessionConfig(){
-  const webhookUrl=process.env.WHATSAPP_HOOK_URL;
-  const secret=process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY;
-  const events=String(process.env.WHATSAPP_HOOK_EVENTS||'message').split(',').map(v=>v.trim()).filter(Boolean);
+  const webhookUrl=globalWebhookUrl;
+  const secret=webhookSecret;
+  const events=String(process.env.WHATSAPP_HOOK_EVENTS||'message,message.any').split(',').map(v=>v.trim()).filter(Boolean);
   if(!events.includes('session.status'))events.push('session.status');
   const webhook=webhookUrl?{
     url:webhookUrl,
