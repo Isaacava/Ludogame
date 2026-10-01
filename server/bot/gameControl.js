@@ -61,7 +61,7 @@ function roomSummary(room){
   return {
     code:room?.code||null,
     playerCount:Number(room?.playerCount||humans.length||0),
-    reserved:h​​umans.length,
+    reserved:humans.length,
     connected:humans.filter(p=>!!p.socketId).length,
     open:roomHasOpenSeat(room),
     started:!!room?.engine,
