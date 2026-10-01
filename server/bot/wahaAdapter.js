@@ -79,6 +79,35 @@ async function recreateUnpairedFailedSession(fetchImpl){
   return {ok:true,status:'STARTING',data,recreated:true};
 }
 
+async function resetWahaSession(fetchImpl){
+  const session=getWahaSession();
+  try{
+    const current=await getWahaSessionInfo(fetchImpl);
+    if(current.res.ok&&current.data.status==='WORKING'&&current.data.me?.id){
+      return {ok:false,status:'WORKING',message:'Session is already connected; refusing to delete a working WhatsApp session.'};
+    }
+  }catch{}
+  try{
+    const remove=await wahaRequest('/api/sessions/'+encodeURIComponent(session),{method:'DELETE'},fetchImpl);
+    if(!remove.ok&&remove.status!==404){
+      return {ok:false,status:remove.status,message:await remove.text().catch(()=>'')||'Could not delete failed WAHA session.'};
+    }
+  }catch(e){ return {ok:false,status:502,message:e.message}; }
+
+  const create=await wahaRequest('/api/sessions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({name:session,start:true,config:{
+      webhooks:(()=>{const url=getPublicBaseUrl();const secret=process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY;const events=String(process.env.WHATSAPP_HOOK_EVENTS||'message,message.any').split(',').map(v=>v.trim()).filter(Boolean);if(!events.includes('session.status'))events.push('session.status');return url?[{url,events,...(secret?{hmac:{key:secret}}:{}),retries:{policy:'exponential',delaySeconds:2,attempts:8}}]:[]})(),
+      noweb:{markOnline:true}
+    }})
+  },fetchImpl);
+  if(!create.ok&&create.status!==409){
+    return {ok:false,status:create.status,message:await create.text().catch(()=>'')||'Could not create fresh WAHA session.'};
+  }
+  return {ok:true,status:'STARTING'};
+}
+
 async function resolveInboundChatId(payload,fetchImpl){
   const from=String(payload?.from||'');
   const chatId=String(payload?.chatId||from||'');
@@ -255,7 +284,7 @@ img{width:320px;max-width:100%;border:1px solid #ddd;border-radius:16px}
 <h1>CodePlay WhatsApp</h1>
 <p id="status" class="muted">Checking session…</p>
 <img id="qr" alt="WhatsApp QR code" style="display:none">
-<p id="help" class="muted"></p><button id="showQr" onclick="showQr()" style="margin-top:10px;width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-weight:700">Show QR code</button>
+<p id="help" class="muted"></p><button id="showQr" onclick="showQr()" style="margin-top:10px;width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-weight:700">Show QR code</button><button id="reset" onclick="resetSession()" style="margin-top:10px;width:100%;padding:12px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;font-weight:700">Reset WhatsApp session</button>
 <div style="margin-top:20px;text-align:left">
 <label for="phone"><strong>Pair with phone number</strong></label>
 <p class="muted" style="margin:6px 0 10px">Enter the bot WhatsApp number in international digits, without +, spaces or dashes.</p>
@@ -278,6 +307,26 @@ async function showQr(){
     qr.style.display='block';
     document.getElementById('help').textContent='On your phone: WhatsApp → Settings → Linked devices → Link a device, then scan this QR. Keep this page open while scanning.';
   }catch(e){document.getElementById('help').textContent=e.message||'Could not load the QR code.';}
+}
+async function resetSession(){
+  const button=document.getElementById('reset');
+  if(!confirm('This will remove the current WAHA session and require pairing again. Continue?'))return;
+  button.disabled=true;
+  button.textContent='Resetting…';
+  try{
+    const r=await fetch('/waha/reset',{method:'POST',credentials:'same-origin'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.message||data.error||('Reset failed: '+r.status));
+    document.getElementById('status').textContent='Session status: '+(data.status||'STARTING');
+    document.getElementById('help').textContent='Fresh session created. QR pairing will be available shortly.';
+    document.getElementById('qr').style.display='none';
+    setTimeout(refresh,2000);
+  }catch(e){
+    document.getElementById('help').textContent=e.message||'Could not reset the session.';
+  }finally{
+    button.disabled=false;
+    button.textContent='Reset WhatsApp session';
+  }
 }
 async function requestCode(){
   const phone=document.getElementById('phone').value.replace(/\D/g,'');
@@ -432,6 +481,15 @@ function createWahaApp(opts={}){
     res.status(200).json(out);
   });
 
+  app.post('/waha/reset',pairingAuth,async(req,res)=>{
+    try{
+      const result=await resetWahaSession(fetchImpl);
+      return res.status(result.ok?200:409).json(result);
+    }catch(e){
+      return res.status(502).json({error:'waha-reset-failed',message:e.message});
+    }
+  });
+
   app.post('/waha/pairing-code',pairingAuth,express.json(),async(req,res)=>{
     try{
       const raw=String(req.body?.phoneNumber||'');
@@ -476,4 +534,4 @@ function createWahaApp(opts={}){
   return app;
 }
 
-module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage};
+module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage,resetWahaSession};
