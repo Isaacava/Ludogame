@@ -81,45 +81,47 @@ async function recreateUnpairedFailedSession(fetchImpl){
 }
 
 async function resolveInboundChatId(payload,fetchImpl){
+  const from=String(payload?.from||'');
+  const chatId=String(payload?.chatId||from||'');
   const participant=String(payload?.participant||'');
-  const candidate=(participant.endsWith('@c.us')&&String(payload?.from||'').endsWith('@lid'))
-    ? participant
-    : String(payload?.chatId||payload?.from||'');
-  if(!candidate)return {chatId:null,phone:null};
+  const key=payload?._data?.key||{};
+  const senderPn=String(key.senderPn||key.participantPn||'');
+  const remoteJidAlt=String(key.remoteJidAlt||'');
+  if(!chatId)return {chatId:null,phone:null,reason:'missing-chat-id'};
 
-  if(candidate.endsWith('@lid')){
-    const lid=encodeURIComponent(candidate);
-    const response=await wahaRequest(`/api/${encodeURIComponent(getWahaSession())}/lids/${lid}`,{},fetchImpl);
-    const data=await response.json().catch(()=>({}));
-    const phoneChatId=String(data?.pn||'');
-    if(response.ok&&phoneChatId.endsWith('@c.us')){
-      return {chatId:phoneChatId,phone:normalizePhone(phoneChatId)};
-    }
-    // Keep the original id for diagnostics, but do not try to send to @lid.
-    return {chatId:null,phone:null,lid:candidate};
+  if(chatId.endsWith('@g.us')||chatId.endsWith('@newsletter')||chatId.endsWith('@broadcast')){
+    return {chatId:null,phone:null,reason:'ignored-non-private-chat',originalChatId:chatId};
   }
 
-  if(candidate.endsWith('@c.us')){
-    return {chatId:candidate,phone:normalizePhone(candidate)};
+  if(chatId.endsWith('@c.us')){
+    return {chatId,phone:normalizePhone(chatId)};
   }
 
-  if(candidate.endsWith('@g.us')||candidate.endsWith('@newsletter')){
-    return {chatId:candidate,phone:null};
+  const directPhoneCandidates=[participant,senderPn,remoteJidAlt]
+    .map(v=>String(v||''))
+    .filter(v=>v.endsWith('@c.us'));
+  if(directPhoneCandidates.length){
+    const phoneChatId=directPhoneCandidates[0];
+    return {chatId:phoneChatId,phone:normalizePhone(phoneChatId),lid:chatId,source:'payload-mapping'};
   }
 
-  return {chatId:candidate,phone:normalizePhone(candidate)};
+  if(chatId.endsWith('@lid')){
+    const lid=encodeURIComponent(chatId);
+    try{
+      const response=await wahaRequest(`/api/${encodeURIComponent(getWahaSession())}/lids/${lid}`,{},fetchImpl);
+      const data=await response.json().catch(()=>({}));
+      const phoneChatId=String(data?.pn||'');
+      if(response.ok&&phoneChatId.endsWith('@c.us')){
+        return {chatId:phoneChatId,phone:normalizePhone(phoneChatId),lid:chatId,source:'lid-api'};
+      }
+    }catch{}
+    // WAHA supports sending directly to @lid. Keep the exact chatId when a phone mapping is unavailable.
+    return {chatId,phone:null,lid:chatId,source:'lid-direct'};
+  }
+
+  return {chatId,phone:normalizePhone(chatId),source:'fallback'};
 }
 
-const stats={
-  startedAt:Date.now(),
-  webhooksReceived:0,
-  lastWebhookAt:null,
-  lastEvent:null,
-  repliesSent:0,
-  lastReplyAt:null,
-  lastError:null,
-  lastRejected:null
-};
 const processedMessageIds=new Map();
 const EVENT_WS_RECONNECT_MS=3000;
 
@@ -142,28 +144,63 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
     return;
   }
   if(body?.event!=='message'&&body?.event!=='message.any')return;
+
   const payload=body.payload||{};
-  if(payload.fromMe)return;
-  const messageKey=payload.id||`${payload.from||''}|${payload.timestamp||''}|${payload.body||''}`;
+  const fromMe=Boolean(payload.fromMe);
+  const messageId=payload.id&&typeof payload.id==='object'?(payload.id._serialized||payload.id.id):payload.id;
+  stats.lastMessageReceived={
+    at:new Date().toISOString(),
+    event:body.event,
+    id:messageId||null,
+    from:payload.from||null,
+    chatId:payload.chatId||null,
+    fromMe,
+    body:String(payload.body||'').slice(0,200),
+    source:payload.source||null
+  };
+
+  if(fromMe){
+    stats.lastIgnored={at:Date.now(),reason:'fromMe',chatId:payload.from||payload.chatId||null};
+    console.log('[waha] ignored fromMe message');
+    return;
+  }
+
+  const messageKey=messageId||`${payload.from||payload.chatId||''}|${payload.timestamp||''}|${payload.body||''}`;
   if(rememberMessage(messageKey))return;
 
   const resolved=await resolveInboundChatId(payload,fetchImpl);
-  const chatId=resolved.chatId;
-  if(!chatId)return;
+  if(!resolved.chatId){
+    stats.lastIgnored={at:Date.now(),reason:resolved.reason||'no-chat-id',chatId:payload.from||payload.chatId||null};
+    console.warn('[waha] ignored message:',stats.lastIgnored.reason);
+    return;
+  }
 
-  const phone=resolved.phone;
-  const text=payload.body||'';
-  if(!text)return;
+  const chatId=resolved.chatId;
+  const text=String(
+    payload.body ??
+    payload._data?.message?.conversation ??
+    payload._data?.message?.extendedTextMessage?.text ??
+    ''
+  ).trim();
+
+  if(!text){
+    stats.lastIgnored={at:Date.now(),reason:'no-text',chatId};
+    console.warn('[waha] ignored message with no text:',chatId);
+    return;
+  }
+
+  const identityKey=resolved.phone||chatId;
 
   try{
-    const existing=phone?await userStore.getAsync(phone):undefined;
+    const existing=await userStore.getAsync(identityKey);
     const {reply,patch}=handleMessage(existing,text,cfgStore);
-    if(phone)userStore.upsert(phone,patch);
+    userStore.upsert(identityKey,{...patch,phone:identityKey});
     await sendWahaText(chatId,reply,fetchImpl);
     stats.repliesSent++;
     stats.lastReplyAt=Date.now();
     stats.lastError=null;
-    console.log('[waha] replied to '+chatId);
+    stats.lastIgnored=null;
+    console.log('[waha] replied to '+chatId+' identity='+identityKey);
   }catch(e){
     stats.lastError={at:Date.now(),message:e.message};
     console.error('[waha] reply failed:',e.stack||e.message);
@@ -400,7 +437,9 @@ function createWahaApp(opts={}){
         repliesSent:stats.repliesSent,
         lastReplyAt:stats.lastReplyAt?new Date(stats.lastReplyAt).toISOString():null,
         lastError:stats.lastError,
-        lastRejected:stats.lastRejected
+        lastRejected:stats.lastRejected,
+        lastMessageReceived:stats.lastMessageReceived,
+        lastIgnored:stats.lastIgnored
       },
       problems:[]
     };
