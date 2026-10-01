@@ -44,7 +44,26 @@ function resolveWhatsAppGameToken(token){
   }catch{return null}
 }
 
+async function sendWahaWhatsAppText(to,text,fetchImpl=global.fetch){
+  const base=String(process.env.WAHA_URL||'http://127.0.0.1:3001').replace(/\/+$/,'');
+  const session=process.env.WAHA_SESSION||'default';
+  const headers={'Content-Type':'application/json'};
+  if(process.env.WAHA_API_KEY)headers['X-Api-Key']=process.env.WAHA_API_KEY;
+  const chatId=String(to).replace(/\D/g,'')+'@c.us';
+  const res=await fetchImpl(base+'/api/sendText',{
+    method:'POST',
+    headers,
+    body:JSON.stringify({chatId,text:String(text||''),session})
+  });
+  if(!res.ok){
+    const body=await res.text().catch(()=>'');
+    throw new Error('WAHA WhatsApp send failed: '+res.status+' '+body);
+  }
+  return res.json().catch(()=>null);
+}
+
 async function sendWhatsAppText(to,text,fetchImpl=global.fetch){
+  if(process.env.WAHA_API_KEY||process.env.WAHA_URL)return sendWahaWhatsAppText(to,text,fetchImpl);
   const graphVersion=process.env.META_GRAPH_API_VERSION||'v26.0';
   const phoneNumberId=process.env.META_WHATSAPP_PHONE_NUMBER_ID||'';
   const accessToken=process.env.META_WHATSAPP_ACCESS_TOKEN||'';
@@ -110,4 +129,4 @@ async function notifyGameResults(room,{winnerIndex,gameName='game'}={}){
   return room.whatsappResultsPromise;
 }
 
-module.exports={createWhatsAppGameToken,resolveWhatsAppGameToken,sendWhatsAppText,buildGameIdentityQuery,notifyGameResults,gameResultMessage};
+module.exports={createWhatsAppGameToken,resolveWhatsAppGameToken,sendWhatsAppText,sendWahaWhatsAppText,buildGameIdentityQuery,notifyGameResults,gameResultMessage};
