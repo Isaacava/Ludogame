@@ -49,8 +49,8 @@ const app=express();
 const {router:adminRouter}=createAdminRoutes(configStore);
 app.use('/api/admin',adminRouter);
 app.use(createMetaWhatsAppApp({users,configStore}));
-app.use(createBotApp({users,sessions,configStore}));
 app.use(createWahaApp({users}));
+app.use(createBotApp({users,sessions,configStore}));
 app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/config/public',(req,res)=>{
