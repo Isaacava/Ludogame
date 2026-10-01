@@ -6,12 +6,17 @@ const wahaPort=String(process.env.WAHA_API_PORT||'3001');
 const wahaUrl=process.env.WAHA_URL||`http://127.0.0.1:${wahaPort}`;
 const session=process.env.WAHA_SESSION||'default';
 const apiKey=process.env.WAHA_API_KEY||'';
+const publicBaseUrl=(process.env.PUBLIC_BASE_URL||process.env.SITE_URL||(process.env.RAILWAY_PUBLIC_DOMAIN?'https://'+process.env.RAILWAY_PUBLIC_DOMAIN:'')).replace(/\/+$/,'');
+const webhookSecret=process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY||'';
+const globalWebhookUrl=process.env.WHATSAPP_HOOK_URL||(publicBaseUrl?publicBaseUrl+'/waha/webhook':'');
 
 const app=spawn(process.execPath,['server/startAll.js'],{
   cwd:codeplayDir,
   env:{...process.env},
   stdio:'inherit'
 });
+
+console.log('WAHA global webhook: '+(globalWebhookUrl||'(not configured)')+' events='+(process.env.WHATSAPP_HOOK_EVENTS||'message')+' hmac='+String(!!webhookSecret));
 
 const waha=spawn('/entrypoint.sh',[],{
   cwd:'/app',
@@ -23,7 +28,13 @@ const waha=spawn('/entrypoint.sh',[],{
     PORT:wahaPort,
     WHATSAPP_API_PORT:wahaPort,
     WAHA_BASE_URL:wahaUrl,
-    WAHA_LOG_LEVEL:process.env.WAHA_LOG_LEVEL||'info'
+    WAHA_LOG_LEVEL:process.env.WAHA_LOG_LEVEL||'info',
+    WHATSAPP_HOOK_URL:globalWebhookUrl,
+    WHATSAPP_HOOK_EVENTS:process.env.WHATSAPP_HOOK_EVENTS||'message',
+    WHATSAPP_HOOK_HMAC_KEY:webhookSecret,
+    WHATSAPP_HOOK_RETRIES_POLICY:process.env.WHATSAPP_HOOK_RETRIES_POLICY||'exponential',
+    WHATSAPP_HOOK_RETRIES_DELAY_SECONDS:process.env.WHATSAPP_HOOK_RETRIES_DELAY_SECONDS||'2',
+    WHATSAPP_HOOK_RETRIES_ATTEMPTS:process.env.WHATSAPP_HOOK_RETRIES_ATTEMPTS||'8'
   },
   stdio:'inherit'
 });
