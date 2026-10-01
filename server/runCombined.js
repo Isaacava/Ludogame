@@ -22,7 +22,8 @@ const waha=spawn('/entrypoint.sh',[],{
     WAHA_NOWEB_WA_VERSION_FORCE:process.env.WAHA_NOWEB_WA_VERSION_FORCE||'False',
     PORT:wahaPort,
     WHATSAPP_API_PORT:wahaPort,
-    WAHA_BASE_URL:wahaUrl
+    WAHA_BASE_URL:wahaUrl,
+    WAHA_LOG_LEVEL:process.env.WAHA_LOG_LEVEL||'info'
   },
   stdio:'inherit'
 });
@@ -56,6 +57,27 @@ waha.on('exit',(code,signal)=>{
   }
 });
 
+function buildSessionConfig(){
+  const webhookUrl=process.env.WHATSAPP_HOOK_URL;
+  const secret=process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY;
+  const events=String(process.env.WHATSAPP_HOOK_EVENTS||'message,session.status').split(',').map(v=>v.trim()).filter(Boolean);
+  const webhook=webhookUrl?{
+    url:webhookUrl,
+    events,
+    ...(secret?{hmac:{key:secret}}:{}),
+    retries:{
+      policy:process.env.WHATSAPP_HOOK_RETRIES_POLICY||'exponential',
+      delaySeconds:Number(process.env.WHATSAPP_HOOK_RETRIES_DELAY_SECONDS||2),
+      attempts:Number(process.env.WHATSAPP_HOOK_RETRIES_ATTEMPTS||8)
+    }
+  }:null;
+  return {
+    ...(webhook?{webhooks:[webhook]}:{}),
+    noweb:{markOnline:true},
+    ...(process.env.WAHA_SESSION_DEBUG==='true'?{debug:true}:{})
+  };
+}
+
 async function waitForWaha(){
   if(!apiKey){
     console.error('WAHA_API_KEY is not set; refusing to bootstrap the WAHA session.');
@@ -75,6 +97,21 @@ async function waitForWaha(){
   return false;
 }
 
+async function updateSessionConfig(){
+  const config=buildSessionConfig();
+  if(!Object.keys(config).length)return true;
+  const update=await fetch(`${wahaUrl}/api/sessions/${encodeURIComponent(session)}`,{
+    method:'PUT',
+    headers:{'X-Api-Key':apiKey,'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({name:session,config})
+  });
+  if(!update.ok){
+    console.error('WAHA session config update failed:',update.status,await update.text().catch(()=>''));
+    return false;
+  }
+  return true;
+}
+
 async function ensureSession(){
   if(!await waitForWaha())return;
   try{
@@ -83,7 +120,8 @@ async function ensureSession(){
     });
     if(get.ok){
       const data=await get.json().catch(()=>({}));
-      if(data.status==='STOPPED'||data.status==='FAILED'){
+      if(data.status!=='WORKING'){
+        await updateSessionConfig();
         await fetch(`${wahaUrl}/api/sessions/${encodeURIComponent(session)}/start`,{
           method:'POST',
           headers:{'X-Api-Key':apiKey,'Content-Type':'application/json'}
@@ -100,7 +138,8 @@ async function ensureSession(){
       headers:{'X-Api-Key':apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({
         name:session,
-        start:true
+        start:true,
+        config:buildSessionConfig()
       })
     });
     if(!create.ok&&create.status!==409){
