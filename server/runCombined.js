@@ -121,8 +121,8 @@ async function ensureSession(){
     });
     if(get.ok){
       const data=await get.json().catch(()=>({}));
-      if(data.status!=='WORKING'){
-        await updateSessionConfig();
+      await updateSessionConfig();
+      if(data.status==='STOPPED'||data.status==='FAILED'){
         await fetch(`${wahaUrl}/api/sessions/${encodeURIComponent(session)}/start`,{
           method:'POST',
           headers:{'X-Api-Key':apiKey,'Content-Type':'application/json'}
