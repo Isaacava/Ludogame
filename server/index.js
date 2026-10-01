@@ -11,10 +11,12 @@ const {createWahaApp}=require('./bot/wahaAdapter');
 const {createMetaWhatsAppApp}=require('./bot/metaWhatsAppAdapter');
 const {MongoPersistence}=require('./db/mongoPersistence');
 const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
+const {registerGameManager}=require('./bot/gameControl');
 
 const PORT=process.env.PORT||3001;
 const configStore=new ConfigStore();
 const rooms=new RoomManager(configStore);
+registerGameManager('ludo',rooms);
 const persistence=new MongoPersistence();
 const users=new UserStore(persistence);
 const sessions=new SessionStore(persistence);
