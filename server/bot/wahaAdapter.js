@@ -221,7 +221,14 @@ function createWahaApp(opts={}){
 
   app.post('/waha/webhook',express.raw({type:['application/json','application/*+json']}),async(req,res)=>{
     const rawBody=Buffer.isBuffer(req.body)?req.body:Buffer.from(req.body||'');
-    if(!verifyWebhook(rawBody,req))return res.sendStatus(401);
+    console.log('WAHA webhook received', {
+      hmacPresent: Boolean(req.get('x-webhook-hmac')),
+      bytes: rawBody.length
+    });
+    if(!verifyWebhook(rawBody,req)){
+      console.warn('WAHA webhook rejected: invalid HMAC');
+      return res.sendStatus(401);
+    }
 
     let body={};
     try{body=JSON.parse(rawBody.toString('utf8')||'{}');}
@@ -231,7 +238,7 @@ function createWahaApp(opts={}){
       console.warn('WAHA session.status:',JSON.stringify(body));
       return res.sendStatus(200);
     }
-    if(body.event!=='message')return res.sendStatus(200);
+    if(body.event!=='message' && body.event!=='message.any')return res.sendStatus(200);
     const payload=body.payload||{};
     if(payload.fromMe)return res.sendStatus(200);
 
