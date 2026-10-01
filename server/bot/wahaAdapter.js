@@ -78,7 +78,10 @@ async function recreateUnpairedFailedSession(fetchImpl){
 }
 
 async function resolveInboundChatId(payload,fetchImpl){
-  const candidate=String(payload?.chatId||payload?.from||'');
+  const participant=String(payload?.participant||'');
+  const candidate=(participant.endsWith('@c.us')&&String(payload?.from||'').endsWith('@lid'))
+    ? participant
+    : String(payload?.chatId||payload?.from||'');
   if(!candidate)return {chatId:null,phone:null};
 
   if(candidate.endsWith('@lid')){
