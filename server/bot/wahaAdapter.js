@@ -76,6 +76,33 @@ async function recreateUnpairedFailedSession(fetchImpl){
   return {ok:true,status:'STARTING',data,recreated:true};
 }
 
+async function resolveInboundChatId(payload,fetchImpl){
+  const candidate=String(payload?.chatId||payload?.from||'');
+  if(!candidate)return {chatId:null,phone:null};
+
+  if(candidate.endsWith('@lid')){
+    const lid=encodeURIComponent(candidate);
+    const response=await wahaRequest(`/api/${encodeURIComponent(getWahaSession())}/lids/${lid}`,{},fetchImpl);
+    const data=await response.json().catch(()=>({}));
+    const phoneChatId=String(data?.pn||'');
+    if(response.ok&&phoneChatId.endsWith('@c.us')){
+      return {chatId:phoneChatId,phone:normalizePhone(phoneChatId)};
+    }
+    // Keep the original id for diagnostics, but do not try to send to @lid.
+    return {chatId:null,phone:null,lid:candidate};
+  }
+
+  if(candidate.endsWith('@c.us')){
+    return {chatId:candidate,phone:normalizePhone(candidate)};
+  }
+
+  if(candidate.endsWith('@g.us')||candidate.endsWith('@newsletter')){
+    return {chatId:candidate,phone:null};
+  }
+
+  return {chatId:candidate,phone:normalizePhone(candidate)};
+}
+
 async function sendWahaText(chatId,text,fetchImpl){
   const res=await wahaRequest('/api/sendText',{
     method:'POST',
@@ -242,17 +269,18 @@ function createWahaApp(opts={}){
     const payload=body.payload||{};
     if(payload.fromMe)return res.sendStatus(200);
 
-    const chatId=payload.from;
+    const resolved=await resolveInboundChatId(payload,fetchImpl);
+    const chatId=resolved.chatId;
     if(!chatId)return res.sendStatus(200);
 
-    const phone=normalizePhone(chatId);
+    const phone=resolved.phone;
     const text=payload.body||'';
     if(!text)return res.sendStatus(200);
 
     try{
-      const existing=await userStore.getAsync(phone);
+      const existing=phone?await userStore.getAsync(phone):undefined;
       const {reply,patch}=handleMessage(existing,text);
-      userStore.upsert(phone,patch);
+      if(phone)userStore.upsert(phone,patch);
       await sendWahaText(chatId,reply,fetchImpl);
     }catch(e){
       console.error('WAHA webhook handling failed:',e.message);
@@ -328,4 +356,4 @@ function createWahaApp(opts={}){
   return app;
 }
 
-module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest};
+module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId};
