@@ -4,7 +4,8 @@ const express=require('express');
 const twilio=require('twilio');
 const {MessagingResponse}=twilio.twiml;
 const {ConfigStore}=require('./config/configStore');
-const {buildGameIdentityQuery}=require('./bot/whatsappBridge');
+const {buildGameIdentityQuery,sendWhatsAppText}=require('./bot/whatsappBridge');
+const {createReservedRoom,findOpenRoom,findRoom,roomSummary}=require('./bot/gameControl');
 const botConfig=new ConfigStore();
 function getGameSiteUrl(){
   const candidates=[
@@ -90,21 +91,140 @@ const COUNT_MENU=`How many players?
 4 — one colour each
 
 Reply 2, 3 or 4.`;
+const COMMAND_MENU=`Bot commands
+HELP — show this command list
+MENU — show game menu
+LUDO — start Ludo setup
+WHOT — start Whot setup
+CREATE LUDO 4 — create a 4-player Ludo room
+CREATE WHOT 2 — create a 2-player Whot room
+JOIN LUDO ABCD — join a Ludo room
+JOIN WHOT ABCD — join a Whot room
+STATUS LUDO ABCD — check a room
+CONNECT WEB — get a web login code
 
-function handleMessage(user,text,configStore=botConfig){
-  const t=(text||'').trim().toLowerCase();
-  if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
+You can also send the invite message you receive from a friend.`;
 
-  const gameJoin=t.match(/^join\s+(ludo|whot)\s+([a-z0-9]{4})$/);
-  if(gameJoin){
-    const game=gameJoin[1],code=gameJoin[2].toUpperCase();
-    if(!user||user.stage==='new'||user.stage==='awaiting_name'){
-      return{reply:`You're joining ${game.toUpperCase()} room *${code}*.\n\nFirst, what should we call you?`,patch:{stage:'awaiting_name',pendingJoin:{game,code}}};
-    }
-    const page=game==='whot'?'whot.html':'play.html';
-    const waQuery=buildGameIdentityQuery(user.phone);
-    return{reply:`Joining ${game} room *${code}* — tap to open the board:\n${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`,patch:{stage:'game_menu'}};
+function gameSiteUrl(){
+  const candidates=[
+    process.env.GAME_SITE_URL,
+    process.env.SITE_ORIGIN,
+    ...(String(process.env.CORS_ORIGIN||'').split(',').map(v=>v.trim())),
+    process.env.SITE_URL
+  ].map(v=>String(v||'').replace(/\\/+$/,'')).filter(v=>/^https?:\\/\\//i.test(v)&&!/railway\\.app(?:\\/|$)/i.test(v));
+  return candidates[0]||'https://codeplay.com';
+}
+
+function botNumber(){
+  return String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\\D/g,'');
+}
+
+function makeBotInviteLink(game,code){
+  const message='I am ready to play with my friend on CodePlay '+String(game).toUpperCase()+' room code is "'+String(code).toUpperCase()+'"';
+  const number=botNumber();
+  return number?'https://wa.me/'+number+'?text='+encodeURIComponent(message):'https://wa.me/?text='+encodeURIComponent(message);
+}
+
+function makeGameLink(game,room,player){
+  const page=game==='whot'?'whot.html':'play.html';
+  const token=player&&player.playerToken?('&playerToken='+encodeURIComponent(player.playerToken)):'';
+  const wa=player&&player.whatsappPhone?buildGameIdentityQuery(player.whatsappPhone):'';
+  const name=player&&player.name?'&name='+encodeURIComponent(player.name):'';
+  const action=token?'reconnect':'join';
+  return gameSiteUrl()+'/'+page+'?mode=friends&action='+action+'&code='+encodeURIComponent(room.code)+name+wa+token;
+}
+
+function parseRoomInvite(text){
+  const raw=String(text||'').trim();
+  const lower=raw.toLowerCase();
+  let game=null,code=null;
+  let match=lower.match(/\\b(join|room|code)[^a-z0-9]{0,20}(ludo|whot)?[^a-z0-9]{0,20}([a-z0-9]{4})\\b/i);
+  if(match){
+    game=match[2]?String(match[2]).toLowerCase():null;
+    code=String(match[3]).toUpperCase();
   }
+  if(!code){
+    match=raw.match(/(?:room\\s*(?:code)?|code)\\s*(?:is|:|=)?\\s*["'“”]?([A-Z0-9]{4})["'“”]?/i);
+    if(match)code=match[1].toUpperCase();
+  }
+  if(!code&&(lower.startsWith('join '))){
+    const parts=lower.split(/\\s+/);
+    if(parts.length>=3&&(parts[1]==='ludo'||parts[1]==='whot')&&/^[a-z0-9]{4}$/.test(parts[2])){
+      game=parts[1];code=parts[2].toUpperCase();
+    }
+  }
+  if(!code)return null;
+  if(!game){
+    const ludo=findRoom('ludo',code);
+    const whot=findRoom('whot',code);
+    if(ludo&&!whot)game='ludo';
+    else if(whot&&!ludo)game='whot';
+  }
+  return {game,code};
+}
+
+async function notifyHostFriendReady(game,room,friend){
+  const host=room&&room.players&&room.players.find(p=>!p.bot&&p.whatsappPhone);
+  if(!host||!friend||!host.whatsappPhone||host.whatsappPhone===friend.phone)return;
+  const link=makeGameLink(game,room,host);
+  try{
+    await sendWhatsAppText(host.whatsappPhone,'👋 '+(friend.name||'Your friend')+' is ready to join your '+game.toUpperCase()+' room '+room.code+'.\\n\\nOpen your game:\\n'+link);
+  }catch(err){
+    console.error('WhatsApp friend-ready notification failed:',err.message);
+  }
+}
+
+async function createBotRoom(user,game,playerCount,mode){
+  const room=createReservedRoom(game,{playerCount,name:user.name||'Guest',phone:user.phone,mode});
+  const host=room.players[0];
+  const link=makeGameLink(game,room,host);
+  const share=makeBotInviteLink(game,room.code);
+  const summary=roomSummary(room);
+  return {
+    room,
+    reply:'✅ '+String(game).toUpperCase()+' room created!\\n\\nRoom code: *'+room.code+'*\\nPlayers: '+summary.reserved+' / '+summary.playerCount+'\\n\\nOpen your game:\\n'+link+'\\n\\nSend this invite link to your friend:\\n'+share+'\\n\\nTheir message will come to this bot, and I will check the room before giving them the game link.'
+  };
+}
+
+async function handleRoomInvite(user,invite){
+  let match=findOpenRoom(invite.code,invite.game);
+  if(!match){
+    const existing=invite.game?findRoom(invite.game,invite.code):null;
+    if(existing&&existing.engine){
+      return {reply:'That '+String(invite.game).toUpperCase()+' room *'+invite.code+'* has already started or is full. Ask your friend to create a new room.',patch:{stage:'game_menu'}};
+    }
+    return {reply:'I could not find an open CodePlay room with code *'+invite.code+'*. Check the code and try again.',patch:{stage:'game_menu'}};
+  }
+  if(!user||user.stage==='new'||user.stage==='awaiting_name'){
+    return {reply:'✅ I found the '+match.game.toUpperCase()+' room *'+invite.code+'.*\\n\\nWhat should I call you?',patch:{stage:'awaiting_name',pendingJoin:{game:match.game,code:invite.code}}};
+  }
+  const link=makeGameLink(match.game,match.room,{whatsappPhone:user.phone,name:user.name});
+  await notifyHostFriendReady(match.game,match.room,user);
+  return {reply:'✅ You are ready.\\n\\nRoom *'+invite.code+'* is open. Tap this link to join:\\n'+link,patch:{stage:'game_menu'}};
+}
+
+async function handleMessage(user,text,configStore=botConfig){
+  const t=(text||'').trim().toLowerCase();
+  if(t==='help'||t==='commands')return{reply:COMMAND_MENU,patch:{stage:user&&user.stage!=='new'?user.stage:'game_menu'}};
+  const createMatch=t.match(/^create\\s+(ludo|whot)\\s+([234])$/);
+  if(createMatch){
+    const game=createMatch[1],count=Number(createMatch[2]);
+    if(game==='whot'&&getWhotConfig(configStore).enabled===false)return{reply:'Whot is currently disabled.',patch:{stage:'game_menu'}};
+    if(!user||user.stage==='new')return{reply:'First, what should I call you?',patch:{stage:'awaiting_name',pendingCreate:{game,count,mode:'friends'}}};
+    const created=await createBotRoom(user,game,count,'friends');
+    return{reply:created.reply,patch:{stage:'game_menu',pendingMode:null}};
+  }
+  const statusMatch=t.match(/^status\\s+(ludo|whot)\\s+([a-z0-9]{4})$/);
+  if(statusMatch){
+    const game=statusMatch[1],code=statusMatch[2].toUpperCase(),room=findRoom(game,code);
+    if(!room)return{reply:'I could not find room *'+code+'*.',patch:{stage:'game_menu'}};
+    const s=roomSummary(room);
+    return{reply:'📊 '+game.toUpperCase()+' room *'+code+'*\\nPlayers reserved: '+s.reserved+'/'+s.playerCount+'\\nConnected: '+s.connected+'/'+s.playerCount+'\\n'+(s.started?'Game started.':'Room is open.'),patch:{stage:'game_menu'}};
+  }
+  const invite=parseRoomInvite(text);
+  if(invite)return await handleRoomInvite(user,invite);
+
+  if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
 
   const joinMatch=t.match(/^join\s+([a-z0-9]{4})$/);
   if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&joinMatch){
@@ -117,14 +237,19 @@ function handleMessage(user,text,configStore=botConfig){
   if(user.stage==='awaiting_name'){
     const name=text.trim().slice(0,40);
     if(!name)return{reply:'Just your name is fine — what should we call you?',patch:{}};
-    if(user.pendingJoin&&user.pendingJoin.game&&user.pendingJoin.code){
-      const game=user.pendingJoin.game,code=String(user.pendingJoin.code).toUpperCase();
-      const page=game==='whot'?'whot.html':'play.html';
-      const waQuery=buildGameIdentityQuery(user.phone);
-      const link=`${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`;
-      return{reply:`Nice to meet you, ${name}! 🎉\n\nYou're joining ${game.toUpperCase()} room *${code}*.\n\nTap to open the board:\n${link}`,patch:{stage:'game_menu',name,pendingJoin:null}};
+    const patch={stage:'game_menu',name};
+    if(user.pendingCreate){
+      const created=await createBotRoom({phone:user.phone,name},user.pendingCreate.game,user.pendingCreate.count,user.pendingCreate.mode||'friends');
+      patch.pendingCreate=null;
+      return{reply:`Nice to meet you, ${name}! 🎉\\n\\n${created.reply}`,patch};
     }
-    return{reply:`Nice to meet you, ${name}! 🎉\n\nYour WhatsApp number is your CodePlay identity, so there is no login needed to play.\n\nYou can play multiplayer immediately. Later, type CONNECT WEB if you want to link this WhatsApp identity to your web account.\n\n${GAME_MENU}`,patch:{stage:'game_menu',name}};
+    if(user.pendingJoin){
+      const invite={game:user.pendingJoin.game,code:user.pendingJoin.code};
+      const result=await handleRoomInvite({...user,...patch},invite);
+      result.patch={...patch,...result.patch,pendingJoin:null};
+      return{reply:`Nice to meet you, ${name}! 🎉\\n\\n${result.reply}`,patch:result.patch};
+    }
+    return{reply:`Nice to meet you, ${name}! 🎉\\n\\nYour WhatsApp number is your CodePlay identity, so there is no login needed to play.\\n\\nYou can play multiplayer immediately. Later, type CONNECT WEB if you want to link this WhatsApp identity to your web account.\\n\\n${GAME_MENU}\\n\\nType HELP any time to see bot commands.`,patch};
   }
 
   if(user.stage==='game_menu' && /^(connect|login)(?:\s+web)?$/.test(t)){
@@ -154,16 +279,15 @@ function handleMessage(user,text,configStore=botConfig){
 
   if(user.stage==='whot_count'){
     const allowed=(getWhotConfig(configStore).playerCounts||[2,3,4]).map(String);
-    if(!allowed.includes(t))return{reply:`Didn't catch that.\n\n${getWhotCountMenu(configStore)}`,patch:{stage:'whot_count'}};
+    if(!allowed.includes(t))return{reply:`Didn't catch that.\\n\\n${getWhotCountMenu(configStore)}`,patch:{stage:'whot_count'}};
     const pendingMode=user.pendingMode==='computer'?'computer':'friends';
+    if(pendingMode==='friends'){
+      const created=await createBotRoom(user,'whot',Number(t),'friends');
+      return{reply:created.reply,patch:{stage:'game_menu',pendingMode:null}};
+    }
     const waQuery=buildGameIdentityQuery(user.phone);
-    const link=pendingMode==='computer'
-      ? `${getGameSiteUrl()}/whot.html?mode=computer&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`
-      : `${getGameSiteUrl()}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
-    const reply=pendingMode==='computer'
-      ? `Tap to start your ${t}-player Whot match against computer opponents:\n${link}`
-      : `Tap to create your Whot room — you'll get a 4-letter code:\n${link}\n\nShare the code with your friends.`;
-    return{reply,patch:{stage:'game_menu',pendingMode:null}};
+    const link=`${gameSiteUrl()}/whot.html?mode=computer&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
+    return{reply:`Tap to start your ${t}-player Whot match against computer opponents:\\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
   }
 
   if(user.stage==='ludo_mode_menu'){
@@ -173,11 +297,17 @@ function handleMessage(user,text,configStore=botConfig){
   }
 
   if(user.stage==='ludo_count'){
-    if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\n\n${COUNT_MENU}`,patch:{stage:'ludo_count'}};
+    if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\\n\\n${COUNT_MENU}`,patch:{stage:'ludo_count'}};
     const waQuery=buildGameIdentityQuery(user.phone);
     if(user.pendingMode==='friends'){
-      const link=`${getGameSiteUrl()}/play.html?mode=friends&action=create&players=${t}${waQuery}`;
-      return{reply:`Tap to create your room — you'll get a 4-letter code on screen:\n${link}\n\nShare the code in your WhatsApp group. Friends can open the site and enter it, or message me: JOIN <code>`,patch:{stage:'game_menu',pendingMode:null}};
+      const created=await createBotRoom(user,'ludo',Number(t),'friends');
+      return{reply:created.reply,patch:{stage:'game_menu',pendingMode:null}};
+    }
+    const link=`${gameSiteUrl()}/play.html?players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
+    return{reply:`Here you go — tap to play vs the computer:\\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
+  }
+
+  return{reply:`Tap to create your room — you'll get a 4-letter code on screen:\n${link}\n\nShare the code in your WhatsApp group. Friends can open the site and enter it, or message me: JOIN <code>`,patch:{stage:'game_menu',pendingMode:null}};
     }
     const link=`${getGameSiteUrl()}/play.html?players=${t}${waQuery}`;
     return{reply:`Here you go — tap to play vs the computer:\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
