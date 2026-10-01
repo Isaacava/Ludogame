@@ -228,7 +228,7 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
 }
 
 function extractFirstUrl(text){
-  const match=String(text||'').match(/https?:\\/\\/[^\\s]+/);
+  const match=String(text||'').match(/https?:\/\/[^\s]+/);
   return match?match[0]:null;
 }
 
