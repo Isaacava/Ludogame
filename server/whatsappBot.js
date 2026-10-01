@@ -6,7 +6,16 @@ const {MessagingResponse}=twilio.twiml;
 const {ConfigStore}=require('./config/configStore');
 const {buildGameIdentityQuery}=require('./bot/whatsappBridge');
 const botConfig=new ConfigStore();
-const SITE_URL=process.env.SITE_URL||'https://codeplay.com';
+function getGameSiteUrl(){
+  const candidates=[
+    process.env.GAME_SITE_URL,
+    process.env.SITE_ORIGIN,
+    ...(String(process.env.CORS_ORIGIN||'').split(',').map(v=>v.trim())),
+    process.env.getGameSiteUrl()
+  ].map(v=>String(v||'').replace(/\\/+$/,'')).filter(Boolean);
+  const frontend=candidates.find(v=>!/railway\.app(?:\\/|$)/i.test(v));
+  return frontend||candidates[0]||'https://codeplay.com';
+}
 const LOGIN_CODE_TTL_MS=10*60*1000;
 
 class UserStore{
@@ -92,7 +101,7 @@ function handleMessage(user,text,configStore=botConfig){
     const game=gameJoin[1],code=gameJoin[2].toUpperCase();
     const page=game==='whot'?'whot.html':'play.html';
     const waQuery=buildGameIdentityQuery(user.phone);
-    return{reply:`Joining ${game} room *${code}* — tap to open the board:\\n${SITE_URL}/${page}?mode=friends&action=join&code=${code}${waQuery}`,patch:{stage:'game_menu'}};
+    return{reply:`Joining ${game} room *${code}* — tap to open the board:\\n${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`,patch:{stage:'game_menu'}};
   }
 
   const joinMatch=t.match(/^join\\s+([a-z0-9]{4})$/);
@@ -111,7 +120,7 @@ function handleMessage(user,text,configStore=botConfig){
 
   if(user.stage==='game_menu' && /^(connect|login)(?:\\s+web)?$/.test(t)){
     const loginCode=generateLoginCode();
-    return{reply:`Here is your CodePlay web login code: *${loginCode}*\\n\\nIt is valid for 10 minutes. Open ${SITE_URL}/signin and enter the code to connect your WhatsApp identity to the web account.`,patch:{stage:'game_menu',loginCode,loginCodeExpiresAt:Date.now()+LOGIN_CODE_TTL_MS}};
+    return{reply:`Here is your CodePlay web login code: *${loginCode}*\\n\\nIt is valid for 10 minutes. Open ${getGameSiteUrl()}/signin and enter the code to connect your WhatsApp identity to the web account.`,patch:{stage:'game_menu',loginCode,loginCodeExpiresAt:Date.now()+LOGIN_CODE_TTL_MS}};
   }
 
   if(user.stage==='game_menu'){
@@ -140,8 +149,8 @@ function handleMessage(user,text,configStore=botConfig){
     const pendingMode=user.pendingMode==='computer'?'computer':'friends';
     const waQuery=buildGameIdentityQuery(user.phone);
     const link=pendingMode==='computer'
-      ? `${SITE_URL}/whot.html?mode=computer&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`
-      : `${SITE_URL}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
+      ? `${getGameSiteUrl()}/whot.html?mode=computer&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`
+      : `${getGameSiteUrl()}/whot.html?mode=friends&action=create&players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
     const reply=pendingMode==='computer'
       ? `Tap to start your ${t}-player Whot match against computer opponents:\\n${link}`
       : `Tap to create your Whot room — you'll get a 4-letter code:\\n${link}\\n\\nShare the code with your friends.`;
@@ -158,10 +167,10 @@ function handleMessage(user,text,configStore=botConfig){
     if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\\n\\n${COUNT_MENU}`,patch:{stage:'ludo_count'}};
     const waQuery=buildGameIdentityQuery(user.phone);
     if(user.pendingMode==='friends'){
-      const link=`${SITE_URL}/play.html?mode=friends&action=create&players=${t}${waQuery}`;
+      const link=`${getGameSiteUrl()}/play.html?mode=friends&action=create&players=${t}${waQuery}`;
       return{reply:`Tap to create your room — you'll get a 4-letter code on screen:\\n${link}\\n\\nShare the code in your WhatsApp group. Friends can open the site and enter it, or message me: JOIN <code>`,patch:{stage:'game_menu',pendingMode:null}};
     }
-    const link=`${SITE_URL}/play.html?players=${t}${waQuery}`;
+    const link=`${getGameSiteUrl()}/play.html?players=${t}${waQuery}`;
     return{reply:`Here you go — tap to play vs the computer:\\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
   }
 
