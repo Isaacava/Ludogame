@@ -27,7 +27,8 @@ class RoomManager {
       connected:true,
       disconnectedAt:null,
       name:profile.name||`Player ${room.players.length+1}`,
-      color:profile.color||null
+      color:profile.color||null,
+      whatsappPhone:profile.whatsappPhone||null
     };
     room.players.push(player);
     if(room.players.length===room.playerCount && room.players.every(p=>p.socketId)) {
