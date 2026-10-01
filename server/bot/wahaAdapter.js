@@ -227,6 +227,10 @@ function createWahaApp(opts={}){
     try{body=JSON.parse(rawBody.toString('utf8')||'{}');}
     catch{return res.sendStatus(400);}
 
+    if(body.event==='session.status'){
+      console.warn('WAHA session.status:',JSON.stringify(body));
+      return res.sendStatus(200);
+    }
     if(body.event!=='message')return res.sendStatus(200);
     const payload=body.payload||{};
     if(payload.fromMe)return res.sendStatus(200);
