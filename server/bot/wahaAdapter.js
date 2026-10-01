@@ -7,6 +7,9 @@ const {handleMessage,users:defaultUsers,normalizePhone}=require('../whatsappBot'
 function getWahaUrl(){return process.env.WAHA_URL||'http://127.0.0.1:3001';}
 function getWahaSession(){return process.env.WAHA_SESSION||'default';}
 function getWahaApiKey(){return process.env.WAHA_API_KEY||'';}
+function getPublicBaseUrl(){
+  return String(process.env.PUBLIC_BASE_URL||process.env.SITE_URL||(process.env.RAILWAY_PUBLIC_DOMAIN?'https://'+process.env.RAILWAY_PUBLIC_DOMAIN:'')).replace(/\/+$/,'');
+}
 
 function toChatId(phone){return String(phone).replace(/^\+/,'')+'@c.us';}
 
@@ -107,6 +110,16 @@ async function resolveInboundChatId(payload,fetchImpl){
   return {chatId:candidate,phone:normalizePhone(candidate)};
 }
 
+const stats={
+  startedAt:Date.now(),
+  webhooksReceived:0,
+  lastWebhookAt:null,
+  lastEvent:null,
+  repliesSent:0,
+  lastReplyAt:null,
+  lastError:null,
+  lastRejected:null
+};
 const processedMessageIds=new Map();
 const EVENT_WS_RECONNECT_MS=3000;
 
@@ -122,7 +135,8 @@ function rememberMessage(id){
   return false;
 }
 
-async function processWahaMessage(body,userStore,fetchImpl){
+async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
+  stats.lastEvent=body?.event||null;
   if(body?.event==='session.status'){
     console.warn('WAHA session.status:',JSON.stringify(body));
     return;
@@ -143,15 +157,20 @@ async function processWahaMessage(body,userStore,fetchImpl){
 
   try{
     const existing=phone?await userStore.getAsync(phone):undefined;
-    const {reply,patch}=handleMessage(existing,text);
+    const {reply,patch}=handleMessage(existing,text,cfgStore);
     if(phone)userStore.upsert(phone,patch);
     await sendWahaText(chatId,reply,fetchImpl);
+    stats.repliesSent++;
+    stats.lastReplyAt=Date.now();
+    stats.lastError=null;
+    console.log('[waha] replied to '+chatId);
   }catch(e){
-    console.error('WAHA message handling failed:',e.stack||e.message);
+    stats.lastError={at:Date.now(),message:e.message};
+    console.error('[waha] reply failed:',e.stack||e.message);
   }
 }
 
-function startWahaEventSocket(userStore,fetchImpl){
+function startWahaEventSocket(userStore,fetchImpl,cfgStore){
   if(String(process.env.WAHA_EVENT_WS_ENABLED||'true').toLowerCase()==='false')return;
   let stopped=false;
   let timer=null;
@@ -174,7 +193,7 @@ function startWahaEventSocket(userStore,fetchImpl){
     ws.on('message',raw=>{
       try{
         const body=JSON.parse(raw.toString());
-        Promise.resolve(processWahaMessage(body,userStore,fetchImpl)).catch(err=>console.error('WAHA event handling failed:',err.message));
+        Promise.resolve(processWahaMessage(body,userStore,fetchImpl,cfgStore)).catch(err=>console.error('WAHA event handling failed:',err.message));
       }catch(e){
         console.error('WAHA event WebSocket payload error:',e.message);
       }
@@ -203,7 +222,9 @@ async function sendWahaText(chatId,text,fetchImpl){
 }
 
 function verifyWebhook(rawBody,req){
-  const secret=process.env.WAHA_WEBHOOK_SECRET;
+  const secret=process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY;
+  const directSecret=req.get('x-waha-secret')||req.query.secret;
+  if(secret&&String(directSecret||'')===secret)return true;
   if(!secret)return true;
   const provided=String(req.get('x-webhook-hmac')||'').trim().toLowerCase();
   if(!provided)return false;
@@ -333,17 +354,21 @@ let lastAutoRestartAt=0;
 const AUTO_RESTART_COOLDOWN_MS=15_000;
 
 function createWahaApp(opts={}){
-  const fetchImpl=opts.fetchImpl,userStore=opts.users||defaultUsers,app=express();
-  startWahaEventSocket(userStore,fetchImpl);
+  const fetchImpl=opts.fetchImpl,userStore=opts.users||defaultUsers,cfgStore=opts.configStore,app=express();
+  startWahaEventSocket(userStore,fetchImpl,cfgStore);
+  console.log('[waha] adapter config: url='+getWahaUrl()+' session='+getWahaSession()+' apiKey='+Boolean(getWahaApiKey())+' webhookSecret='+(Boolean(process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY)));
 
   app.post('/waha/webhook',express.raw({type:['application/json','application/*+json']}),async(req,res)=>{
+    stats.webhooksReceived++;
+    stats.lastWebhookAt=Date.now();
     const rawBody=Buffer.isBuffer(req.body)?req.body:Buffer.from(req.body||'');
     console.log('WAHA webhook received', {
       hmacPresent: Boolean(req.get('x-webhook-hmac')),
       bytes: rawBody.length
     });
     if(!verifyWebhook(rawBody,req)){
-      console.warn('WAHA webhook rejected: invalid HMAC');
+      stats.lastRejected={at:Date.now(),reason:'invalid webhook authentication'};
+      console.warn('[waha] webhook rejected: invalid authentication');
       return res.sendStatus(401);
     }
 
@@ -351,8 +376,12 @@ function createWahaApp(opts={}){
     try{body=JSON.parse(rawBody.toString('utf8')||'{}');}
     catch{return res.sendStatus(400);}
 
-    await processWahaMessage(body,userStore,fetchImpl);
-    return res.sendStatus(200);
+    console.log('[waha] webhook event='+String(body.event||'?')+' from='+String(body.payload?.from||body.payload?.chatId||'?')+' body="'+String(body.payload?.body||'').slice(0,40)+'"');
+    res.sendStatus(200);
+    Promise.resolve(processWahaMessage(body,userStore,fetchImpl,cfgStore)).catch(err=>{
+      stats.lastError={at:Date.now(),message:err.message};
+      console.error('[waha] async message handling failed:',err.stack||err.message);
+    });
   });
 
   app.get('/waha/pairing',pairingAuth,(req,res)=>res.type('html').send(createPairingHtml()));
