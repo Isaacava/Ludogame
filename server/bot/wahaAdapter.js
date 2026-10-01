@@ -213,7 +213,9 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
     const existing=await userStore.getAsync(identityKey);
     const {reply,patch}=handleMessage(existing,text,cfgStore);
     userStore.upsert(identityKey,{...patch,phone:identityKey});
-    const linkUrl=extractFirstUrl(reply);\n    if(linkUrl)await sendWahaGameLink(chatId,reply,linkUrl,fetchImpl);\n    else await sendWahaText(chatId,reply,fetchImpl);
+    const linkUrl=extractFirstUrl(reply);
+    if(linkUrl)await sendWahaGameLink(chatId,reply,linkUrl,fetchImpl);
+    else await sendWahaText(chatId,reply,fetchImpl);
     stats.repliesSent++;
     stats.lastReplyAt=Date.now();
     stats.lastError=null;
