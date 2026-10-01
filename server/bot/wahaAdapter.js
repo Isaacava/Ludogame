@@ -40,7 +40,11 @@ async function recreateUnpairedFailedSession(fetchImpl){
   },fetchImpl);
 
   if(restart.ok){
-    return {ok:true,status:'RESTARTING',data,restarted:true};
+    await new Promise(r=>setTimeout(r,3000));
+    const afterRestart=await getWahaSessionInfo(fetchImpl);
+    if(afterRestart.res.ok&&afterRestart.data.status!=='FAILED'){
+      return {ok:true,status:afterRestart.data.status,data:afterRestart.data,restarted:true};
+    }
   }
 
   const remove=await wahaRequest(`/api/sessions/${encodeURIComponent(getWahaSession())}`,{
