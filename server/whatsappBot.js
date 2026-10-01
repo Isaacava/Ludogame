@@ -293,7 +293,7 @@ async function handleMessage(user,text,configStore=botConfig){
       return{reply:made.reply,patch:{stage:'game_menu',pendingMode:null}};
     }
     const waQuery=buildGameIdentityQuery(user.phone);
-    const link=botGameSiteUrl()+'/play.html?players='+t+'&name='+encodeURIComponent(user.name||'Guest')+waQuery;
+    const link=gameSiteUrl()+'/play.html?players='+t+'&name='+encodeURIComponent(user.name||'Guest')+waQuery;
     return{reply:'Here you go — tap to play vs the computer:\n'+link,patch:{stage:'game_menu',pendingMode:null}};
   }
 
