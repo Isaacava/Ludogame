@@ -136,22 +136,17 @@ function makeGameLink(game,room,player){
 
 function parseRoomInvite(text){
   const raw=String(text||'').trim();
-  const lower=raw.toLowerCase();
-  let game=null,code=null;
-  let match=lower.match(/\b(join|room|code)[^a-z0-9]{0,20}(ludo|whot)?[^a-z0-9]{0,20}([a-z0-9]{4})\b/i);
-  if(match){
-    game=match[2]?String(match[2]).toLowerCase():null;
-    code=String(match[3]).toUpperCase();
+  let game=null;
+  let code=null;
+  let m=raw.match(/\bjoin\s+(ludo|whot)\s+([a-z0-9]{4})\b/i);
+  if(m){game=m[1].toLowerCase();code=m[2].toUpperCase();}
+  if(!code){
+    m=raw.match(/\broom\s+code\s*(?:is|:|=)?\s*["'“”]?([a-z0-9]{4})["'“”]?\b/i);
+    if(m)code=m[1].toUpperCase();
   }
   if(!code){
-    match=raw.match(/(?:room\s*(?:code)?|code)\s*(?:is|:|=)?\s*["'“”]?([A-Z0-9]{4})["'“”]?/i);
-    if(match)code=match[1].toUpperCase();
-  }
-  if(!code&&lower.startsWith('join ')){
-    const parts=lower.split(/\s+/);
-    if(parts.length>=3&&(parts[1]==='ludo'||parts[1]==='whot')&&/^[a-z0-9]{4}$/.test(parts[2])){
-      game=parts[1];code=parts[2].toUpperCase();
-    }
+    m=raw.match(/\bcode\s*(?:is|:|=)?\s*["'“”]?([a-z0-9]{4})["'“”]?\b/i);
+    if(m)code=m[1].toUpperCase();
   }
   if(!code)return null;
   if(!game){
@@ -162,17 +157,6 @@ function parseRoomInvite(text){
   }
   return {game,code};
 }
-async function notifyHostFriendReady(game,room,friend){
-  const host=room&&room.players&&room.players.find(p=>!p.bot&&p.whatsappPhone);
-  if(!host||!friend||!host.whatsappPhone||host.whatsappPhone===friend.phone)return;
-  const link=makeGameLink(game,room,host);
-  try{
-    await sendWhatsAppText(host.whatsappPhone,'👋 '+(friend.name||'Your friend')+' is ready to join your '+game.toUpperCase()+' room '+room.code+'.\\n\\nOpen your game:\\n'+link);
-  }catch(err){
-    console.error('WhatsApp friend-ready notification failed:',err.message);
-  }
-}
-
 async function createBotRoom(user,game,playerCount,mode){
   const room=createReservedRoom(game,{playerCount,name:user.name||'Guest',phone:user.phone,mode});
   const host=room.players[0];
