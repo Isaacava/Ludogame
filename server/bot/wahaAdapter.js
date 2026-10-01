@@ -387,25 +387,68 @@ function createWahaApp(opts={}){
   app.get('/waha/pairing',pairingAuth,(req,res)=>res.type('html').send(createPairingHtml()));
 
   app.get('/waha/status',pairingAuth,async(req,res)=>{
+    const out={
+      wahaUrl:getWahaUrl(),
+      session:getWahaSession(),
+      apiKeyConfigured:Boolean(getWahaApiKey()),
+      webhookSecretConfigured:Boolean(process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY),
+      expectedWebhookUrl:getPublicBaseUrl()?getPublicBaseUrl()+'/waha/webhook':null,
+      bot:{
+        webhooksReceived:stats.webhooksReceived,
+        lastWebhookAt:stats.lastWebhookAt?new Date(stats.lastWebhookAt).toISOString():null,
+        lastEvent:stats.lastEvent,
+        repliesSent:stats.repliesSent,
+        lastReplyAt:stats.lastReplyAt?new Date(stats.lastReplyAt).toISOString():null,
+        lastError:stats.lastError,
+        lastRejected:stats.lastRejected
+      },
+      problems:[]
+    };
     try{
       const current=await getWahaSessionInfo(fetchImpl);
-      if(!current.res.ok)return res.status(current.res.status).json(current.data);
+      if(current.res.status===401||current.res.status===403){
+        out.wahaReachable=true;
+        out.wahaHttpStatus=current.res.status;
+        out.problems.push('WAHA rejected the API request. Make sure WAHA_API_KEY matches.');
+      }else if(current.res.ok){
+        out.wahaReachable=true;
+        out.wahaHttpStatus=current.res.status;
+        out.sessionStatus=current.data.status||null;
+        out.engine=current.data.engine?.engine||null;
+        out.me=current.data.me||null;
 
-      if(current.data.status==='FAILED'){
-        const now=Date.now();
-        if(now-lastAutoRestartAt>AUTO_RESTART_COOLDOWN_MS){
-          lastAutoRestartAt=now;
-          const recovery=await recreateUnpairedFailedSession(fetchImpl);
-          if(recovery.ok){
-            return res.json({...recovery.data,status:recovery.status,autoRecovered:true});
+        if(current.data.status==='FAILED'){
+          const now=Date.now();
+          if(now-lastAutoRestartAt>AUTO_RESTART_COOLDOWN_MS){
+            lastAutoRestartAt=now;
+            const recovery=await recreateUnpairedFailedSession(fetchImpl);
+            if(recovery.ok){
+              out.autoRecovered=true;
+              out.sessionStatus=recovery.status;
+              out.recovery=recovery;
+            }
           }
         }
-      }
 
-      return res.json(current.data);
-    }catch(e){
-      return res.status(502).json({error:'waha-unavailable',message:e.message});
+        if(out.sessionStatus!=='WORKING'&&out.sessionStatus!=='SCAN_QR_CODE'&&out.sessionStatus!=='STARTING'){
+          out.problems.push(`WAHA session is "${out.sessionStatus}", not ready.`);
+        }
+      }else{
+        out.wahaReachable=true;
+        out.wahaHttpStatus=current.res.status;
+        out.problems.push(`WAHA returned HTTP ${current.res.status} for session "${getWahaSession()}".`);
+      }
+    }catch(err){
+      out.wahaReachable=false;
+      out.problems.push(`Cannot reach WAHA at ${getWahaUrl()}: ${err.message}`);
     }
+
+    if(!out.apiKeyConfigured)out.problems.push('WAHA_API_KEY is not configured.');
+    if(!out.webhookSecretConfigured)out.problems.push('WAHA webhook authentication secret is not configured.');
+    if(!out.bot.webhooksReceived)out.problems.push('No WAHA webhook has reached CodePlay yet. Send a message from a different WhatsApp number.');
+    if(out.bot.lastRejected)out.problems.push('The last webhook was rejected: '+out.bot.lastRejected.reason);
+    if(out.bot.lastError)out.problems.push('The last reply failed: '+out.bot.lastError.message);
+    res.json(out);
   });
 
   app.post('/waha/pairing-code',pairingAuth,express.json(),async(req,res)=>{
