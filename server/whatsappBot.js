@@ -157,6 +157,13 @@ function parseRoomInvite(text){
   }
   return {game,code};
 }
+async function notifyHostFriendReady(game,room,friend){
+  const host=room&&room.players&&room.players.find(p=>!p.bot&&p.whatsappPhone);
+  if(!host||!friend||host.whatsappPhone===friend.phone)return;
+  try{
+    await sendWhatsAppText(host.whatsappPhone,'👋 '+(friend.name||'Your friend')+' is ready to join your '+String(game).toUpperCase()+' room '+room.code+'.\n\nOpen your game:\n'+makeGameLink(game,room,host));
+  }catch(err){console.error('Friend-ready WhatsApp notification failed:',err.message)}
+}
 async function createBotRoom(user,game,playerCount,mode){
   const room=createReservedRoom(game,{playerCount,name:user.name||'Guest',phone:user.phone,mode});
   const host=room.players[0];
