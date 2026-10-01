@@ -1,6 +1,7 @@
 'use strict';
 const crypto=require('crypto');
 const express=require('express');
+const WebSocket=require('ws');
 const {handleMessage,users:defaultUsers,normalizePhone}=require('../whatsappBot');
 
 function getWahaUrl(){return process.env.WAHA_URL||'http://127.0.0.1:3001';}
@@ -101,6 +102,91 @@ async function resolveInboundChatId(payload,fetchImpl){
   }
 
   return {chatId:candidate,phone:normalizePhone(candidate)};
+}
+
+const processedMessageIds=new Map();
+const EVENT_WS_RECONNECT_MS=3000;
+
+function rememberMessage(id){
+  const key=String(id||'');
+  if(!key)return false;
+  const now=Date.now();
+  for(const [k,t] of processedMessageIds){
+    if(now-t>5*60*1000)processedMessageIds.delete(k);
+  }
+  if(processedMessageIds.has(key))return true;
+  processedMessageIds.set(key,now);
+  return false;
+}
+
+async function processWahaMessage(body,userStore,fetchImpl){
+  if(body?.event==='session.status'){
+    console.warn('WAHA session.status:',JSON.stringify(body));
+    return;
+  }
+  if(body?.event!=='message'&&body?.event!=='message.any')return;
+  const payload=body.payload||{};
+  if(payload.fromMe)return;
+  const messageKey=payload.id||`${payload.from||''}|${payload.timestamp||''}|${payload.body||''}`;
+  if(rememberMessage(messageKey))return;
+
+  const resolved=await resolveInboundChatId(payload,fetchImpl);
+  const chatId=resolved.chatId;
+  if(!chatId)return;
+
+  const phone=resolved.phone;
+  const text=payload.body||'';
+  if(!text)return;
+
+  try{
+    const existing=phone?await userStore.getAsync(phone):undefined;
+    const {reply,patch}=handleMessage(existing,text);
+    if(phone)userStore.upsert(phone,patch);
+    await sendWahaText(chatId,reply,fetchImpl);
+  }catch(e){
+    console.error('WAHA message handling failed:',e.stack||e.message);
+  }
+}
+
+function startWahaEventSocket(userStore,fetchImpl){
+  if(String(process.env.WAHA_EVENT_WS_ENABLED||'true').toLowerCase()==='false')return;
+  let stopped=false;
+  let timer=null;
+
+  const connect=()=>{
+    if(stopped)return;
+    const key=getWahaApiKey();
+    if(!key){
+      console.error('WAHA event WebSocket disabled: WAHA_API_KEY is missing.');
+      return;
+    }
+    const params=new URLSearchParams();
+    params.append('session',getWahaSession());
+    params.append('events','message');
+    params.append('events','message.any');
+    params.append('events','session.status');
+    params.set('x-api-key',key);
+    const ws=new WebSocket(`${getWahaUrl().replace(/^http/,'ws')}/ws?${params.toString()}`);
+    ws.on('open',()=>console.log('WAHA event WebSocket connected.'));
+    ws.on('message',raw=>{
+      try{
+        const body=JSON.parse(raw.toString());
+        Promise.resolve(processWahaMessage(body,userStore,fetchImpl)).catch(err=>console.error('WAHA event handling failed:',err.message));
+      }catch(e){
+        console.error('WAHA event WebSocket payload error:',e.message);
+      }
+    });
+    ws.on('error',err=>console.error('WAHA event WebSocket error:',err.message));
+    ws.on('close',()=>{
+      if(stopped)return;
+      console.warn('WAHA event WebSocket closed; reconnecting.');
+      clearTimeout(timer);
+      timer=setTimeout(connect,EVENT_WS_RECONNECT_MS);
+    });
+  };
+
+  setTimeout(connect,5000);
+  return ()=>{stopped=true;clearTimeout(timer);};
 }
 
 async function sendWahaText(chatId,text,fetchImpl){
@@ -245,6 +331,7 @@ const AUTO_RESTART_COOLDOWN_MS=15_000;
 
 function createWahaApp(opts={}){
   const fetchImpl=opts.fetchImpl,userStore=opts.users||defaultUsers,app=express();
+  startWahaEventSocket(userStore,fetchImpl);
 
   app.post('/waha/webhook',express.raw({type:['application/json','application/*+json']}),async(req,res)=>{
     const rawBody=Buffer.isBuffer(req.body)?req.body:Buffer.from(req.body||'');
@@ -261,30 +348,7 @@ function createWahaApp(opts={}){
     try{body=JSON.parse(rawBody.toString('utf8')||'{}');}
     catch{return res.sendStatus(400);}
 
-    if(body.event==='session.status'){
-      console.warn('WAHA session.status:',JSON.stringify(body));
-      return res.sendStatus(200);
-    }
-    if(body.event!=='message' && body.event!=='message.any')return res.sendStatus(200);
-    const payload=body.payload||{};
-    if(payload.fromMe)return res.sendStatus(200);
-
-    const resolved=await resolveInboundChatId(payload,fetchImpl);
-    const chatId=resolved.chatId;
-    if(!chatId)return res.sendStatus(200);
-
-    const phone=resolved.phone;
-    const text=payload.body||'';
-    if(!text)return res.sendStatus(200);
-
-    try{
-      const existing=phone?await userStore.getAsync(phone):undefined;
-      const {reply,patch}=handleMessage(existing,text);
-      if(phone)userStore.upsert(phone,patch);
-      await sendWahaText(chatId,reply,fetchImpl);
-    }catch(e){
-      console.error('WAHA webhook handling failed:',e.message);
-    }
+    await processWahaMessage(body,userStore,fetchImpl);
     return res.sendStatus(200);
   });
 
@@ -356,4 +420,4 @@ function createWahaApp(opts={}){
   return app;
 }
 
-module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId};
+module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage,startWahaEventSocket};
