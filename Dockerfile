@@ -1,4 +1,4 @@
-FROM devlikeapro/waha:noweb
+FROM devlikeapro/waha:noweb-2026.8.2
 
 WORKDIR /codeplay
 
