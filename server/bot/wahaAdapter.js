@@ -213,9 +213,7 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
     const existing=await userStore.getAsync(identityKey);
     const {reply,patch}=handleMessage(existing,text,cfgStore);
     userStore.upsert(identityKey,{...patch,phone:identityKey});
-    const linkUrl=extractFirstUrl(reply);
-    if(linkUrl)await sendWahaGameLink(chatId,reply,linkUrl,fetchImpl);
-    else await sendWahaText(chatId,reply,fetchImpl);
+    await sendWahaText(chatId,reply,fetchImpl);
     stats.repliesSent++;
     stats.lastReplyAt=Date.now();
     stats.lastError=null;
@@ -225,30 +223,6 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
     stats.lastError={at:Date.now(),message:e.message};
     console.error('[waha] reply failed:',e.stack||e.message);
   }
-}
-
-function extractFirstUrl(text){
-  const match=String(text||'').match(/https?:\/\/[^\s]+/);
-  return match?match[0]:null;
-}
-
-async function sendWahaGameLink(chatId,text,url,fetchImpl){
-  const cleanText=String(text||'').replace(url,'').trim();
-  try{
-    const res=await wahaRequest('/api/sendButtons',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({
-        session:getWahaSession(),
-        chatId,
-        body:cleanText||'Open CodePlay to continue.',
-        footer:'CodePlay',
-        buttons:[{type:'url',text:'Open game',url}]
-      })
-    },fetchImpl);
-    if(res.ok)return res.json().catch(()=>null);
-  }catch{}
-  return sendWahaText(chatId,text,fetchImpl);
 }
 
 async function sendWahaText(chatId,text,fetchImpl){
@@ -567,4 +541,4 @@ function createWahaApp(opts={}){
   return app;
 }
 
-module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,sendWahaGameLink,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage,resetWahaSession};
+module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage,resetWahaSession};
