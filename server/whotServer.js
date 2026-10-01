@@ -2,8 +2,10 @@
 const {io,configStore}=require('./index');
 const {WhotRoomManager}=require('./rooms/whotRoomManager');
 const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
+const {registerGameManager}=require('./bot/gameControl');
 
 const rooms=new WhotRoomManager(configStore);
+registerGameManager('whot',rooms);
 const reactions=new Set(['😂','🔥','👏','😭','Omo!','Sharp!']);
 function emitWhotAudio(room,playerIndex,cue){const player=room&&room.players[playerIndex];if(player&&player.socketId)io.to(player.socketId).emit('game-audio',{game:'whot',cue});}
 function emitWhotRoomAudio(room,cue){if(!room)return;room.players.forEach((_,index)=>emitWhotAudio(room,index,cue));}
