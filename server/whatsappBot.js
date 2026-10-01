@@ -96,8 +96,11 @@ function handleMessage(user,text,configStore=botConfig){
   if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
 
   const gameJoin=t.match(/^join\s+(ludo|whot)\s+([a-z0-9]{4})$/);
-  if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&gameJoin){
+  if(gameJoin){
     const game=gameJoin[1],code=gameJoin[2].toUpperCase();
+    if(!user||user.stage==='new'||user.stage==='awaiting_name'){
+      return{reply:`You're joining ${game.toUpperCase()} room *${code}*.\n\nFirst, what should we call you?`,patch:{stage:'awaiting_name',pendingJoin:{game,code}}};
+    }
     const page=game==='whot'?'whot.html':'play.html';
     const waQuery=buildGameIdentityQuery(user.phone);
     return{reply:`Joining ${game} room *${code}* — tap to open the board:\n${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`,patch:{stage:'game_menu'}};
@@ -114,6 +117,13 @@ function handleMessage(user,text,configStore=botConfig){
   if(user.stage==='awaiting_name'){
     const name=text.trim().slice(0,40);
     if(!name)return{reply:'Just your name is fine — what should we call you?',patch:{}};
+    if(user.pendingJoin&&user.pendingJoin.game&&user.pendingJoin.code){
+      const game=user.pendingJoin.game,code=String(user.pendingJoin.code).toUpperCase();
+      const page=game==='whot'?'whot.html':'play.html';
+      const waQuery=buildGameIdentityQuery(user.phone);
+      const link=`${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`;
+      return{reply:`Nice to meet you, ${name}! 🎉\n\nYou're joining ${game.toUpperCase()} room *${code}*.\n\nTap to open the board:\n${link}`,patch:{stage:'game_menu',name,pendingJoin:null}};
+    }
     return{reply:`Nice to meet you, ${name}! 🎉\n\nYour WhatsApp number is your CodePlay identity, so there is no login needed to play.\n\nYou can play multiplayer immediately. Later, type CONNECT WEB if you want to link this WhatsApp identity to your web account.\n\n${GAME_MENU}`,patch:{stage:'game_menu',name}};
   }
 
