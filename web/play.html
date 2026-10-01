@@ -158,10 +158,11 @@ function commitNet(mv,value,isLast,after){currentValid=[];modeRow.innerHTML='';r
 function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(HUMAN_INDEX,sum,false);if(legal.length===1){commitNet(legal[0],sum,true,null);return}currentValid=legal;wrText('Tap a token to move it by '+sum+'.');window._netPending={value:sum,isLast:true,after:null,mode:'combine'};render()}
 function initFriendsMode(action,existingCode,playerCount){
  GAME_MODE='friends';renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
- var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode), crossTabSaved=(!savedCode||savedCode!==requestedCode)?loadSavedRoomForCode(requestedCode):null;
- var sameTabRoom=!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
- var resumeAcrossTabs=!!(!sameTabRoom&&requestedCode&&crossTabSaved&&crossTabSaved.playerToken);
- if(sameTabRoom){ROOM_CODE=savedCode;playerToken=saved.playerToken;seatEstablished=true;if(saved.playerCount)playerCount=saved.playerCount;}
+ var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode), incomingPlayerToken=(new URLSearchParams(location.search).get('playerToken')||'').trim(), crossTabSaved=(!savedCode||savedCode!==requestedCode)?loadSavedRoomForCode(requestedCode):null;
+ var sameTabRoom=!incomingPlayerToken&&!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
+ var resumeAcrossTabs=!incomingPlayerToken&&!!(!sameTabRoom&&requestedCode&&crossTabSaved&&crossTabSaved.playerToken);
+ if(incomingPlayerToken&&requestedCode){ROOM_CODE=requestedCode;playerToken=incomingPlayerToken;seatEstablished=true;}
+ else if(sameTabRoom){ROOM_CODE=savedCode;playerToken=saved.playerToken;seatEstablished=true;if(saved.playerCount)playerCount=saved.playerCount;}
  else if(resumeAcrossTabs){ROOM_CODE=requestedCode;playerToken=crossTabSaved.playerToken;if(crossTabSaved.playerCount)playerCount=crossTabSaved.playerCount;}
  socket.on('connect_error',function(err){
    if(seatEstablished&&ROOM_CODE&&playerToken){wrText('Connection lost — reconnecting to your Ludo room…');return;}
