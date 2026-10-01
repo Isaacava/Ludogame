@@ -22,6 +22,56 @@ async function wahaRequest(path,options={},fetchImpl){
   return doFetch(`${getWahaUrl()}${path}`,{...options,headers});
 }
 
+async function getWahaSessionInfo(fetchImpl){
+  const res=await wahaRequest(`/api/sessions/${encodeURIComponent(getWahaSession())}`,{},fetchImpl);
+  const data=await res.json().catch(()=>({}));
+  return {res,data};
+}
+
+async function recreateUnpairedFailedSession(fetchImpl){
+  const {res,data}=await getWahaSessionInfo(fetchImpl);
+  if(!res.ok)return {ok:false,status:res.status,data};
+  if(data.status!=='FAILED')return {ok:true,status:data.status,data,recreated:false};
+  if(data.me&&data.me.id)return {ok:true,status:data.status,data,recreated:false,preserved:true};
+
+  const restart=await wahaRequest(`/api/sessions/${encodeURIComponent(getWahaSession())}/restart`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'}
+  },fetchImpl);
+
+  if(restart.ok){
+    return {ok:true,status:'RESTARTING',data,restarted:true};
+  }
+
+  const remove=await wahaRequest(`/api/sessions/${encodeURIComponent(getWahaSession())}`,{
+    method:'DELETE'
+  },fetchImpl);
+  if(!remove.ok&&remove.status!==404){
+    return {ok:false,status:remove.status,data};
+  }
+
+  const create=await wahaRequest('/api/sessions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      name:getWahaSession(),
+      start:true,
+      config:{
+        noweb:{
+          markOnline:true
+        }
+      }
+    })
+  },fetchImpl);
+
+  if(!create.ok&&create.status!==409){
+    const body=await create.text().catch(()=>'');
+    return {ok:false,status:create.status,data:{error:'session-recreate-failed',message:body||'Could not recreate WAHA session.'}};
+  }
+
+  return {ok:true,status:'STARTING',data,recreated:true};
+}
+
 async function sendWahaText(chatId,text,fetchImpl){
   const res=await wahaRequest('/api/sendText',{
     method:'POST',
@@ -112,7 +162,7 @@ async function requestCode(){
       body:JSON.stringify({phoneNumber:phone})
     });
     const data=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(data.error||data.message||('Request failed: '+r.status));
+    if(!r.ok)throw new Error(data.message||data.error||('Request failed: '+r.status));
     box.textContent=data.code||'';
     box.style.display='block';
     help.textContent='On the bot phone: WhatsApp → Settings → Linked Devices → Link with phone number instead, then enter this code.';
@@ -144,6 +194,9 @@ async function refresh(){
       qr.src='/waha/qr?ts='+Date.now();
       qr.style.display='block';
       help.textContent='On your phone: WhatsApp → Settings → Linked devices → Link a device, then scan this QR.';
+    }else if(s.status==='RESTARTING'||s.status==='STARTING'){
+      qr.style.display='none';
+      help.textContent='WAHA is restarting the unpaired session. This page refreshes automatically.';
     }else{
       qr.style.display='none';
       help.textContent='The QR may appear shortly. This page refreshes automatically.';
@@ -196,26 +249,21 @@ function createWahaApp(opts={}){
 
   app.get('/waha/status',pairingAuth,async(req,res)=>{
     try{
-      const sessionPath=`/api/sessions/${encodeURIComponent(getWahaSession())}`;
-      const response=await wahaRequest(sessionPath,{},fetchImpl);
-      const data=await response.json().catch(()=>({}));
-      if(!response.ok)return res.status(response.status).json(data);
+      const current=await getWahaSessionInfo(fetchImpl);
+      if(!current.res.ok)return res.status(current.res.status).json(current.data);
 
-      if(data.status==='FAILED'){
+      if(current.data.status==='FAILED'){
         const now=Date.now();
         if(now-lastAutoRestartAt>AUTO_RESTART_COOLDOWN_MS){
           lastAutoRestartAt=now;
-          const restart=await wahaRequest(`${sessionPath}/restart`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'}
-          },fetchImpl);
-          if(restart.ok){
-            return res.json({...data,status:'RESTARTING',autoRestarted:true});
+          const recovery=await recreateUnpairedFailedSession(fetchImpl);
+          if(recovery.ok){
+            return res.json({...recovery.data,status:recovery.status,autoRecovered:true});
           }
         }
       }
 
-      return res.json(data);
+      return res.json(current.data);
     }catch(e){
       return res.status(502).json({error:'waha-unavailable',message:e.message});
     }
@@ -226,6 +274,16 @@ function createWahaApp(opts={}){
       const raw=String(req.body?.phoneNumber||'');
       const phone=raw.replace(/\D/g,'');
       if(phone.length<8||phone.length>15)return res.status(400).json({error:'invalid-phone-number'});
+
+      const current=await getWahaSessionInfo(fetchImpl);
+      if(current.res.ok&&current.data.status==='FAILED'&&!current.data.me){
+        const recovery=await recreateUnpairedFailedSession(fetchImpl);
+        if(!recovery.ok)return res.status(502).json(recovery.data);
+        if(recovery.status==='STARTING'||recovery.status==='RESTARTING'){
+          await new Promise(r=>setTimeout(r,1500));
+        }
+      }
+
       const response=await wahaRequest(`/api/${encodeURIComponent(getWahaSession())}/auth/request-code`,{
         method:'POST',
         headers:{'Content-Type':'application/json','Accept':'application/json'},
