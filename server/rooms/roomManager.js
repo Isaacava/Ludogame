@@ -71,6 +71,7 @@ class RoomManager {
     const player=room.players[index];
     if(player.connected && player.socketId && player.socketId!==socketId) return {error:'seat-already-connected'};
     player.socketId=socketId; player.connected=true; player.disconnectedAt=null;
+    if(!room.engine&&room.players.length===room.playerCount&&room.players.every(p=>!!p.socketId))this.resetEngine(room);
     return {index,playerToken:player.playerToken,room};
   }
   removeSocket(socketId){
