@@ -530,9 +530,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   }
   function connect(){
     socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10,timeout:12000});
-    const saved=loadRoom(),requestedCode=String(roomCode||'').toUpperCase(),creating=mode==='computer'||action==='create';
-    if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
-    if(!creating&&requestedCode){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
+    const saved=loadRoom(),requestedCode=String(roomCode||'').toUpperCase(),incomingPlayerToken=(params.get('playerToken')||'').trim(),creating=mode==='computer'||action==='create';
+    if(incomingPlayerToken&&requestedCode){roomCode=requestedCode;playerToken=incomingPlayerToken}
+    else if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
+    if(!creating&&requestedCode&&!incomingPlayerToken){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
     socket.on('connect',()=>{
       if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer',whatsappToken:whatsappGameToken});showWaiting('Starting your computer match…');return}
       if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends',whatsappToken:whatsappGameToken});showWaiting('Creating your Whot room…');return}
