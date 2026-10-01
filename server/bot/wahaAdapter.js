@@ -212,7 +212,7 @@ async function processWahaMessage(body,userStore,fetchImpl,cfgStore){
   try{
     const existing=await userStore.getAsync(identityKey);
     const botUser=existing||{phone:identityKey,stage:'new',name:null,loginCode:null,loginCodeExpiresAt:null};
-    const {reply,patch}=handleMessage(botUser,text,cfgStore);
+    const {reply,patch}=await handleMessage(botUser,text,cfgStore);
     userStore.upsert(identityKey,{...patch,phone:identityKey});
     await sendWahaText(chatId,reply,fetchImpl);
     stats.repliesSent++;
