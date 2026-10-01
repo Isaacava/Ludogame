@@ -405,7 +405,7 @@ function createWahaApp(opts={}){
   const fetchImpl=opts.fetchImpl,userStore=opts.users||defaultUsers,cfgStore=opts.configStore,app=express();
   console.log('[waha] adapter config: url='+getWahaUrl()+' session='+getWahaSession()+' apiKey='+Boolean(getWahaApiKey())+' webhookSecret='+(Boolean(process.env.WAHA_WEBHOOK_SECRET||process.env.WHATSAPP_HOOK_HMAC_KEY)));
 
-  app.post('/waha/webhook',express.raw({type:['application/json','application/*+json']}),async(req,res)=>{
+  app.post('/waha/webhook',express.raw({type:'*/*',limit:'2mb'}),async(req,res)=>{
     stats.webhooksReceived++;
     stats.lastWebhookAt=Date.now();
     const rawBody=Buffer.isBuffer(req.body)?req.body:Buffer.from(req.body||'');
@@ -420,9 +420,16 @@ function createWahaApp(opts={}){
     }
 
     let body={};
-    try{body=JSON.parse(rawBody.toString('utf8')||'{}');}
-    catch{return res.sendStatus(400);}
+    try{
+      const parsed=JSON.parse(rawBody.toString('utf8')||'{}');
+      body=(parsed&&parsed.request&&typeof parsed.request==='object')?parsed.request:parsed;
+    }catch(err){
+      stats.lastError={at:Date.now(),message:'Webhook JSON parse failed: '+err.message,rawPreview:rawBody.toString('utf8').slice(0,500)};
+      console.error('[waha] webhook JSON parse failed:',err.message);
+      return res.sendStatus(400);
+    }
 
+    stats.lastEvent=body?.event||null;
     console.log('[waha] webhook event='+String(body.event||'?')+' from='+String(body.payload?.from||body.payload?.chatId||'?')+' body="'+String(body.payload?.body||'').slice(0,40)+'"');
     res.sendStatus(200);
     Promise.resolve(processWahaMessage(body,userStore,fetchImpl,cfgStore)).catch(err=>{
