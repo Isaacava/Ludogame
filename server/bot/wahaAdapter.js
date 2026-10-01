@@ -255,7 +255,7 @@ img{width:320px;max-width:100%;border:1px solid #ddd;border-radius:16px}
 <h1>CodePlay WhatsApp</h1>
 <p id="status" class="muted">Checking session…</p>
 <img id="qr" alt="WhatsApp QR code" style="display:none">
-<p id="help" class="muted"></p>
+<p id="help" class="muted"></p><button id="showQr" onclick="showQr()" style="margin-top:10px;width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;background:#fff;font-weight:700">Show QR code</button>
 <div style="margin-top:20px;text-align:left">
 <label for="phone"><strong>Pair with phone number</strong></label>
 <p class="muted" style="margin:6px 0 10px">Enter the bot WhatsApp number in international digits, without +, spaces or dashes.</p>
@@ -266,6 +266,19 @@ img{width:320px;max-width:100%;border:1px solid #ddd;border-radius:16px}
 </div>
 </div>
 <script>
+async function showQr(){
+  try{
+    const r=await fetch('/waha/qr?ts='+Date.now(),{credentials:'same-origin'});
+    if(!r.ok)throw new Error((await r.text())||('QR request failed: '+r.status));
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const qr=document.getElementById('qr');
+    qr.onload=()=>URL.revokeObjectURL(url);
+    qr.src=url;
+    qr.style.display='block';
+    document.getElementById('help').textContent='On your phone: WhatsApp → Settings → Linked devices → Link a device, then scan this QR. Keep this page open while scanning.';
+  }catch(e){document.getElementById('help').textContent=e.message||'Could not load the QR code.';}
+}
 async function requestCode(){
   const phone=document.getElementById('phone').value.replace(/\D/g,'');
   const pair=document.getElementById('pair');
