@@ -111,12 +111,12 @@ function gameSiteUrl(){
     process.env.SITE_ORIGIN,
     ...(String(process.env.CORS_ORIGIN||'').split(',').map(v=>v.trim())),
     process.env.SITE_URL
-  ].map(v=>String(v||'').replace(/\\/+$/,'')).filter(v=>/^https?:\\/\\//i.test(v)&&!/railway\\.app(?:\\/|$)/i.test(v));
+  ].map(v=>String(v||'').replace(/\/+$/,'')).filter(v=>/^https?:\/\//i.test(v)&&!/railway\.app(?:\/|$)/i.test(v));
   return candidates[0]||'https://codeplay.com';
 }
 
 function botNumber(){
-  return String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\\D/g,'');
+  return String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'');
 }
 
 function makeBotInviteLink(game,code){
@@ -138,17 +138,17 @@ function parseRoomInvite(text){
   const raw=String(text||'').trim();
   const lower=raw.toLowerCase();
   let game=null,code=null;
-  let match=lower.match(/\\b(join|room|code)[^a-z0-9]{0,20}(ludo|whot)?[^a-z0-9]{0,20}([a-z0-9]{4})\\b/i);
+  let match=lower.match(/\b(join|room|code)[^a-z0-9]{0,20}(ludo|whot)?[^a-z0-9]{0,20}([a-z0-9]{4})\b/i);
   if(match){
     game=match[2]?String(match[2]).toLowerCase():null;
     code=String(match[3]).toUpperCase();
   }
   if(!code){
-    match=raw.match(/(?:room\\s*(?:code)?|code)\\s*(?:is|:|=)?\\s*["'“”]?([A-Z0-9]{4})["'“”]?/i);
+    match=raw.match(/(?:room\s*(?:code)?|code)\s*(?:is|:|=)?\s*["'“”]?([A-Z0-9]{4})["'“”]?/i);
     if(match)code=match[1].toUpperCase();
   }
-  if(!code&&(lower.startsWith('join '))){
-    const parts=lower.split(/\\s+/);
+  if(!code&&lower.startsWith('join ')){
+    const parts=lower.split(/\s+/);
     if(parts.length>=3&&(parts[1]==='ludo'||parts[1]==='whot')&&/^[a-z0-9]{4}$/.test(parts[2])){
       game=parts[1];code=parts[2].toUpperCase();
     }
@@ -162,7 +162,6 @@ function parseRoomInvite(text){
   }
   return {game,code};
 }
-
 async function notifyHostFriendReady(game,room,friend){
   const host=room&&room.players&&room.players.find(p=>!p.bot&&p.whatsappPhone);
   if(!host||!friend||!host.whatsappPhone||host.whatsappPhone===friend.phone)return;
@@ -334,7 +333,7 @@ function createBotApp(options={}){
       if(!twilio.validateRequest(twilioAuthToken,signature,webhookUrl,req.body))return res.sendStatus(403);
     }
     const phone=normalizePhone(req.body.From),body=req.body.Body||'',existing=await userStore.getAsync(phone);
-    const {reply,patch}=handleMessage(existing,body,cfgStore);userStore.upsert(phone,patch);
+    const {reply,patch}=await handleMessage(existing,body,cfgStore);userStore.upsert(phone,patch);
     const twiml=new MessagingResponse();twiml.message(reply);res.type('text/xml').send(twiml.toString());
   });
   app.post('/api/auth/verify',async(req,res)=>{
