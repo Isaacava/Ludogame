@@ -122,6 +122,7 @@ async function resolveInboundChatId(payload,fetchImpl){
 }
 
 const processedMessageIds=new Map();
+const stats={webhooksReceived:0,lastWebhookAt:null,lastEvent:null,repliesSent:0,lastReplyAt:null,lastError:null,lastRejected:null,lastMessageReceived:null,lastIgnored:null};
 
 function rememberMessage(id){
   const key=String(id||'');
@@ -461,4 +462,4 @@ function createWahaApp(opts={}){
   return app;
 }
 
-module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage,startWahaEventSocket};
+module.exports={createWahaApp,normalizePhone,toChatId,sendWahaText,verifyWebhook,wahaRequest,resolveInboundChatId,processWahaMessage};
