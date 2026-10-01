@@ -96,7 +96,7 @@ function handleMessage(user,text,configStore=botConfig){
   const t=(text||'').trim().toLowerCase();
   if(user&&user.stage!=='new'&&t==='menu')return{reply:GAME_MENU,patch:{stage:'game_menu'}};
 
-  const gameJoin=t.match(/^join\\s+(ludo|whot)\\s+([a-z0-9]{4})$/);
+  const gameJoin=t.match(/^join\s+(ludo|whot)\s+([a-z0-9]{4})$/);
   if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&gameJoin){
     const game=gameJoin[1],code=gameJoin[2].toUpperCase();
     const page=game==='whot'?'whot.html':'play.html';
@@ -104,7 +104,7 @@ function handleMessage(user,text,configStore=botConfig){
     return{reply:`Joining ${game} room *${code}* — tap to open the board:\n${getGameSiteUrl()}/${page}?mode=friends&action=join&code=${code}${waQuery}`,patch:{stage:'game_menu'}};
   }
 
-  const joinMatch=t.match(/^join\\s+([a-z0-9]{4})$/);
+  const joinMatch=t.match(/^join\s+([a-z0-9]{4})$/);
   if(user&&user.stage!=='new'&&user.stage!=='awaiting_name'&&joinMatch){
     const code=joinMatch[1].toUpperCase();
     return{reply:`Tell me the game too: JOIN LUDO ${code} or JOIN WHOT ${code}.`,patch:{stage:'game_menu'}};
@@ -118,7 +118,7 @@ function handleMessage(user,text,configStore=botConfig){
     return{reply:`Nice to meet you, ${name}! 🎉\n\nYour WhatsApp number is your CodePlay identity, so there is no login needed to play.\n\nYou can play multiplayer immediately. Later, type CONNECT WEB if you want to link this WhatsApp identity to your web account.\n\n${GAME_MENU}`,patch:{stage:'game_menu',name}};
   }
 
-  if(user.stage==='game_menu' && /^(connect|login)(?:\\s+web)?$/.test(t)){
+  if(user.stage==='game_menu' && /^(connect|login)(?:\s+web)?$/.test(t)){
     const loginCode=generateLoginCode();
     return{reply:`Here is your CodePlay web login code: *${loginCode}*\n\nIt is valid for 10 minutes. Open ${getGameSiteUrl()}/signin and enter the code to connect your WhatsApp identity to the web account.`,patch:{stage:'game_menu',loginCode,loginCodeExpiresAt:Date.now()+LOGIN_CODE_TTL_MS}};
   }
