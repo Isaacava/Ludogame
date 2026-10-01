@@ -296,25 +296,18 @@ async function handleMessage(user,text,configStore=botConfig){
   }
 
   if(user.stage==='ludo_count'){
-    if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\\n\\n${COUNT_MENU}`,patch:{stage:'ludo_count'}};
-    const waQuery=buildGameIdentityQuery(user.phone);
+    if(!['2','3','4'].includes(t))return{reply:`Didn't catch that.\n\n${COUNT_MENU}`,patch:{stage:'ludo_count'}};
     if(user.pendingMode==='friends'){
-      const created=await createBotRoom(user,'ludo',Number(t),'friends');
-      return{reply:created.reply,patch:{stage:'game_menu',pendingMode:null}};
+      const made=await createBotRoom(user,'ludo',Number(t),'friends');
+      return{reply:made.reply,patch:{stage:'game_menu',pendingMode:null}};
     }
-    const link=`${gameSiteUrl()}/play.html?players=${t}&name=${encodeURIComponent(user.name||'Guest')}${waQuery}`;
-    return{reply:`Here you go — tap to play vs the computer:\\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
+    const waQuery=buildGameIdentityQuery(user.phone);
+    const link=botGameSiteUrl()+'/play.html?players='+t+'&name='+encodeURIComponent(user.name||'Guest')+waQuery;
+    return{reply:'Here you go — tap to play vs the computer:\n'+link,patch:{stage:'game_menu',pendingMode:null}};
   }
 
-  return{reply:`Tap to create your room — you'll get a 4-letter code on screen:\n${link}\n\nShare the code in your WhatsApp group. Friends can open the site and enter it, or message me: JOIN <code>`,patch:{stage:'game_menu',pendingMode:null}};
-    }
-    const link=`${getGameSiteUrl()}/play.html?players=${t}${waQuery}`;
-    return{reply:`Here you go — tap to play vs the computer:\n${link}`,patch:{stage:'game_menu',pendingMode:null}};
-  }
-
-  return{reply:`Reply "menu" any time to see game options.\n\n${GAME_MENU}`,patch:{stage:'game_menu'}};
+  return{reply:'Reply "menu" any time to see game options.\n\n'+GAME_MENU+'\n\nType HELP any time to see bot commands.',patch:{stage:'game_menu'}};
 }
-
 function createBotApp(options={}){
   const userStore=options.users||users,sessionStore=options.sessions||sessions,cfgStore=options.configStore||botConfig,app=express();
   app.use(express.urlencoded({extended:false}));app.use(express.json());
