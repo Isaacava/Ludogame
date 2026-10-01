@@ -369,7 +369,7 @@ function createWahaApp(opts={}){
 
   app.get('/waha/pairing',pairingAuth,(req,res)=>res.type('html').send(createPairingHtml()));
 
-  app.get('/waha/status',pairingAuth,async(req,res)=>{
+  app.get('/waha/status',async(req,res)=>{
     const out={
       wahaUrl:getWahaUrl(),
       session:getWahaSession(),
