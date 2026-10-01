@@ -307,20 +307,21 @@ async function refresh(){
     const status=document.getElementById('status');
     const qr=document.getElementById('qr');
     const help=document.getElementById('help');
-    if(s.status==='WORKING'){
+    const sessionStatus=s.sessionStatus||s.status||'UNKNOWN';
+    if(sessionStatus==='WORKING'){
       status.textContent='✅ WhatsApp is connected.';
       status.className='ok';
       qr.style.display='none';
       help.textContent=s.me&&s.me.id?('Connected number: '+s.me.id.split('@')[0]):'';
       return;
     }
-    status.textContent='Session status: '+(s.status||'UNKNOWN');
+    status.textContent='Session status: '+sessionStatus;
     status.className='muted';
-    if(s.status==='SCAN_QR_CODE'){
+    if(sessionStatus==='SCAN_QR_CODE'){
       qr.src='/waha/qr?ts='+Date.now();
       qr.style.display='block';
       help.textContent='On your phone: WhatsApp → Settings → Linked devices → Link a device, then scan this QR.';
-    }else if(s.status==='RESTARTING'||s.status==='STARTING'){
+    }else if(sessionStatus==='RESTARTING'||sessionStatus==='STARTING'){
       qr.style.display='none';
       help.textContent='WAHA is restarting the unpaired session. This page refreshes automatically.';
     }else{
