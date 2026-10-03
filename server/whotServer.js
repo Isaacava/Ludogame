@@ -18,6 +18,11 @@ function emitState(room,extra={}){
     if(p.bot||!p.socketId)return;
     io.to(p.socketId).emit('whot:state',{code:room.code,index,playerToken:p.playerToken,state:room.engine.stateFor(index),...extra});
   });
+  if(room.spectators){
+    room.spectators.forEach((_,socketId)=>{
+      io.to(socketId).emit('whot:state',{code:room.code,index:-1,spectator:true,state:room.engine.toJSON(),...extra});
+    });
+  }
 }
 function emitRoomWaiting(room,text){
   io.to(`WHOT_${room.code}`).emit('whot:status',{roomCode:room.code,waiting:true,needed:room.playerCount,joined:room.players.filter(p=>!p.bot&&p.socketId).length,text,players:humanRoom(room)});
@@ -54,8 +59,9 @@ io.on('connection',socket=>{
     const allowed=Array.isArray(cfg.playerCounts)&&cfg.playerCounts.length?cfg.playerCounts:[2,3,4];
     if(!allowed.includes(count))return socket.emit('whot:error',{message:'player-count-disabled'});
     const room=rooms.createRoom(count,socket.id,{name,whatsappPhone:whatsapp?.phone||null},mode==='computer'?'computer':'friends');
+    socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;
     socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null});
+    socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null,audience:rooms.audienceInfo(room,true)});
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:join-room',({code,name,playerToken,whatsappToken})=>{
@@ -64,25 +70,54 @@ io.on('connection',socket=>{
     if(existing&&playerToken){
       const resumed=rooms.reconnect(existing,socket.id,playerToken);
       if(!resumed.error){
-        const room=existing,index=resumed.index;socket.join(`WHOT_${room.code}`);
-        socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true});
+        const room=existing,index=resumed.index;socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
+        socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true)});
         emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);return;
       }
     }
     if((configStore.get('whot')||{}).enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
     const result=rooms.joinRoom(code,socket.id,{name,whatsappPhone:whatsapp?.phone||null});
     if(result.error)return socket.emit('whot:error',{message:result.error});
-    const room=result.room,index=rooms.playerIndexOf(room,socket.id);socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:joined',{code:room.code,index,playerToken:rooms.playerTokenAt(room,index),joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null});
+    const room=result.room,index=rooms.playerIndexOf(room,socket.id);socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
+    socket.emit('whot:joined',{code:room.code,index,playerToken:rooms.playerTokenAt(room,index),joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,audience:rooms.audienceInfo(room,true)});
     if(room.engine)emitState(room);else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:reconnect',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room)return socket.emit('whot:error',{message:'room-not-found'});
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('whot:error',{message:result.error});
-    const {index}=result;socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:joined',{code:room.code,index,playerToken:result.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true});
+    const {index}=result;socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
+    socket.emit('whot:joined',{code:room.code,index,playerToken:result.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true)});
     emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);
   });
+  socket.on('whot:spectate',({code,watchToken,name})=>{
+    const room=rooms.getRoom(code);
+    if(!room)return socket.emit('whot:error',{message:'room-not-found'});
+    if(!rooms.canSpectate(room,watchToken))return socket.emit('whot:error',{message:'spectator-access-denied'});
+    socket.data.role='spectator';socket.data.game='whot';socket.data.roomCode=room.code;socket.data.spectatorName=String(name||'Guest').slice(0,30);
+    rooms.addSpectator(room,socket.id,socket.data.spectatorName);socket.join(`WHOT_${room.code}`);
+    socket.emit('whot:spectator-joined',{code:room.code,started:!!room.engine,audience:rooms.audienceInfo(room,false)});
+    if(room.engine)socket.emit('whot:state',{code:room.code,index:-1,spectator:true,state:room.engine.toJSON()});
+    else emitRoomWaiting(room,'Waiting for players…');
+    io.to(`WHOT_${room.code}`).emit('whot:audience-info',rooms.audienceInfo(room,false));
+  });
+  socket.on('whot:set-room-visibility',({code,visibility})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('whot:error',{message:'room-not-found'});
+    const index=rooms.playerIndexOf(room,socket.id);if(index!==0)return socket.emit('whot:error',{message:'not-host'});
+    rooms.setVisibility(room,visibility);
+    io.to(`WHOT_${room.code}`).emit('whot:audience-info',rooms.audienceInfo(room,false));
+    socket.emit('whot:audience-host',rooms.audienceInfo(room,true));
+  });
+  socket.on('whot:chat-message',({code,text})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('whot:error',{message:'room-not-found'});
+    let role='spectator',name=socket.data.spectatorName||'Guest';
+    const index=rooms.playerIndexOf(room,socket.id);
+    if(index>=0){role='player';name=room.players[index].name||('Player '+(index+1));}
+    else if(!room.spectators?.has(socket.id))return socket.emit('whot:error',{message:'not-in-room'});
+    const result=rooms.addChatMessage(room,socket.id,{name,role,text});
+    if(result.error)return socket.emit('whot:error',{message:result.error});
+    io.to(`WHOT_${room.code}`).emit('whot:chat-message',result.message);
+  });
+
   socket.on('whot:play-card',({code,cardId,call,lastCall})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('whot:error',{message:'room-not-ready'});
     const index=rooms.playerIndexOf(room,socket.id);if(index<0)return socket.emit('whot:error',{message:'not-in-room'});
@@ -98,9 +133,13 @@ io.on('connection',socket=>{
   });
   socket.on('whot:reaction',({code,reaction})=>{
     if(!reactions.has(reaction))return;
-    const room=rooms.getRoom(code),index=room&&rooms.playerIndexOf(room,socket.id);if(!room||index<0)return;
+    const room=rooms.getRoom(code);if(!room)return;
+    const index=rooms.playerIndexOf(room,socket.id);
+    let name=socket.data.spectatorName||'Guest';
+    if(index>=0)name=room.players[index].name||`Player ${index+1}`;
+    else if(!room.spectators?.has(socket.id))return;
     const now=Date.now();if(socket.data.whotReactionAt&&now-socket.data.whotReactionAt<500)return;socket.data.whotReactionAt=now;
-    io.to(`WHOT_${room.code}`).emit('whot:reaction',{name:room.players[index].name||`Player ${index+1}`,reaction});
+    io.to(`WHOT_${room.code}`).emit('whot:reaction',{name,reaction});
   });
   socket.on('whot:rematch',({code})=>{
     const result=rooms.requestRematch(code,socket.id);if(result.error)return socket.emit('whot:error',{message:result.error});
@@ -108,8 +147,15 @@ io.on('connection',socket=>{
     if(result.started){emitState(result.room);scheduleBot(result.room)}
   });
   socket.on('disconnect',()=>{
+    const roomCode=socket.data.roomCode;
+    if(socket.data.role==='spectator'&&roomCode){
+      const room=rooms.getRoom(roomCode);
+      if(room&&rooms.removeSpectator(room,socket.id))io.to(`WHOT_${room.code}`).emit('whot:audience-info',rooms.audienceInfo(room,false));
+      return;
+    }
     const removed=rooms.removeSocket(socket.id);if(!removed)return;
-    const room=removed.room;io.to(`WHOT_${room.code}`).emit('whot:status',{roomCode:room.code,waiting:false,players:humanRoom(room),text:`${removed.player.name||'Player'} disconnected`});
+    const room=removed.room;io.to(`WHOT_${room.code}`).emit('whot:status',{roomCode:room.code,waiting:false,players:humanRoom(room),text:(removed.player.name||'Player')+' disconnected'});
+    io.to(`WHOT_${room.code}`).emit('whot:audience-info',rooms.audienceInfo(room,false));
   });
 });
 
