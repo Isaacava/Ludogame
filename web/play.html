@@ -236,8 +236,8 @@ function initFriendsMode(action,existingCode,playerCount){
      history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+(players.length?'&players='+players.length:''));
    }
  });
- socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;seatEstablished=true;setRoomRoster(x.players);if(x.audience){WATCH_TOKEN=x.audience.spectatorToken||'';setAudience(x.audience)}saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed);renderSocialBar();refreshAudienceUi()});
- socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;setRoomRoster(x.players);if(x.audience)setAudience(x.audience);if(x.started)hideWaitingRoom();else renderWaiting(x.joined,x.needed)});
+ socket.on('room-created',function(x){ROOM_CODE=x.code;playerToken=x.playerToken||playerToken;seatEstablished=true;if(x.whatsappBotNumber)WHATSAPP_BOT_NUMBER=String(x.whatsappBotNumber).replace(/\D/g,'');setRoomRoster(x.players);if(x.audience){WATCH_TOKEN=x.audience.spectatorToken||'';setAudience(x.audience)}saveActiveRoom();history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+ROOM_CODE+'&players='+x.playerCount);renderWaiting(x.joined,x.needed);renderSocialBar();refreshAudienceUi()});
+ socket.on('room-status',function(x){ROOM_CODE=normalizeRoomCode(x.code)||ROOM_CODE;if(x.whatsappBotNumber)WHATSAPP_BOT_NUMBER=String(x.whatsappBotNumber).replace(/\D/g,'');setRoomRoster(x.players);if(x.audience)setAudience(x.audience);if(x.started)hideWaitingRoom();else renderWaiting(x.joined,x.needed)});
  socket.on('player-joined',function(x){setRoomRoster(x.players);renderWaiting(x.joined,x.needed)});
  socket.on('player-connection',function(x){setRoomRoster(x.players);log((x.name||'Player')+(x.connected?' reconnected.':' disconnected.'))});
  socket.on('game-audio',function(x){if(x&&x.game==='ludo'&&window.CodePlayAudio)CodePlayAudio.play(x.cue)});
