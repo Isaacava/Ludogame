@@ -1,6 +1,7 @@
 'use strict';
 const crypto=require('crypto');
 const {WhotEngine}=require('../engine/whotEngine');
+const {ensureAudience, setVisibility, canSpectate, addSpectator, removeSpectator, audienceInfo, addChatMessage} = require('../realtime/audience');
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const RECONNECT_GRACE_MS=2*60*1000;
 const normCode=c=>String(c||'').trim().toUpperCase();
@@ -14,6 +15,7 @@ class WhotRoomManager{
       for(let i=1;i<playerCount;i++)room.players.push({socketId:null,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:`CPU ${i}`,bot:true});
       this.resetEngine(room);
     }
+    ensureAudience(room);
     this.rooms.set(code,room);return room;
   }
   joinRoom(code,socketId,profile={}){
@@ -34,6 +36,12 @@ class WhotRoomManager{
     return room.engine;
   }
   getRoom(code){return this.rooms.get(normCode(code))}
+  setVisibility(room, visibility){ return setVisibility(room, visibility); }
+  canSpectate(room, watchToken){ return canSpectate(room, watchToken); }
+  addSpectator(room, socketId, name){ return addSpectator(room, socketId, name); }
+  removeSpectator(room, socketId){ return removeSpectator(room, socketId); }
+  audienceInfo(room, includeSecret=false){ return audienceInfo(room, includeSecret); }
+  addChatMessage(room, socketId, data){ return addChatMessage(room, socketId, data); }
   playerIndexOf(room,socketId){return room.players.findIndex(p=>p.socketId===socketId&&!p.bot)}
   playerTokenAt(room,index){return room.players[index]?room.players[index].playerToken:null}
   reconnect(room,socketId,playerToken){
