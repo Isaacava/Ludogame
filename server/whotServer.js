@@ -12,6 +12,15 @@ function emitWhotRoomAudio(room,cue){if(!room)return;room.players.forEach((_,ind
 function emitWhotResultAudio(room,playerIndex,result){if(!room||!result)return;const kind=result.resolution&&result.resolution.kind;const cue={normal:'whot-card','hold-on':'whot-hold-on','pick-two':'whot-pick2','pick-three':'whot-pick3',suspension:'whot-suspension','general-market':'whot-general-market',whot:'whot-wild'}[kind]||'whot-card';emitWhotRoomAudio(room,cue);if(result.gameOver){const winner=result.state&&result.state.winner!=null?result.state.winner:playerIndex;room.players.forEach((_,index)=>emitWhotAudio(room,index,index===winner?'game-winner':'game-loser'));notifyGameResults(room,{winnerIndex:winner,gameName:'Whot'}).catch(()=>{});}}
 const humanRoom=(room)=>room.players.map((p,index)=>({index,name:p.name||`Player ${index+1}`,connected:!!p.socketId,bot:!!p.bot}));
 
+function spectatorState(room){
+  if(!room?.engine)return null;
+  const state=room.engine.toJSON();
+  state.players=state.players.map((p,index)=>({
+    ...p,
+    cards:(room.engine.players[index]?.cards||[]).map(card=>({...card}))
+  }));
+  return state;
+}
 function emitState(room,extra={}){
   if(!room.engine)return;
   room.players.forEach((p,index)=>{
@@ -20,7 +29,7 @@ function emitState(room,extra={}){
   });
   if(room.spectators){
     room.spectators.forEach((_,socketId)=>{
-      io.to(socketId).emit('whot:state',{code:room.code,index:-1,spectator:true,state:room.engine.toJSON(),...extra});
+      io.to(socketId).emit('whot:state',{code:room.code,index:-1,spectator:true,state:spectatorState(room),...extra});
     });
   }
 }
@@ -96,7 +105,7 @@ io.on('connection',socket=>{
     socket.data.role='spectator';socket.data.game='whot';socket.data.roomCode=room.code;socket.data.spectatorName=String(name||'Guest').slice(0,30);
     rooms.addSpectator(room,socket.id,socket.data.spectatorName);socket.join(`WHOT_${room.code}`);
     socket.emit('whot:spectator-joined',{code:room.code,started:!!room.engine,audience:rooms.audienceInfo(room,false)});
-    if(room.engine)socket.emit('whot:state',{code:room.code,index:-1,spectator:true,state:room.engine.toJSON()});
+    if(room.engine)socket.emit('whot:state',{code:room.code,index:-1,spectator:true,state:spectatorState(room)});
     else emitRoomWaiting(room,'Waiting for players…');
     io.to(`WHOT_${room.code}`).emit('whot:audience-info',rooms.audienceInfo(room,false));
   });
