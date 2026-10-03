@@ -118,7 +118,7 @@ io.on('connection',socket=>{
       const resumed=rooms.reconnect(existingRoom,socket.id,playerToken);
       if(!resumed.error){
         const room=existingRoom;
-        socket.join(room.code);
+        socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
         socket.emit('you-are-player',{index:resumed.index,playerToken:resumed.playerToken,reconnected:true});
         io.to(room.code).emit('player-connection',{index:resumed.index,name:room.players[resumed.index].name||`Player ${resumed.index+1}`,connected:true,players:roomPlayers(room)});
         socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
@@ -137,7 +137,7 @@ io.on('connection',socket=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
     socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
-    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room)});
+    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
   socket.on('spectate-room',({code,watchToken,name})=>{
@@ -227,9 +227,16 @@ io.on('connection',socket=>{
     if(!endResult.gameOver)emitGameAudio(room,endResult.nextTurn,'ludo-turn');
   });
   socket.on('disconnect',()=>{
+    const roomCode=socket.data.roomCode;
+    if(socket.data.role==='spectator'&&roomCode){
+      const room=rooms.getRoom(roomCode);
+      if(room&&rooms.removeSpectator(room,socket.id))io.to(room.code).emit('audience-info',rooms.audienceInfo(room,false));
+      return;
+    }
     const removed=rooms.removeSocket(socket.id);
     if(removed){
       io.to(removed.room.code).emit('player-connection',{index:removed.index,name:removed.player.name||`Player ${removed.index+1}`,connected:false,players:roomPlayers(removed.room)});
+      io.to(removed.room.code).emit('audience-info',rooms.audienceInfo(removed.room,false));
     }
   });
 });
