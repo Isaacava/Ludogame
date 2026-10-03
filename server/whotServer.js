@@ -70,7 +70,7 @@ io.on('connection',socket=>{
     const room=rooms.createRoom(count,socket.id,{name,whatsappPhone:whatsapp?.phone||null},mode==='computer'?'computer':'friends');
     socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;
     socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null,audience:rooms.audienceInfo(room,true)});
+    socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null,audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:join-room',({code,name,playerToken,whatsappToken})=>{
@@ -80,7 +80,7 @@ io.on('connection',socket=>{
       const resumed=rooms.reconnect(existing,socket.id,playerToken);
       if(!resumed.error){
         const room=existing,index=resumed.index;socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
-        socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true)});
+        socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
         emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);return;
       }
     }
@@ -88,7 +88,7 @@ io.on('connection',socket=>{
     const result=rooms.joinRoom(code,socket.id,{name,whatsappPhone:whatsapp?.phone||null});
     if(result.error)return socket.emit('whot:error',{message:result.error});
     const room=result.room,index=rooms.playerIndexOf(room,socket.id);socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:joined',{code:room.code,index,playerToken:rooms.playerTokenAt(room,index),joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,audience:rooms.audienceInfo(room,true)});
+    socket.emit('whot:joined',{code:room.code,index,playerToken:rooms.playerTokenAt(room,index),joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine)emitState(room);else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:reconnect',({code,playerToken})=>{
