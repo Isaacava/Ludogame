@@ -46,7 +46,7 @@ button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weig
   <button id="inviteBtn" class="invite">📨 Invite</button>
 </div>
 <div id="audienceBar" class="audienceBar">
-  <button id="viewerBtn" class="audienceBtn">👁 <span id="viewerCount">0</span> watching</button>
+  <button id="viewerBtn" class="audienceBtn">👁 <span id="viewerCount">0 live · 0 views</span></button>
   <button id="chatBtn" class="audienceBtn">💬 Chat <span id="chatBadge">0</span></button>
   <button id="watchLinkBtn" class="audienceBtn">🔗 Watch link</button>
   <button id="visibilityBtn" class="audienceBtn">🌐 Public</button>
@@ -146,7 +146,7 @@ function audienceWatchUrl(){
 }
 function refreshAudienceUi(){
   audienceBarEl.style.display=(GAME_MODE==='friends'||SPECTATOR_MODE)?'flex':'none';
-  viewerCountEl.textContent=''+(window.__audienceViewerCount||0);
+  viewerCountEl.textContent=(window.__audienceViewerCount||0)+' live · '+(window.__audienceTotalViews||0)+' views';
   visibilityBtnEl.textContent=AUDIENCE_VISIBILITY==='private'?'🔒 Private':'🌐 Public';
   var isHost=!SPECTATOR_MODE&&GAME_MODE==='friends'&&HUMAN_INDEX===0;
   visibilityBtnEl.style.display=isHost?'inline-flex':'none';
@@ -154,7 +154,7 @@ function refreshAudienceUi(){
 }
 function setAudience(info){
   if(!info)return;
-  if(typeof info.viewerCount==='number')window.__audienceViewerCount=info.viewerCount;
+  if(typeof info.viewerCount==='number')window.__audienceViewerCount=info.viewerCount;if(typeof info.totalViews==='number')window.__audienceTotalViews=info.totalViews;
   if(info.visibility)AUDIENCE_VISIBILITY=info.visibility;
   if(Array.isArray(info.chat)){CHAT_MESSAGES=info.chat;renderChat()}
   refreshAudienceUi();
