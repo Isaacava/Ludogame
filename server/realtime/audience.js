@@ -10,6 +10,7 @@ function ensureAudience(room) {
   if (!room.spectators) room.spectators = new Map();
   if (!Array.isArray(room.chat)) room.chat = [];
   if (!room.chatRate) room.chatRate = new Map();
+  if (!Number.isFinite(room.totalViews)) room.totalViews = 0;
   if (!room.visibility) room.visibility = 'public';
   if (!room.spectatorToken) room.spectatorToken = crypto.randomBytes(18).toString('hex');
   return room;
@@ -34,6 +35,7 @@ function addSpectator(room, socketId, name) {
     joinedAt: Date.now()
   };
   room.spectators.set(socketId, spectator);
+  room.totalViews += 1;
   return spectator;
 }
 
@@ -46,6 +48,7 @@ function audienceInfo(room, includeSecret = false) {
   ensureAudience(room);
   const info = {
     viewerCount: room.spectators.size,
+    totalViews: room.totalViews,
     visibility: room.visibility,
     chat: room.chat.slice(-50)
   };
