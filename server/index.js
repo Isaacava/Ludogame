@@ -106,8 +106,8 @@ io.on('connection',socket=>{
     const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
     if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
-    const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});socket.join(room.code);
-    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room)});
+    const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
+    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
   socket.on('join-room',({code,name,color,playerToken,whatsappToken})=>{
@@ -121,13 +121,13 @@ io.on('connection',socket=>{
         socket.join(room.code);
         socket.emit('you-are-player',{index:resumed.index,playerToken:resumed.playerToken,reconnected:true});
         io.to(room.code).emit('player-connection',{index:resumed.index,name:room.players[resumed.index].name||`Player ${resumed.index+1}`,connected:true,players:roomPlayers(room)});
-        socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room)});
+        socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
         if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
         return;
       }
     }
     const result=rooms.joinRoom(normalizedCode,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});if(result.error)return socket.emit('error-msg',result.error);
-    const room=result.room;socket.join(room.code);
+    const room=result.room;socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
     const myIndex=rooms.playerIndexOf(room,socket.id);
     socket.emit('you-are-player',{index:myIndex,playerToken:rooms.playerTokenAt(room,myIndex)});
     io.to(room.code).emit('player-joined',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,players:roomPlayers(room)});
@@ -136,10 +136,37 @@ io.on('connection',socket=>{
   socket.on('reconnect-player',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
-    socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
+    socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
     socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room)});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
+  socket.on('spectate-room',({code,watchToken,name})=>{
+    const room=rooms.getRoom(code);
+    if(!room)return socket.emit('error-msg','room-not-found');
+    if(!rooms.canSpectate(room,watchToken))return socket.emit('error-msg','spectator-access-denied');
+    socket.data.role='spectator';socket.data.game='ludo';socket.data.roomCode=room.code;socket.data.spectatorName=String(name||'Guest').slice(0,30);
+    rooms.addSpectator(room,socket.id,socket.data.spectatorName);socket.join(room.code);
+    socket.emit('you-are-spectator',{code:room.code,started:!!room.engine,audience:rooms.audienceInfo(room,false)});
+    if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON(),spectator:true});
+    else socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:false,players:roomPlayers(room)});
+    io.to(room.code).emit('audience-info',rooms.audienceInfo(room,false));
+  });
+  socket.on('set-room-visibility',({code,visibility})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    const index=rooms.playerIndexOf(room,socket.id);if(index!==0)return socket.emit('error-msg','not-host');
+    rooms.setVisibility(room,visibility);io.to(room.code).emit('audience-info',rooms.audienceInfo(room,false));socket.emit('audience-host',rooms.audienceInfo(room,true));
+  });
+  socket.on('chat-message',({code,text})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    let role='spectator',name=socket.data.spectatorName||'Guest';
+    const index=rooms.playerIndexOf(room,socket.id);
+    if(index>=0){role='player';name=room.players[index].name||('Player '+(index+1));}
+    else if(!room.spectators?.has(socket.id))return socket.emit('error-msg','not-in-room');
+    const result=rooms.addChatMessage(room,socket.id,{name,role,text});
+    if(result.error)return socket.emit('error-msg',result.error);
+    io.to(room.code).emit('chat-message',result.message);
+  });
+
   socket.on('roll-dice',({code})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
     const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
