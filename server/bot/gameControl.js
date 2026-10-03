@@ -65,7 +65,9 @@ function roomSummary(room){
     connected:humans.filter(p=>!!p.socketId).length,
     open:roomHasOpenSeat(room),
     started:!!room?.engine,
-    gameOver:!!room?.engine?.gameOver
+    gameOver:!!room?.engine?.gameOver,
+    visibility:room?.visibility||'public',
+    viewers:room?.spectators?.size||0
   };
 }
 
