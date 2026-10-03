@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CodePlay Live — Ludo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+:root{--bg:#101114;--panel:#191b20;--ink:#f5f7fb;--muted:#9da4b3;--line:#2a2d35;--green:#38a169;--red:#e53e3e;--yellow:#d69e2e;--blue:#3182ce;box-sizing:border-box}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh;padding:max(12px,env(safe-area-inset-top)) 12px max(18px,env(safe-area-inset-bottom));display:flex;justify-content:center}
+button,input{font:inherit}
+.shell{width:min(100%,760px)}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.brand{font-weight:900;font-size:14px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.live{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;font-size:11px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#ff4b4b;box-shadow:0 0 0 5px rgba(255,75,75,.12)}
+.match{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.matchTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.matchTitle{font-size:18px;font-weight:900}.room{font-size:11px;color:var(--muted)}
+.stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.chip{border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:11px;color:var(--muted)}
+.boardWrap{position:relative;aspect-ratio:1;width:min(94vw,620px);margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr)}
+.cell{border:.5px solid rgba(255,255,255,.06)}.base-green{background:rgba(56,161,105,.22)}.base-red{background:rgba(229,62,62,.22)}.base-yellow{background:rgba(214,158,46,.22)}.base-blue{background:rgba(49,130,206,.22)}.path{background:#f5f6f7}.home-green{background:rgba(56,161,105,.5)}.home-red{background:rgba(229,62,62,.5)}.home-yellow{background:rgba(214,158,46,.55)}.home-blue{background:rgba(49,130,206,.5)}
+.center{background:conic-gradient(var(--green) 0 90deg,var(--red) 90deg 180deg,var(--yellow) 180deg 270deg,var(--blue) 270deg)}
+.tokens{position:absolute;inset:0}
+.tok{position:absolute;width:6%;height:6%;border-radius:50%;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:3}
+.tok.active{box-shadow:0 0 0 4px rgba(255,215,0,.16),0 0 18px rgba(255,215,0,.75),0 2px 8px rgba(0,0,0,.35)}
+.bottom{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.player{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:10px}.player.active{border-color:#f4c84a;box-shadow:0 0 0 1px rgba(244,200,74,.25)}.pname{font-weight:800;font-size:12px}.pcopy{font-size:10px;color:var(--muted);margin-top:3px}
+.actions{display:flex;gap:7px;align-items:center}.actions button,.send{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:9px 11px;cursor:pointer}.reactionBar{display:flex;gap:5px;flex-wrap:wrap}.reaction{min-width:40px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.panelHead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:800;font-size:12px}
+.messages{max-height:260px;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.msg{font-size:12px;line-height:1.35}.msg b{font-weight:800}.msg .time{color:var(--muted);font-size:9px;margin-left:5px}
+.composer{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.composer input{flex:1;min-width:0;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px}
+.audience{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px}.pill{font-size:10px;border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:var(--muted)}
+.toast{position:fixed;left:50%;top:12%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 13px;font-size:12px;box-shadow:0 10px 35px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
+.floatReaction{position:fixed;left:50%;top:44%;font-size:42px;transform:translate(-50%,-50%);animation:float 1.2s ease-out forwards;pointer-events:none;z-index:30}@keyframes float{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%) scale(1.35)}}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);align-items:center;justify-content:center;padding:20px;z-index:40}.overlay.show{display:flex}.card{width:min(92vw,420px);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;text-align:center}.card h2{margin:0 0 8px}.card p{color:var(--muted);font-size:12px;line-height:1.5}
+@media(max-width:560px){body{padding-left:8px;padding-right:8px}.matchTitle{font-size:16px}.players{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="header">
+    <div><div class="brand">🎲 CodePlay Live</div><div class="sub">Ludo spectator view</div></div>
+    <div class="live"><span class="dot"></span><span id="statusText">CONNECTING</span><span id="viewsChip">👁 0</span></div>
+  </header>
+
+  <section class="match">
+    <div class="matchTop"><div><div class="matchTitle" id="matchTitle">Ludo match</div><div class="room" id="roomLabel"></div></div><div id="stateLabel" class="room">WAITING</div></div>
+    <div class="stats">
+      <span class="chip" id="watching">👁 0 watching</span>
+      <span class="chip" id="views">0 views</span>
+      <span class="chip" id="messagesCount">💬 0</span>
+      <span class="chip" id="reactionsCount">🔥 0</span>
+    </div>
+  </section>
+
+  <section class="boardWrap">
+    <div id="grid" class="grid"></div>
+    <div id="tokens" class="tokens"></div>
+  </section>
+
+  <div class="bottom">
+    <section class="players" id="players"></section>
+
+    <section class="panel">
+      <div class="panelHead"><span>💬 Live chat</span><span id="chatHint">Read-only game view</span></div>
+      <div id="messages" class="messages"></div>
+      <div class="composer"><input id="chatInput" maxlength="280" placeholder="Comment on the match…"><button class="send" id="sendChat">Send</button></div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHead"><span>👁 Audience</span><span id="audienceSummary">0 watching</span></div>
+      <div id="audience" class="audience"><span class="pill">No viewers yet</span></div>
+    </section>
+
+    <section class="actions">
+      <div class="reactionBar">
+        <button class="actions button reaction" data-r="🔥">🔥</button>
+        <button class="actions button reaction" data-r="😂">😂</button>
+        <button class="actions button reaction" data-r="😱">😱</button>
+        <button class="actions button reaction" data-r="👏">👏</button>
+        <button class="actions button reaction" data-r="💀">💀</button>
+        <button class="actions button reaction" data-r="❤️">❤️</button>
+        <button class="actions button reaction" data-r="🎉">🎉</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="finishOverlay" class="overlay"><div class="card"><h2 id="finishTitle">🏆 Match complete</h2><p id="finishText"></p><button class="send" onclick="document.getElementById('finishOverlay').classList.remove('show')">Continue watching</button></div></div>
+
+<script>
+const PATH=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
+const HOME_COLS={green:[[7,1],[7,2],[7,3],[7,4],[7,5]],red:[[1,7],[2,7],[3,7],[4,7],[5,7]],yellow:[[7,13],[7,12],[7,11],[7,10],[7,9]],blue:[[13,7],[12,7],[11,7],[10,7],[9,7]]};
+const START_INDEX={green:0,red:13,yellow:26,blue:39};
+const HOME_BASE_POS={green:[[2,2],[2,3],[3,2],[3,3]],red:[[2,11],[2,12],[3,11],[3,12]],yellow:[[11,11],[11,12],[12,11],[12,12]],blue:[[11,2],[11,3],[12,2],[12,3]]};
+const COLORS={green:'#38a169',red:'#e53e3e',yellow:'#d69e2e',blue:'#3182ce'};
+const grid=document.getElementById('grid'),tokensEl=document.getElementById('tokens');
+const state={players:[],turn:0,gameOver:false,finishOrder:[],audience:{},chat:[]};
+const params=new URLSearchParams(location.search);
+let code=(params.get('code')||location.pathname.split('/').pop()||'').trim().toUpperCase();
+let watchToken=params.get('watch')||'';
+const viewerId=localStorage.getItem('codeplay_viewer_id')||(()=>{const id='v_'+cryptoRandom() ;localStorage.setItem('codeplay_viewer_id',id);return id})();
+const viewerName=(localStorage.getItem('codeplay_name')||'Guest').slice(0,30);
+let socket=null, socketUrl=location.origin;
+
+function cryptoRandom(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function cap(s){return String(s||'Player').replace(/^./,m=>m.toUpperCase())}
+function pathIdx(rel,color){return (START_INDEX[color]+rel)%52}
+function cellFor(color,pos){
+  if(pos===-1)return HOME_BASE_POS[color];
+  if(pos<=50)return [PATH[pathIdx(pos,color)]];
+  if(pos<=55)return [HOME_COLS[color][pos-51]];
+  return [[7,7]];
+}
+function cellClass(r,c){
+  if(r<6&&c<6)return 'base-green';
+  if(r<6&&c>8)return 'base-red';
+  if(r>8&&c>8)return 'base-yellow';
+  if(r>8&&c<6)return 'base-blue';
+  if(r>=6&&r<=8&&c>=6&&c<=8)return 'center';
+  for(const [color,cells] of Object.entries(HOME_COLS))if(cells.some(([rr,cc])=>rr===r&&cc===c))return 'home-'+color;
+  return 'path';
+}
+for(let r=0;r<15;r++)for(let c=0;c<15;c++){const d=document.createElement('div');d.className='cell '+cellClass(r,c);grid.appendChild(d)}
+
+function render(){
+  tokensEl.innerHTML='';
+  const players=state.players||[];
+  players.forEach((p,pi)=>{
+    const colors=Array.isArray(p.colors)&&p.colors.length?p.colors:Object.keys(p.tokens||{});
+    colors.forEach(color=>{
+      const arr=(p.tokens&&p.tokens[color])||[];
+      arr.forEach((pos,ti)=>{
+        const slots=cellFor(color,pos);
+        let rr,cc;
+        if(pos===-1){const b=slots[ti%slots.length];rr=b[0];cc=b[1]}
+        else{rr=slots[0][0];cc=slots[0][1]}
+        const onHome=pos===56;
+        if(onHome)continue;
+        const d=document.createElement('div');
+        d.className='tok '+(pi===Number(state.turn)?'active':'');
+        d.style.background=COLORS[color]||'#888';
+        const offset=((ti%2)*1.5);
+        d.style.left=((cc+0.5+offset/10)/15*100)+'%';
+        d.style.top=((rr+0.5+Math.floor(ti/2)*0.7/10)/15*100)+'%';
+        d.title=cap(p.name||('Player '+(pi+1)))+' — '+color+' '+(ti+1);
+        tokensEl.appendChild(d);
+      });
+    }
+  });
+  renderPlayers();
+}
+function renderPlayers(){
+  const el=document.getElementById('players');
+  el.innerHTML=(state.players||[]).map((p,i)=>{
+    const cards=[];
+    for(const c of (p.colors||Object.keys(p.tokens||{}))){
+      const arr=p.tokens?.[c]||[];
+      const home=arr.filter(v=>v===56).length;
+      const base=arr.filter(v=>v===-1).length;
+      cards.push('<span class="pcopy">'+cap(c)+': '+home+'/4 home · '+base+' base</span>');
+    }
+    return '<article class="player '+(i===Number(state.turn)?'active':'')+'"><div class="pname">'+(i===Number(state.turn)?'🔥 ':'')+escapeHtml(p.name||('Player '+(i+1)))+'</div>'+cards.join('<br>')+'</article>';
+  }).join('');
+}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function updateAudience(a){
+  state.audience=a||{};
+  const watching=Number(a.watching??a.viewerCount??0);
+  const views=Number(a.views??a.totalViews??0);
+  const messages=Number(a.messages??state.chat.length??0);
+  const reactions=Number(a.reactions??0);
+  document.getElementById('watching').textContent='👁 '+watching+' watching';
+  document.getElementById('views').textContent=views+' views';
+  document.getElementById('messagesCount').textContent='💬 '+messages;
+  document.getElementById('reactionsCount').textContent='🔥 '+reactions;
+  document.getElementById('viewsChip').textContent='👁 '+watching;
+  document.getElementById('audienceSummary').textContent=watching+' watching';
+  document.getElementById('audience').innerHTML=(a.audience||[]).map(v=>'<span class="pill">👤 '+escapeHtml(v.name)+'</span>').join('')||'<span class="pill">No viewers yet</span>';
+}
+function renderChat(){
+  const el=document.getElementById('messages');el.innerHTML='';
+  state.chat.slice(-100).forEach(m=>{const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+escapeHtml(m.name||'Guest')+'</b>: '+escapeHtml(m.text||'')+' <span class="time">'+new Date(m.at||m.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span>';el.appendChild(d)});
+  el.scrollTop=el.scrollHeight;
+}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>el.classList.remove('show'),1800)}
+function burst(e){const d=document.createElement('div');d.className='floatReaction';d.textContent=e;document.body.appendChild(d);setTimeout(()=>d.remove(),1250)}
+function applyState(s){
+  if(!s)return;
+  state.players=s.players||[];
+  state.turn=Number.isFinite(s.turn)?s.turn:0;
+  state.gameOver=!!s.gameOver;
+  state.finishOrder=s.finishOrder||[];
+  render();
+  const live=state.gameOver?'FINISHED':'LIVE';
+  document.getElementById('stateLabel').textContent=live;
+  document.getElementById('statusText').textContent=live;
+  if(state.gameOver)showFinished();
+}
+function showFinished(){
+  const winner=state.finishOrder?.length?state.players[state.finishOrder[0]]?.name:null;
+  document.getElementById('finishTitle').textContent=winner?'🏆 '+cap(winner)+' wins!':'🏆 Match complete';
+  const a=state.audience||{};
+  document.getElementById('finishText').textContent=''+(a.views||0)+' total views · '+(a.messages||state.chat.length||0)+' comments · '+(a.reactions||0)+' reactions';
+  document.getElementById('finishOverlay').classList.add('show');
+}
+
+function connect(){
+  if(socket)return;
+  document.getElementById('statusText').textContent='CONNECTING';
+  socket=io(socketUrl,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:Infinity});
+  socket.on('connect',()=>{document.getElementById('statusText').textContent='LIVE';socket.emit('watch-room',{code,watchToken,name:viewerName,viewerId});});
+  socket.on('disconnect',()=>{document.getElementById('statusText').textContent='RECONNECTING';});
+  socket.on('connect_error',()=>{document.getElementById('statusText').textContent='RECONNECTING';});
+  socket.on('error-msg',m=>{toast(m==='watch-not-authorized'?'This watch link is private or expired.':m);if(m==='room-not-found'||m==='watch-not-authorized')document.getElementById('statusText').textContent='UNAVAILABLE'});
+  socket.on('spectator-ready',p=>{document.getElementById('matchTitle').textContent='CodePlay Ludo · '+code;document.getElementById('roomLabel').textContent='Room '+code;state.chat=p.chat||[];updateAudience(p.audience||{});renderChat();if(p.state)applyState(p.state);else document.getElementById('stateLabel').textContent='WAITING';});
+  socket.on('room-status',p=>{document.getElementById('stateLabel').textContent=p.started?'LIVE':'WAITING';if(p.players)state.players=p.players.map(x=>({...x,tokens:{}}));renderPlayers();});
+  socket.on('player-joined',p=>{document.getElementById('stateLabel').textContent='WAITING';toast((p.joined||0)+' / '+(p.needed||0)+' players connected');});
+  socket.on('player-connection',p=>{if(p.players)renderPlayers();});
+  socket.on('game-ready',p=>{if(p.state)applyState(p.state);if(p.audience)updateAudience(p.audience);});
+  socket.on('move-applied',p=>{if(p.state)applyState(p.state);});
+  socket.on('turn-passed',p=>{if(p.state)applyState(p.state);});
+  socket.on('dice-rolled',p=>{if(p.dice?.length)toast('🎲 '+p.dice.join(' + '));});
+  socket.on('audience-info',a=>updateAudience(a));
+  socket.on('audience-update',a=>updateAudience(a));
+  socket.on('chat-message',m=>{state.chat.push(m);if(state.chat.length>100)state.chat.shift();renderChat();updateAudience({...state.audience,messages:state.chat.length});});
+  socket.on('reaction',p=>{burst(p.emoji||p.reaction||'🔥');updateAudience({...state.audience,reactions:p.total??state.audience.reactions});});
+  socket.on('watch-link-updated',p=>{toast('Watch link regenerated by host');});
+  socket.on('watch-settings-updated',p=>{toast('Watch settings updated');});
+  socket.on('match-finished',p=>{if(p.state)applyState(p.state);if(p.audience)updateAudience(p.audience);showFinished();});
+}
+document.getElementById('sendChat').onclick=()=>{const input=document.getElementById('chatInput');const text=input.value.trim();if(!text||!socket)return;socket.emit('chat-send',{code,text});input.value=''};
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('sendChat').click()});
+document.querySelectorAll('[data-r]').forEach(b=>b.addEventListener('click',()=>{if(socket)socket.emit('reaction',{code,emoji:b.dataset.r})}));
+document.getElementById('roomLabel').textContent='Room '+code;
+fetch('/api/config/public').then(r=>r.json()).then(cfg=>{if(cfg.socketUrl)socketUrl=cfg.socketUrl}).catch(()=>{}).finally(connect);
+</script>
+</body>
+</html>
