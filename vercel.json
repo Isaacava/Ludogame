@@ -4,6 +4,27 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/live/ludo/:code",
+      "has": [
+        {
+          "type": "query",
+          "key": "watch",
+          "value": "(?<watch>[a-f0-9]{36})"
+        }
+      ],
+      "destination": "/live-ludo.html?code=:code&watch=:watch"
+    },
+    {
+      "source": "/live/ludo/:code",
+      "missing": [
+        {
+          "type": "query",
+          "key": "watch"
+        }
+      ],
+      "destination": "/live-ludo.html?code=:code"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://codeplay-ludo-production.up.railway.app/api/:path*"
     },

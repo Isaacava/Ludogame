@@ -140,12 +140,12 @@ io.on('connection',socket=>{
     socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
-  socket.on('spectate-room',({code,watchToken,name})=>{
+  socket.on('spectate-room',({code,watchToken,name,viewerId})=>{
     const room=rooms.getRoom(code);
     if(!room)return socket.emit('error-msg','room-not-found');
     if(!rooms.canSpectate(room,watchToken))return socket.emit('error-msg','spectator-access-denied');
     socket.data.role='spectator';socket.data.game='ludo';socket.data.roomCode=room.code;socket.data.spectatorName=String(name||'Guest').slice(0,30);
-    rooms.addSpectator(room,socket.id,socket.data.spectatorName);socket.join(room.code);
+    rooms.addSpectator(room,socket.id,{name:socket.data.spectatorName,viewerId});socket.join(room.code);
     socket.emit('you-are-spectator',{code:room.code,started:!!room.engine,audience:rooms.audienceInfo(room,false)});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON(),spectator:true});
     else socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:false,players:roomPlayers(room)});
@@ -226,6 +226,77 @@ io.on('connection',socket=>{
     const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
     if(!endResult.gameOver)emitGameAudio(room,endResult.nextTurn,'ludo-turn');
   });
+
+  // Live audience compatibility/events. These aliases keep the spectator client
+  // decoupled from the player-oriented event names used by the legacy UI.
+  socket.on('watch-room',({code,watchToken,name,viewerId})=>{
+    const room=rooms.getRoom(code);
+    if(!room)return socket.emit('error-msg','room-not-found');
+    if(!rooms.canSpectate(room,watchToken))return socket.emit('error-msg','watch-not-authorized');
+    socket.data.role='spectator';socket.data.game='ludo';socket.data.roomCode=room.code;socket.data.spectatorName=String(name||'Guest').slice(0,30);
+    rooms.addSpectator(room,socket.id,{name:socket.data.spectatorName,viewerId});socket.join(room.code);
+    const audience=rooms.audienceInfo(room,false);
+    socket.emit('spectator-ready',{code:room.code,status:room.engine?'LIVE':'WAITING',started:!!room.engine,visibility:room.visibility,audience,state:room.engine?room.engine.toJSON():null,chat:room.chat.slice(-100)});
+    if(!room.engine)socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:false,players:roomPlayers(room),audience});
+    io.to(room.code).emit('audience-info',audience);
+    io.to(room.code).emit('audience-update',audience);
+  });
+
+  socket.on('chat-send',({code,text})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    let role='spectator',name=socket.data.spectatorName||'Guest';
+    const index=rooms.playerIndexOf(room,socket.id);
+    if(index>=0){role='player';name=room.players[index].name||('Player '+(index+1));}
+    else if(!room.spectators?.has(socket.id))return socket.emit('error-msg','not-in-room');
+    const result=rooms.addChatMessage(room,socket.id,{name,role,text});
+    if(result.error)return socket.emit('error-msg',result.error);
+    io.to(room.code).emit('chat-message',result.message);
+    const audience=rooms.audienceInfo(room,false);
+    io.to(room.code).emit('audience-update',audience);
+  });
+
+  socket.on('audience-list',({code})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    socket.emit('audience-list',{audience:rooms.audienceInfo(room,false).audience||[]});
+  });
+
+  socket.on('reaction',({code,emoji,reaction})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    const allowed=new Set(['😂','🔥','😱','👏','💀','❤️','🎉','😭','😎','😳','Omo!','Sharp!']);
+    const value=reaction||emoji;
+    if(!allowed.has(value))return;
+    const pIdx=rooms.playerIndexOf(room,socket.id);
+    const isSpectator=room.spectators?.has(socket.id);
+    if(pIdx<0&&!isSpectator)return socket.emit('error-msg','not-in-room');
+    const now=Date.now();
+    if(socket.data.lastLiveReactionAt&&now-socket.data.lastLiveReactionAt<300)return;
+    socket.data.lastLiveReactionAt=now;
+    room.reactionTotal=(room.reactionTotal||0)+1;
+    const name=pIdx>=0?(room.players[pIdx].name||('Player '+(pIdx+1))):(socket.data.spectatorName||'Guest');
+    io.to(room.code).emit('reaction',{emoji:value,reaction:value,name,total:room.reactionTotal});
+    const audience=rooms.audienceInfo(room,false);
+    io.to(room.code).emit('audience-info',audience);
+    io.to(room.code).emit('audience-update',audience);
+  });
+
+  socket.on('set-watch-visibility',({code,visibility})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    const index=rooms.playerIndexOf(room,socket.id);if(index!==0)return socket.emit('error-msg','not-host');
+    rooms.setVisibility(room,visibility);
+    const audience=rooms.audienceInfo(room,false);
+    io.to(room.code).emit('watch-settings-updated',{visibility:room.visibility,watchToken:room.spectatorToken});
+    io.to(room.code).emit('audience-info',audience);
+    io.to(room.code).emit('audience-update',audience);
+  });
+
+  socket.on('regenerate-watch-link',({code})=>{
+    const room=rooms.getRoom(code);if(!room)return socket.emit('error-msg','room-not-found');
+    const index=rooms.playerIndexOf(room,socket.id);if(index!==0)return socket.emit('error-msg','not-host');
+    const crypto=require('crypto');
+    room.spectatorToken=crypto.randomBytes(18).toString('hex');
+    io.to(room.code).emit('watch-link-updated',{visibility:room.visibility,watchToken:room.spectatorToken});
+  });
+
   socket.on('disconnect',()=>{
     const roomCode=socket.data.roomCode;
     if(socket.data.role==='spectator'&&roomCode){
