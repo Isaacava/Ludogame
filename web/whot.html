@@ -115,6 +115,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @keyframes specialPop{0%{opacity:0;transform:translate(-50%,-42%) scale(.72)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}72%{opacity:1;transform:translate(-50%,-56%) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.94)}}
 .status{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:19;padding:8px 12px;border-radius:999px;background:rgba(4,16,12,.46);border:1px solid rgba(255,255,255,.07);font-size:11px;color:#d7e4df;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(10px)}
 .reactions{position:absolute;left:10px;right:10px;bottom:5px;z-index:21;display:flex;gap:5px;overflow:auto;padding:0 3px;justify-content:center}.react{padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:12px}
+.spectatorHands{display:none;width:min(1080px,100%);padding:12px 12px 4px}.spectatorHands.visible{display:block}.spectatorHandsTitle{font-size:13px;font-weight:950;color:var(--gold);margin:0 0 8px}.spectatorPlayer{background:rgba(10,21,18,.82);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:9px 10px;margin:7px 0}.spectatorPlayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px;font-weight:850;margin-bottom:8px}.spectatorCards{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.spectatorCards .card{flex:0 0 52px;min-width:52px}.spectatorPlayer.turning{border-color:rgba(255,215,90,.62);box-shadow:0 0 0 1px rgba(255,215,90,.12),0 8px 25px rgba(0,0,0,.16)}
 .audienceBar{display:none;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.audienceBar button{padding:8px 11px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12px;cursor:pointer}.audienceBtn{display:inline-flex;align-items:center;gap:5px}.chatDrawer{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(420px,94vw);background:rgba(7,17,14,.98);border:1px solid rgba(255,255,255,.1);border-radius:20px;box-shadow:var(--shadow);z-index:90;display:none;overflow:hidden}.chatDrawer.open{display:flex;flex-direction:column}.chatHead{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.08);font-weight:900}.chatHead button{padding:4px 7px;border-radius:8px;background:rgba(255,255,255,.05)}.chatMessages{max-height:42vh;overflow:auto;padding:10px 13px;display:flex;flex-direction:column;gap:8px}.chatMsg{font-size:12px;line-height:1.35}.chatMsg b{font-weight:900;color:var(--gold)}.chatMsg.spectator b{color:var(--muted)}.chatComposer{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(255,255,255,.08)}.chatComposer input{flex:1;min-width:0;padding:10px 11px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--ink)}.chatComposer button{padding:10px 14px;border-radius:11px;background:#2a7bf6;font-weight:850}.spectatorBadge{font-size:11px;color:var(--muted);text-align:center}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}.modal.show{display:flex}.modal.show .modalCard{animation:modalIn .22s ease-out}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
@@ -269,6 +270,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <button id="watchLinkBtn" class="audienceBtn">🔗 Watch link</button>
   <button id="visibilityBtn" class="audienceBtn">🌐 Public</button>
 </div>
+<section id="spectatorHands" class="spectatorHands">
+  <div class="spectatorHandsTitle">👁 Players' cards</div>
+  <div id="spectatorHandsList"></div>
+</section>
 <div id="chatDrawer" class="chatDrawer">
   <div class="chatHead"><span>💬 Live chat</span><button id="chatCloseBtn" aria-label="Close chat">✕</button></div>
   <div id="chatMessages" class="chatMessages"></div>
@@ -328,7 +333,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     homeBtn:document.getElementById('homeBtn'),inviteBtn:document.getElementById('inviteBtn'),
     callTitle:document.getElementById('callTitle'),callHelp:document.getElementById('callHelp'),
     specialFx:document.getElementById('specialFx'),
-    audienceBar:document.getElementById('audienceBar'),viewerCount:document.getElementById('viewerCount'),chatBtn:document.getElementById('chatBtn'),chatBadge:document.getElementById('chatBadge'),chatDrawer:document.getElementById('chatDrawer'),chatMessages:document.getElementById('chatMessages'),chatInput:document.getElementById('chatInput'),chatSend:document.getElementById('chatSendBtn'),chatClose:document.getElementById('chatCloseBtn'),watchLink:document.getElementById('watchLinkBtn'),visibility:document.getElementById('visibilityBtn')
+    audienceBar:document.getElementById('audienceBar'),viewerCount:document.getElementById('viewerCount'),chatBtn:document.getElementById('chatBtn'),chatBadge:document.getElementById('chatBadge'),chatDrawer:document.getElementById('chatDrawer'),chatMessages:document.getElementById('chatMessages'),chatInput:document.getElementById('chatInput'),chatSend:document.getElementById('chatSendBtn'),chatClose:document.getElementById('chatCloseBtn'),watchLink:document.getElementById('watchLinkBtn'),visibility:document.getElementById('visibilityBtn'),spectatorHands:document.getElementById('spectatorHands'),spectatorHandsList:document.getElementById('spectatorHandsList')
   };
 
   function tabId(){
@@ -452,6 +457,20 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function openChat(){e.chatDrawer.classList.add('open');e.chatInput.focus();renderChat()}
   function closeChat(){e.chatDrawer.classList.remove('open')}
   function setSpectatorUi(){e.inviteBtn.style.display='none';e.game.classList.add('spectatorMode');e.status.textContent='Watching live — read-only';}
+  function renderSpectatorHands(){
+    if(!e.spectatorHands||!e.spectatorHandsList)return;
+    if(!spectatorMode){e.spectatorHands.classList.remove('visible');return}
+    e.spectatorHands.classList.add('visible');e.spectatorHandsList.innerHTML='';
+    (state&&state.players||[]).forEach(p=>{
+      const box=document.createElement('div');box.className='spectatorPlayer'+(p.index===state.turn?' turning':'');
+      const head=document.createElement('div');head.className='spectatorPlayerHead';
+      head.innerHTML='<span>'+esc(p.name||('Player '+(p.index+1)))+(p.index===state.turn?' 🔥':'')+'</span><span>'+p.handCount+' cards</span>';
+      const cards=document.createElement('div');cards.className='spectatorCards';
+      (p.cards||[]).forEach(card=>{const wrap=document.createElement('div');wrap.innerHTML=cardHtml(card,true);cards.appendChild(wrap.firstElementChild)});
+      box.appendChild(head);box.appendChild(cards);e.spectatorHandsList.appendChild(box);
+    });
+  }
+
   function render(extra){
     if(!state)return;
     const oldHand={};e.hand.querySelectorAll('[data-card-id]').forEach(n=>{oldHand[n.getAttribute('data-card-id')]=n.getBoundingClientRect()});
@@ -536,6 +555,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     }
     if(extra&&extra.drawn&&extra.drawn.length&&extra.actor===me){animateFlight(oldMarket,e.hand.getBoundingClientRect(),'<div class="marketGhost"></div>',.7)}
     if(extra&&extra.resolution&&extra.resolution.kind)special(extra.resolution.kind);
+    renderSpectatorHands();
     if(state.gameOver)showGameOver();
   }
 
