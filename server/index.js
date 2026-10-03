@@ -107,7 +107,7 @@ io.on('connection',socket=>{
     const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
     if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
     const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
-    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
+    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room),audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
   socket.on('join-room',({code,name,color,playerToken,whatsappToken})=>{
@@ -121,7 +121,7 @@ io.on('connection',socket=>{
         socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
         socket.emit('you-are-player',{index:resumed.index,playerToken:resumed.playerToken,reconnected:true});
         io.to(room.code).emit('player-connection',{index:resumed.index,name:room.players[resumed.index].name||`Player ${resumed.index+1}`,connected:true,players:roomPlayers(room)});
-        socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
+        socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
         if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
         return;
       }
@@ -137,7 +137,7 @@ io.on('connection',socket=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
     socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
-    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true)});
+    socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
   });
   socket.on('spectate-room',({code,watchToken,name})=>{
