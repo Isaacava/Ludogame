@@ -115,6 +115,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @keyframes specialPop{0%{opacity:0;transform:translate(-50%,-42%) scale(.72)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}72%{opacity:1;transform:translate(-50%,-56%) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.94)}}
 .status{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:19;padding:8px 12px;border-radius:999px;background:rgba(4,16,12,.46);border:1px solid rgba(255,255,255,.07);font-size:11px;color:#d7e4df;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(10px)}
 .reactions{position:absolute;left:10px;right:10px;bottom:5px;z-index:21;display:flex;gap:5px;overflow:auto;padding:0 3px;justify-content:center}.react{padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:12px}
+.audienceBar{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.audienceBar button{padding:8px 11px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12px;cursor:pointer}.audienceBtn{display:inline-flex;align-items:center;gap:5px}.chatDrawer{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(420px,94vw);background:rgba(7,17,14,.98);border:1px solid rgba(255,255,255,.1);border-radius:20px;box-shadow:var(--shadow);z-index:90;display:none;overflow:hidden}.chatDrawer.open{display:flex;flex-direction:column}.chatHead{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.08);font-weight:900}.chatHead button{padding:4px 7px;border-radius:8px;background:rgba(255,255,255,.05)}.chatMessages{max-height:42vh;overflow:auto;padding:10px 13px;display:flex;flex-direction:column;gap:8px}.chatMsg{font-size:12px;line-height:1.35}.chatMsg b{font-weight:900;color:var(--gold)}.chatMsg.spectator b{color:var(--muted)}.chatComposer{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(255,255,255,.08)}.chatComposer input{flex:1;min-width:0;padding:10px 11px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--ink)}.chatComposer button{padding:10px 14px;border-radius:11px;background:#2a7bf6;font-weight:850}.spectatorBadge{font-size:11px;color:var(--muted);text-align:center}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}.modal.show{display:flex}.modal.show .modalCard{animation:modalIn .22s ease-out}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 .modalCard{width:min(450px,100%);background:linear-gradient(180deg,#0f1f1a,#09130f);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:19px;box-shadow:var(--shadow)}
@@ -262,6 +263,17 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     </div>
 
     <div class="reactions" id="reactions"></div>
+<div id="audienceBar" class="audienceBar">
+  <button id="viewerBtn" class="audienceBtn">👁 <span id="viewerCount">0</span> watching</button>
+  <button id="chatBtn" class="audienceBtn">💬 Chat <span id="chatBadge">0</span></button>
+  <button id="watchLinkBtn" class="audienceBtn">🔗 Watch link</button>
+  <button id="visibilityBtn" class="audienceBtn">🌐 Public</button>
+</div>
+<div id="chatDrawer" class="chatDrawer">
+  <div class="chatHead"><span>💬 Live chat</span><button id="chatCloseBtn" aria-label="Close chat">✕</button></div>
+  <div id="chatMessages" class="chatMessages"></div>
+  <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…"><button id="chatSendBtn">Send</button></div>
+</div>
   </section>
 </main>
 </div>
@@ -402,6 +414,43 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     e.ruleBanner.classList.remove('bump');void e.ruleBanner.offsetWidth;e.ruleBanner.classList.add('bump');
   }
 
+  function renderChat(){
+    e.chatMessages.innerHTML='';
+    chatMessages.slice(-50).forEach(m=>{
+      const row=document.createElement('div');row.className='chatMsg '+(m.role==='spectator'?'spectator':'');
+      const who=document.createElement('b');who.textContent=(m.name||'Guest')+': ';
+      const body=document.createElement('span');body.textContent=m.text||'';
+      row.appendChild(who);row.appendChild(body);e.chatMessages.appendChild(row);
+    });
+    e.chatMessages.scrollTop=e.chatMessages.scrollHeight;
+    e.chatBadge.textContent=String(chatMessages.length);
+  }
+  function setAudience(info){
+    if(!info)return;
+    if(typeof info.viewerCount==='number')e.viewerCount.textContent=String(info.viewerCount);
+    if(info.visibility)audienceVisibility=info.visibility;
+    if(Array.isArray(info.chat)){chatMessages=info.chat;renderChat()}
+    e.visibility.textContent=audienceVisibility==='private'?'🔒 Private':'🌐 Public';
+    const host=!spectatorMode&&me===0;
+    e.visibility.style.display=host?'inline-flex':'none';
+    e.watchLink.style.display=(!spectatorMode&&(audienceVisibility==='public'||!!watchToken))?'inline-flex':'none';
+    e.audienceBar.style.display='flex';
+  }
+  function watchUrl(){
+    if(!roomCode)return location.href;
+    let u=location.origin+location.pathname+'?mode=watch&action=spectate&code='+encodeURIComponent(roomCode)+'&name='+encodeURIComponent(profileName);
+    if(audienceVisibility==='private'&&watchToken)u+='&watchToken='+encodeURIComponent(watchToken);
+    return u;
+  }
+  function sendChat(){
+    const text=String(e.chatInput.value||'').trim();if(!text||!socket||!roomCode)return;
+    socket.emit('whot:chat-message',{code:roomCode,text});e.chatInput.value='';
+  }
+  function toggleVisibility(){if(socket&&roomCode&&!spectatorMode)socket.emit('whot:set-room-visibility',{code:roomCode,visibility:audienceVisibility==='private'?'public':'private'})}
+  function copyWatchLink(){const url=watchUrl();if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(()=>{e.status.textContent='Watch link copied.'}).catch(()=>window.prompt('Copy this watch link',url));else window.prompt('Copy this watch link',url)}
+  function openChat(){e.chatDrawer.classList.add('open');e.chatInput.focus();renderChat()}
+  function closeChat(){e.chatDrawer.classList.remove('open')}
+  function setSpectatorUi(){e.inviteBtn.style.display='none';e.game.classList.add('spectatorMode');e.status.textContent='Watching live — read-only';}
   function render(extra){
     if(!state)return;
     const oldHand={};e.hand.querySelectorAll('[data-card-id]').forEach(n=>{oldHand[n.getAttribute('data-card-id')]=n.getBoundingClientRect()});
@@ -410,7 +459,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const previousCounts=window.__whotHandCounts||{};
     showGame();
     if(!window.__whotHandCounts)window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
-    e.roomLabel.textContent='Room '+roomCode+' · '+(state.playerCount||state.players.length)+' players';
+    e.roomLabel.textContent=(spectatorMode?'👁 LIVE · ':'Room ')+roomCode+' · '+(state.playerCount||state.players.length)+' players';
     e.marketCount.textContent=String(state.marketCount||0);
 
     e.topSlot.innerHTML=state.top?'<div class="topCard '+((extra&&extra.played)?'cardEnter':'')+'">'+cardHtml(state.top)+'</div>':'';
@@ -472,7 +521,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     }
     animateCall(prompt,whotActive);
 
-    const isTurn=state.turn===me&&!state.gameOver;
+    const isTurn=!spectatorMode&&state.turn===me&&!state.gameOver;
     const canDraw=isTurn;document.querySelector('.handPanel').classList.toggle('myTurn',!!isTurn);
     e.market.classList.toggle('canDraw',!!canDraw);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=canDraw?onDraw:null;
 
@@ -518,7 +567,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     e.winnerSub.textContent='Penalty points remaining in each hand';
     e.results.innerHTML='';
     (state.players||[]).forEach((p,i)=>{const row=document.createElement('div');row.className='resultRow'+(i===state.winner?' winner':'');row.innerHTML='<span>'+esc(p.name)+'</span><span>'+(state.roundScores?state.roundScores[i]:'—')+' pts</span>';e.results.appendChild(row)});
-    e.gameOver.classList.add('show');confetti();
+    e.gameOver.classList.add('show');e.rematchBtn.style.display=spectatorMode?'none':'inline-flex';confetti();
   }
   async function loadWhotConfig(){
     try{
@@ -540,8 +589,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
       reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null,whatsappToken:whatsappGameToken});showWaiting('Joining room '+roomCode+'…');
     });
-    socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
-    socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+    socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';if(x.audience){watchToken=x.audience.spectatorToken||watchToken;setAudience(x.audience)}if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+    socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.audience)setAudience(x.audience);if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:state',x=>{if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state,x)});
     socket.on('whot:status',x=>{if(x.roomCode)roomCode=x.roomCode;if(x.waiting===true)showWaiting(x.text||'Waiting for players…');else if(x.text)e.status.textContent=x.text});
     socket.on('whot:error',x=>{const msg=x.message||String(x);
