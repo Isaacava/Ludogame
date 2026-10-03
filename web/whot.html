@@ -310,7 +310,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   const SHAPE_LABEL={circle:'Circle',triangle:'Triangle',cross:'Cross',square:'Square',star:'Star'};
   const REACTIONS=['😂','🔥','👏','😭','Omo!','Sharp!'];
 
-  let socket=null,roomCode=(params.get('code')||'').trim().toUpperCase(),playerToken=null,me=0,state=null;
+  let socket=null,roomCode=(params.get('code')||'').trim().toUpperCase(),playerToken=null,me=0,state=null,spectatorMode=(params.get('action')==='spectate'||params.get('mode')==='watch'),watchToken=(params.get('watchToken')||'').trim(),audienceVisibility='public',chatMessages=[];
   let reconnectTries=0,reconnecting=false;
   let mode=params.get('mode')||'friends',action=params.get('action')||'create',pendingCardId=null;
 
@@ -580,10 +580,12 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function connect(){
     socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10,timeout:12000});
     const saved=loadRoom(),requestedCode=String(roomCode||'').toUpperCase(),incomingPlayerToken=(params.get('playerToken')||'').trim(),creating=mode==='computer'||action==='create';
-    if(incomingPlayerToken&&requestedCode){roomCode=requestedCode;playerToken=incomingPlayerToken}
+    if(spectatorMode){roomCode=requestedCode;playerToken=null;me=-1}
+    else if(incomingPlayerToken&&requestedCode){roomCode=requestedCode;playerToken=incomingPlayerToken}
     else if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
     if(!creating&&requestedCode&&!incomingPlayerToken){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
     socket.on('connect',()=>{
+      if(spectatorMode){showWaiting('Connecting to live match '+roomCode+'…');socket.emit('whot:spectate',{code:roomCode,watchToken,name:profileName});return}
       if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer',whatsappToken:whatsappGameToken});showWaiting('Starting your computer match…');return}
       if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends',whatsappToken:whatsappGameToken});showWaiting('Creating your Whot room…');return}
       if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
@@ -591,8 +593,12 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     });
     socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';if(x.audience){watchToken=x.audience.spectatorToken||watchToken;setAudience(x.audience)}if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.audience)setAudience(x.audience);if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
-    socket.on('whot:state',x=>{if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state,x)});
+    socket.on('whot:state',x=>{if(x.spectator){spectatorMode=true;me=-1;setSpectatorUi()}else if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state,x)});
     socket.on('whot:status',x=>{if(x.roomCode)roomCode=x.roomCode;if(x.waiting===true)showWaiting(x.text||'Waiting for players…');else if(x.text)e.status.textContent=x.text});
+    socket.on('whot:spectator-joined',x=>{spectatorMode=true;me=-1;roomCode=x.code||roomCode;if(x.audience)setAudience(x.audience);setSpectatorUi()});
+    socket.on('whot:audience-info',x=>setAudience(x));
+    socket.on('whot:audience-host',x=>{if(x&&x.spectatorToken)watchToken=x.spectatorToken;setAudience(x)});
+    socket.on('whot:chat-message',x=>{chatMessages.push(x);chatMessages=chatMessages.slice(-100);renderChat()});
     socket.on('whot:error',x=>{const msg=x.message||String(x);
       if(reconnecting&&(msg==='seat-already-connected'||msg==='invalid-reconnect-token')){
         if(msg==='seat-already-connected'&&reconnectTries<3){reconnectTries++;showWaiting('Reconnecting to room '+roomCode+'…');setTimeout(()=>socket.emit('whot:reconnect',{code:roomCode,playerToken}),1500);return}
@@ -610,8 +616,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
   e.homeBtn.onclick=()=>location.href='/';
   e.inviteBtn.onclick=()=>{if(roomCode){if(whatsappBotNumber){window.open('https://wa.me/'+whatsappBotNumber+'?text='+encodeURIComponent('JOIN WHOT '+roomCode),'_blank','noopener')}else{const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}}};
-  e.rematchBtn.onclick=()=>{e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
+  e.rematchBtn.onclick=()=>{if(spectatorMode)return;e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
+  e.chatBtn.onclick=openChat;e.chatClose.onclick=closeChat;e.chatSend.onclick=sendChat;e.watchLink.onclick=copyWatchLink;e.visibility.onclick=toggleVisibility;e.chatInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')sendChat()});
   e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
+  if(spectatorMode){me=-1;setSpectatorUi()}
   REACTIONS.forEach(r=>{const b=document.createElement('button');b.className='react';b.textContent=r;b.onclick=()=>socket.emit('whot:reaction',{code:roomCode,reaction:r});e.reactions.appendChild(b)});
   loadWhotConfig().then(ok=>{if(ok)connect()});
   window.__whotInternals={render,canPlay,onCard,onDraw,openWhotCall,setState,get state(){return state}};
