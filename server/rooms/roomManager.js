@@ -1,6 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 const { LudoEngine } = require('../engine/ludoEngine');
+const {ensureAudience, setVisibility, canSpectate, addSpectator, removeSpectator, audienceInfo, addChatMessage} = require('../realtime/audience');
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const RECONNECT_GRACE_MS = 2 * 60 * 1000;
 const normCode = c => String(c || '').trim().toUpperCase();
@@ -10,7 +11,8 @@ class RoomManager {
   createRoom(playerCount, hostSocketId, profile = {}) {
     let code; do { code = generateCode(); } while (this.rooms.has(code));
     const room = { code, playerCount, players:[{socketId:hostSocketId,playerToken:crypto.randomBytes(16).toString('hex'),connected:true,disconnectedAt:null,name:profile.name||'Player 1',color:profile.color||null,whatsappPhone:profile.whatsappPhone||null}], engine:null, rematchVotes:new Set(), createdAt:Date.now() };
-    this.rooms.set(code, room); return room;
+        ensureAudience(room);
+this.rooms.set(code, room); return room;
   }
   joinRoom(code, socketId, profile = {}) {
     const room = this.rooms.get(normCode(code)); if(!room) return {error:'room-not-found'}; if(room.engine) return {error:'room-full'};
@@ -63,6 +65,12 @@ class RoomManager {
     return {room,started:false,requested:room.rematchVotes.size};
   }
     getRoom(code){ return this.rooms.get(normCode(code)); }
+  setVisibility(room, visibility){ return setVisibility(room, visibility); }
+  canSpectate(room, watchToken){ return canSpectate(room, watchToken); }
+  addSpectator(room, socketId, name){ return addSpectator(room, socketId, name); }
+  removeSpectator(room, socketId){ return removeSpectator(room, socketId); }
+  audienceInfo(room, includeSecret=false){ return audienceInfo(room, includeSecret); }
+  addChatMessage(room, socketId, data){ return addChatMessage(room, socketId, data); }
   playerIndexOf(room,socketId){ return room.players.findIndex(p=>p.socketId===socketId); }
   playerTokenAt(room,index){ return room.players[index]?room.players[index].playerToken:null; }
   reconnect(room,socketId,playerToken){
