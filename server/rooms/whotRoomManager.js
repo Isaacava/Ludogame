@@ -1,7 +1,7 @@
 'use strict';
 const crypto=require('crypto');
 const {WhotEngine}=require('../engine/whotEngine');
-const {ensureAudience, setVisibility, canSpectate, addSpectator, removeSpectator, audienceInfo, addChatMessage} = require('../realtime/audience');
+const {ensureAudience, setVisibility, applyOptions, canSpectate, spectateDenyReason, addSpectator, removeSpectator, spectatorsToEvict, setMuted, audienceInfo, addChatMessage, addFeed} = require('../realtime/audience');
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const RECONNECT_GRACE_MS=2*60*1000;
 const normCode=c=>String(c||'').trim().toUpperCase();
@@ -38,9 +38,14 @@ class WhotRoomManager{
   getRoom(code){return this.rooms.get(normCode(code))}
   setVisibility(room, visibility){ return setVisibility(room, visibility); }
   canSpectate(room, watchToken){ return canSpectate(room, watchToken); }
-  addSpectator(room, socketId, name){ return addSpectator(room, socketId, name); }
+  addSpectator(room, socketId, payload){ return addSpectator(room, socketId, payload); }
+  applyOptions(room, opts){ return applyOptions(room, opts); }
+  spectateDenyReason(room, watchToken){ return spectateDenyReason(room, watchToken); }
+  spectatorsToEvict(room){ return spectatorsToEvict(room); }
+  setMuted(room, key, muted){ return setMuted(room, key, muted); }
+  addFeed(room, text, kind){ return addFeed(room, text, kind); }
   removeSpectator(room, socketId){ return removeSpectator(room, socketId); }
-  audienceInfo(room, includeSecret=false){ return audienceInfo(room, includeSecret); }
+  audienceInfo(room, includeSecret=false, includeHistory=false){ return audienceInfo(room, includeSecret, includeHistory); }
   addChatMessage(room, socketId, data){ return addChatMessage(room, socketId, data); }
   playerIndexOf(room,socketId){return room.players.findIndex(p=>p.socketId===socketId&&!p.bot)}
   playerTokenAt(room,index){return room.players[index]?room.players[index].playerToken:null}
@@ -68,6 +73,13 @@ class WhotRoomManager{
     if(room.rematchVotes.size===humans.length){this.resetEngine(room);return {room,started:true,requested:room.rematchVotes.size}}
     return {room,started:false,requested:room.rematchVotes.size};
   }
-  sweepExpired(maxAgeMs=30*60*1000){const now=Date.now();for(const [code,room] of this.rooms)if(!room.engine&&now-room.createdAt>maxAgeMs)this.rooms.delete(code)}
+  sweepExpired(maxAgeMs=30*60*1000){
+    const now=Date.now();
+    for(const [code,room] of this.rooms){
+      const idle=now-(room.lastActivityAt||room.createdAt),online=room.players.some(p=>!p.bot&&p.socketId);
+      const stale=!room.engine?now-room.createdAt>maxAgeMs:(room.engine.gameOver?idle>20*60*1000:((!online&&idle>15*60*1000)||idle>3*60*60*1000));
+      if(stale){if(room.botTimer){clearTimeout(room.botTimer);room.botTimer=null}this.rooms.delete(code)}
+    }
+  }
 }
 module.exports={WhotRoomManager,RECONNECT_GRACE_MS};

@@ -26,6 +26,35 @@ button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weig
 .audienceBar{width:min(92vw,380px);display:none;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.audienceBar button{padding:8px 10px;font-size:12px;background:var(--panel);color:var(--ink);border:1px solid var(--line)}.audienceBtn{display:inline-flex;align-items:center;gap:5px}.chatDrawer{position:fixed;inset:auto 10px 10px 10px;max-width:390px;margin:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.38);z-index:75;display:none;overflow:hidden}.chatDrawer.open{display:flex;flex-direction:column}.chatHead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:800}.chatHead button{padding:5px 8px;font-size:16px}.chatMessages{max-height:42vh;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px}.chatMsg{font-size:12px;line-height:1.35}.chatMsg b{font-weight:800}.chatMsg.spectator b{color:var(--sub)}.chatComposer{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.chatComposer input{flex:1;min-width:0;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:10px 11px}.chatComposer button{padding:10px 13px}.spectatorBadge{font-size:11px;color:var(--sub);text-align:center;margin-top:-2px}
 .reactionBubble{position:fixed;left:50%;bottom:18%;transform:translateX(-50%) scale(.6);background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:9px 14px;font-size:15px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;z-index:60}.reactionBubble.show{animation:reactionPop 1.3s ease-out}@keyframes reactionPop{0%{opacity:0;transform:translateX(-50%) scale(.6)}15%{opacity:1;transform:translateX(-50%) scale(1.08)}30%{transform:translateX(-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-34px) scale(1)}}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:80}.modalCard{width:min(94vw,390px);max-height:86vh;overflow:auto;background:var(--panel);color:var(--ink);border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:center}.modalCard h3{margin:0 0 5px;font-size:24px}.resultSub{color:var(--sub);font-size:12px;margin-bottom:14px}.resultRow{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;text-align:left}.resultRow.winner{border-width:2px}.rank{width:24px;font-weight:800}.resultName{flex:1;font-weight:700}.resultActions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:15px}.resultActions button{flex:1;min-width:120px}.rematchState{font-size:12px;color:var(--sub);min-height:18px;margin-top:8px}
+
+/* ===== audience / share (v2) ===== */
+.audienceBar{width:min(94vw,420px);display:none;align-items:stretch;justify-content:center;gap:8px;flex-wrap:nowrap}
+.audienceBar button{flex:1 1 0;min-height:46px;padding:0 8px;font-size:13px;font-weight:700;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;position:relative;white-space:nowrap}
+.badgeDot{display:none;min-width:18px;height:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:#e53e3e;color:#fff;font-size:11px;line-height:18px;text-align:center}.badgeDot.show{display:inline-block}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-8px);max-width:min(92vw,420px);padding:10px 15px;border-radius:14px;background:var(--panel);color:var(--ink);border:1px solid var(--line);font-size:13px;font-weight:700;text-align:center;z-index:140;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 8px 28px rgba(0,0,0,.25)}.toast.show{opacity:1;transform:translate(-50%,0)}
+.feedLine{width:min(94vw,420px);min-height:18px;font-size:12px;color:var(--sub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheetBack{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:none}.sheetBack.show{display:block}
+.sheet{position:fixed;left:50%;bottom:var(--kb,0px);transform:translate(-50%,105%);width:min(520px,100%);max-height:min(88dvh,740px);display:flex;flex-direction:column;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -20px 50px rgba(0,0,0,.35);z-index:90;transition:transform .22s ease;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden}.sheet.show{transform:translate(-50%,0);visibility:visible}
+.sheetGrab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0}
+.sheetHead{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 4px 16px;font-weight:800;font-size:16px}.sheetHead button{width:44px;height:44px;padding:0;border-radius:12px;background:transparent;color:var(--ink);border:1px solid var(--line)}
+.sheetBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 18px}
+.secTitle{font-size:11px;letter-spacing:.08em;font-weight:800;color:var(--sub);margin:16px 0 8px;text-transform:uppercase}.secTitle:first-child{margin-top:4px}
+.statRow{display:flex;gap:8px;flex-wrap:wrap}.statChip{padding:7px 11px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700}
+.shareBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bigBtn{min-height:48px;border-radius:14px;background:transparent;color:var(--ink);border:1.5px solid var(--line);font-weight:800;font-size:14px;padding:0 12px}.bigBtn.wa{grid-column:1/-1;background:#25d366;border:0;color:#04130b}
+.linkBox{margin-top:8px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);font-size:11px;color:var(--sub);word-break:break-all;line-height:1.35}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.seg button{min-height:52px;border-radius:13px;background:transparent;color:var(--ink);border:1.5px solid var(--line);font-size:12px;font-weight:800;line-height:1.25;padding:6px 4px}.seg button.on{border-color:#d69e2e;background:rgba(214,158,46,.15)}
+.hintTxt{font-size:12px;color:var(--sub);line-height:1.45;margin-top:8px}
+.switchRow{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:56px;padding:8px 0;border-top:1px solid var(--line);text-align:left;width:100%;background:transparent;color:var(--ink);border-radius:0}.switchRow b{display:block;font-size:14px}.switchRow span.d{display:block;font-size:11px;color:var(--sub);margin-top:2px;line-height:1.35;font-weight:500}
+.switch{position:relative;flex:0 0 auto;width:52px;height:31px;border-radius:16px;background:var(--line);transition:.18s}.switch:after{content:"";position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:50%;background:#fff;transition:transform .18s}.switch.on{background:#38a169}.switch.on:after{transform:translateX(21px)}
+.viewerRow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;font-size:14px;border-top:1px solid var(--line)}.viewerRow:first-of-type{border-top:0}.smallBtn{min-height:36px;padding:0 12px;border-radius:10px;background:transparent;color:var(--ink);border:1px solid var(--line);font-size:12px;font-weight:700}.smallBtn.on{color:#e53e3e;border-color:#e53e3e}
+.fi{font-size:13px;padding:8px 0;border-top:1px solid var(--line)}.fi:first-child{border-top:0}
+.emptyTxt{text-align:center;color:var(--sub);font-size:13px;padding:18px 8px}
+.chatMessages{flex:1 1 auto;min-height:150px;max-height:52dvh;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 16px;display:flex;flex-direction:column;gap:9px}
+.chatMsg{font-size:14px;line-height:1.4;word-break:break-word}.chatMsg b{font-weight:800}.chatMsg .mute{margin-left:8px;min-height:30px;padding:0 6px;font-size:11px;color:var(--sub);text-decoration:underline;background:transparent}
+.badge{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;margin-right:6px;vertical-align:1px}.badge.host{background:rgba(214,158,46,.2);color:#b7791f}.badge.player{background:rgba(56,161,105,.18);color:#2f855a}.badge.spectator{background:rgba(49,130,206,.16);color:#2b6cb0}
+.chatNote{margin:0 16px 4px;padding:8px 11px;border-radius:11px;background:rgba(214,158,46,.14);font-size:12px;display:none}.chatNote.show{display:block}
+.chatComposer{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}.chatComposer input{flex:1;min-width:0;min-height:48px;padding:0 13px;border-radius:13px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}.chatComposer button{min-width:76px;min-height:48px;padding:0;border-radius:13px;background:#3182ce;color:#fff}.chatComposer button:disabled,.chatComposer input:disabled{opacity:.45}
+.blockedCard{width:min(92vw,380px);text-align:center;padding:22px 18px}.blockedCard h3{margin:0 0 8px;font-size:20px}.blockedCard p{color:var(--sub);font-size:14px;line-height:1.5;margin:0 0 16px}.blockedCard a{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:8px;border-radius:12px;border:1.5px solid var(--line);color:var(--ink);text-decoration:none;font-weight:800}
 </style>
 </head>
 <body>
@@ -45,17 +74,26 @@ button{border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weig
   <button class="reactBtn" data-reaction="Sharp!">Sharp!</button>
   <button id="inviteBtn" class="invite">📨 Invite</button>
 </div>
+<div id="feedLine" class="feedLine" aria-live="polite"></div>
 <div id="audienceBar" class="audienceBar">
-  <button id="viewerBtn" class="audienceBtn">👁 <span id="viewerCount">0 live · 0 views</span></button>
-  <button id="chatBtn" class="audienceBtn">💬 Chat <span id="chatBadge">0</span></button>
-  <button id="watchLinkBtn" class="audienceBtn">🔗 Watch link</button>
-  <button id="visibilityBtn" class="audienceBtn">🌐 Public</button>
+  <button id="viewerBtn" class="audienceBtn" aria-label="Viewers and sharing">👁 <span id="viewerCount">0</span></button>
+  <button id="chatBtn" class="audienceBtn" aria-label="Open chat">💬 Chat<span id="chatBadge" class="badgeDot"></span></button>
+  <button id="watchLinkBtn" class="audienceBtn" aria-label="Share watch link">🔗 Share</button>
 </div>
-<div id="chatDrawer" class="chatDrawer">
-  <div class="chatHead"><span>💬 Live chat</span><button id="chatCloseBtn" aria-label="Close chat">✕</button></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="sheetBack" id="sheetBack"></div>
+<section class="sheet" id="watchSheet" role="dialog" aria-label="Viewers and sharing">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span id="watchTitle">👁 Watch &amp; share</span><button id="watchClose" aria-label="Close">✕</button></div>
+  <div class="sheetBody" id="watchBody"></div>
+</section>
+<section class="sheet" id="chatDrawer" role="dialog" aria-label="Live chat">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>💬 Live chat</span><button id="chatCloseBtn" aria-label="Close chat">✕</button></div>
   <div id="chatMessages" class="chatMessages"></div>
-  <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…"><button id="chatSendBtn">Send</button></div>
-</div>
+  <div class="chatNote" id="chatNote"></div>
+  <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…" enterkeyhint="send" autocomplete="off"><button id="chatSendBtn">Send</button></div>
+</section>
 <div class="legend">✨ Glowing tokens are movable — tap the one you want.</div>
 <div id="playersPanel"></div>
 <div id="log"></div>
@@ -122,6 +160,7 @@ async function doRoll(){if(gameOver)return;CodePlayAudio.play('ludo-dice');var v
 function showModeChoice(splitLegal,combineLegal){modeRow.innerHTML='';statusEl.textContent='Rolled '+d1+' & '+d2+' — split or combine?';if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplit;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombine;modeRow.appendChild(c)}}
 function aiPlayTurn(){var sum=d1+d2,splitD1=legalMoves(turn,d1,true),splitD2=legalMoves(turn,d2,true),combineLegal=legalMoves(turn,sum,false),combineCap=combineLegal.filter(function(m){return wouldCapture(turn,m,sum)}),splitCap=splitD1.filter(function(m){return wouldCapture(turn,m,d1)}).concat(splitD2.filter(function(m){return wouldCapture(turn,m,d2)})),pick=function(legal){return legal.reduce(function(b,m){return players[turn].tokens[m.color][m.idx]>players[turn].tokens[b.color][b.idx]?m:b},legal[0])};setTimeout(function(){if(combineCap.length&&!splitCap.length){applyMove(turn,pick(combineCap),sum);render()}else if(splitD1.length||splitD2.length){var playDie=function(value,legal){if(!legal.length)return;var c=legal.find(function(m){return wouldCapture(turn,m,value)});if(c===undefined)c=legal.find(function(m){return players[turn].tokens[m.color][m.idx]===-1});if(c===undefined)c=pick(legal);applyMove(turn,c,value);render()};playDie(d1,splitD1);if(!gameOver)playDie(d2,legalMoves(turn,d2,true))}else if(combineLegal.length){applyMove(turn,pick(combineLegal),sum);render()}if(!gameOver)resolveEndOfTurn();else rollBtn.disabled=true},450)}
 function startGame(playerCount){players=TEAM_SETUPS[playerCount].map(function(p){return{name:p.name,isHuman:p.isHuman,colors:p.colors,tokens:Object.fromEntries(p.colors.map(function(c){return[c,[-1,-1,-1,-1]]}))}});connectionStates=players.map(function(){return true});turn=0;d1=0;d2=0;gameOver=false;currentValid=[];finishOrder=[];captureBonusPending=false;rematchRequested=false;hideGameOver();showFace(face1El,1);showFace(face2El,1);beginTurn()}
+var WHATSAPP_GAME_TOKEN=(new URLSearchParams(location.search).get('wa_token')||'').trim();
 var GAME_MODE='computer',HUMAN_INDEX=0,socket=null,ROOM_CODE=null,SPECTATOR_MODE=false,WATCH_TOKEN='',AUDIENCE_VISIBILITY='public',CHAT_MESSAGES=[];
 rollBtn.onclick=function(){if(SPECTATOR_MODE||!players.length||gameOver)return;if(GAME_MODE==='computer'&&!players[turn].isHuman)return;if(GAME_MODE==='friends'&&turn!==HUMAN_INDEX)return;rollBtn.disabled=true;if(GAME_MODE==='friends')socket.emit('roll-dice',{code:ROOM_CODE});else doRoll()}
 function wrText(t){statusEl.textContent=t}
@@ -138,33 +177,94 @@ function renderChat(){
   chatMessagesEl.scrollTop=chatMessagesEl.scrollHeight;
   chatBadgeEl.textContent=String(CHAT_MESSAGES.length);
 }
-function audienceWatchUrl(){
-  if(!ROOM_CODE)return location.href;
-  var u=location.origin+location.pathname+'?mode=watch&action=spectate&code='+encodeURIComponent(ROOM_CODE)+'&name='+encodeURIComponent(PLAYER_NAME);
-  if(AUDIENCE_VISIBILITY==='private'&&WATCH_TOKEN)u+='&watchToken='+encodeURIComponent(WATCH_TOKEN);
-  return u;
+var aud={viewerCount:0,totalViews:0,visibility:'link',chatEnabled:true,audience:[],muted:[]},feedItems=[],unread=0,myKey=null,chatOpen=false,watchOpen=false,toastTimer=null;
+var VIEWER_ID=(function(){try{var v=localStorage.getItem('codeplay_viewer_id');if(!v){v='v_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('codeplay_viewer_id',v)}return v}catch(err){return 'v_'+Math.random().toString(36).slice(2)}})();
+var FRIENDLY={'spectator-access-denied':['🔗 Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],'spectating-disabled':['🔒 Watching is off','The host has turned off watching for this match.'],'room-not-found':['Match not found','This room does not exist or the match has already ended.'],'audience-full':['Audience is full','This match has reached its viewer limit. Try again in a moment.']};
+var SOFT={'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little 🙂','empty-message':'Type a message first.','not-host':'Only the host can change that.','not-in-room':'You are not in this match.'};
+function $(id){return document.getElementById(id)}
+function mk(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
+function isHostUser(){return !SPECTATOR_MODE&&GAME_MODE==='friends'&&HUMAN_INDEX===0}
+function toast(msg,ms){var t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},ms||2600)}
+function showBlocked(title,text){
+  var card=mk('div','blockedCard');card.appendChild(mk('h3',null,title));card.appendChild(mk('p',null,text));
+  var home=mk('a',null,'⌂ Home');home.href='/';var live=mk('a',null,'👁 Watch live games');live.href='/?screen=live';card.appendChild(home);card.appendChild(live);
+  var w=$('waitingRoom');w.style.display='block';w.innerHTML='';w.appendChild(card);$('wrap').style.display='none';$('diceArea').style.display='none';
+  document.querySelectorAll('.row').forEach(function(r){r.style.display='none'});socialBarEl.style.display='none';audienceBarEl.style.display='none';
 }
+function liveUrl(){ /* dedicated, read-only Ludo spectator page; never carries the sharer's name */
+  var u=new URL(location.origin+'/live-ludo.html');u.searchParams.set('code',ROOM_CODE||'');
+  if(WATCH_TOKEN)u.searchParams.set('watch',WATCH_TOKEN);return u.toString();
+}
+function audienceWatchUrl(){return liveUrl()}
+function shareText(){return (SPECTATOR_MODE?'🎲 I\u2019m watching a live Ludo match on CodePlay!':'🎲 Watch my Ludo match live on CodePlay!')+'\nRoom '+ROOM_CODE+'\n'+liveUrl()}
+function shareWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(shareText()),'_blank','noopener')}
+function copyText(text,okMsg){
+  function fallback(){var t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand('copy')}catch(err){}t.remove();if(ok)toast(okMsg);else window.prompt('Copy this link',text)}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){toast(okMsg)}).catch(fallback);else fallback();
+}
+function copyWatchLink(){copyText(liveUrl(),'Watch link copied ✔')}
+function nativeShare(){if(navigator.share)navigator.share({title:'CodePlay Ludo — watch live',text:shareText().split('\n')[0],url:liveUrl()}).catch(function(){});else copyWatchLink()}
 function refreshAudienceUi(){
-  audienceBarEl.style.display=(GAME_MODE==='friends'||SPECTATOR_MODE)?'flex':'none';
-  viewerCountEl.textContent=(window.__audienceViewerCount||0)+' live · '+(window.__audienceTotalViews||0)+' views';
-  visibilityBtnEl.textContent=AUDIENCE_VISIBILITY==='private'?'🔒 Private':'🌐 Public';
-  var isHost=!SPECTATOR_MODE&&GAME_MODE==='friends'&&HUMAN_INDEX===0;
-  visibilityBtnEl.style.display=isHost?'inline-flex':'none';
-  watchLinkBtnEl.style.display=(!SPECTATOR_MODE&&(AUDIENCE_VISIBILITY==='public'||!!WATCH_TOKEN))?'inline-flex':'none';
+  audienceBarEl.style.display=(GAME_MODE==='friends'||SPECTATOR_MODE)&&ROOM_CODE?'flex':'none';
+  viewerCountEl.textContent=String(aud.viewerCount||0);
+  chatBadgeEl.textContent=unread>9?'9+':String(unread);chatBadgeEl.classList.toggle('show',unread>0&&!chatOpen);
+  var off=SPECTATOR_MODE&&!aud.chatEnabled;chatInputEl.disabled=off;chatSendBtnEl.disabled=off;chatInputEl.placeholder=off?'Chat is off for viewers':'Say something…';
+  var note=$('chatNote');note.textContent=off?'The host turned chat off for viewers.':'';note.classList.toggle('show',off);
 }
 function setAudience(info){
   if(!info)return;
-  if(typeof info.viewerCount==='number')window.__audienceViewerCount=info.viewerCount;if(typeof info.totalViews==='number')window.__audienceTotalViews=info.totalViews;
-  if(info.visibility)AUDIENCE_VISIBILITY=info.visibility;
-  if(Array.isArray(info.chat)){CHAT_MESSAGES=info.chat;renderChat()}
-  refreshAudienceUi();
+  if(typeof info.viewerCount==='number')aud.viewerCount=info.viewerCount;
+  if(typeof info.totalViews==='number')aud.totalViews=info.totalViews;
+  if(info.visibility)aud.visibility=info.visibility;
+  if(typeof info.chatEnabled==='boolean')aud.chatEnabled=info.chatEnabled;
+  if(Array.isArray(info.audience))aud.audience=info.audience;
+  if(Array.isArray(info.muted))aud.muted=info.muted;
+  if(info.spectatorToken)WATCH_TOKEN=info.spectatorToken;
+  if(Array.isArray(info.chat)){CHAT_MESSAGES=info.chat.slice(-100);renderChat()}
+  if(Array.isArray(info.feed)){feedItems=info.feed.slice(-40);renderFeed()}
+  refreshAudienceUi();if(watchOpen)renderWatchSheet();
 }
-function addChatMessage(m){if(!m)return;CHAT_MESSAGES.push(m);CHAT_MESSAGES=CHAT_MESSAGES.slice(-100);renderChat()}
-function openChat(){chatDrawerEl.classList.add('open');chatInputEl.focus();renderChat()}
-function closeChat(){chatDrawerEl.classList.remove('open')}
-function sendChat(){if(!socket||!ROOM_CODE)return;var text=String(chatInputEl.value||'').trim();if(!text)return;socket.emit(SPECTATOR_MODE||GAME_MODE==='friends'?'chat-message':'chat-message',{code:ROOM_CODE,text:text});chatInputEl.value='';}
-function toggleVisibility(){if(!socket||!ROOM_CODE||SPECTATOR_MODE)return;socket.emit('set-room-visibility',{code:ROOM_CODE,visibility:AUDIENCE_VISIBILITY==='private'?'public':'private'});}
-function copyWatchLink(){var url=audienceWatchUrl();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){wrText('Watch link copied. Share it with your audience.')}).catch(function(){window.prompt('Copy this watch link',url)})}else{window.prompt('Copy this watch link',url)}}
+function openSheet(which){closeSheets(true);chatOpen=which==='chat';watchOpen=which==='watch';$('sheetBack').classList.add('show');(chatOpen?chatDrawerEl:$('watchSheet')).classList.add('show');if(chatOpen){unread=0;renderChat()}else renderWatchSheet();refreshAudienceUi()}
+function closeSheets(keepBack){chatDrawerEl.classList.remove('show');$('watchSheet').classList.remove('show');if(!keepBack)$('sheetBack').classList.remove('show');chatOpen=false;watchOpen=false;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();refreshAudienceUi()}
+function setOpt(patch){Object.assign(aud,patch);renderWatchSheet();if(socket&&ROOM_CODE)socket.emit('set-audience-options',Object.assign({code:ROOM_CODE},patch))}
+function switchRow(title,desc,on,onTap){var row=mk('button','switchRow');row.setAttribute('role','switch');row.setAttribute('aria-checked',on?'true':'false');var t=mk('div');t.appendChild(mk('b',null,title));t.appendChild(mk('span','d',desc));row.appendChild(t);row.appendChild(mk('span','switch'+(on?' on':'')));row.onclick=onTap;return row}
+function renderWatchSheet(){
+  var body=$('watchBody');body.innerHTML='';var host=isHostUser(),vis=aud.visibility;
+  $('watchTitle').textContent=SPECTATOR_MODE?'👁 You\u2019re watching':'👁 Watch & share';
+  var stats=mk('div','statRow');stats.appendChild(mk('span','statChip','👁 '+aud.viewerCount+' watching now'));stats.appendChild(mk('span','statChip',aud.totalViews+' total views'));body.appendChild(stats);
+  if(vis==='private'&&!SPECTATOR_MODE){body.appendChild(mk('div','hintTxt','🔒 Watching is turned off for this match, so nobody can join as a viewer.'))}
+  else{
+    body.appendChild(mk('div','secTitle',SPECTATOR_MODE?'Invite friends to watch':'Share your match'));
+    var btns=mk('div','shareBtns');var wa=mk('button','bigBtn wa','💬 Share on WhatsApp');wa.onclick=shareWhatsApp;var cp=mk('button','bigBtn','🔗 Copy link');cp.onclick=copyWatchLink;var sh=mk('button','bigBtn','⬆️ More…');sh.onclick=nativeShare;btns.appendChild(wa);btns.appendChild(cp);btns.appendChild(sh);body.appendChild(btns);
+    body.appendChild(mk('div','linkBox',liveUrl()));
+  }
+  if(host){
+    body.appendChild(mk('div','secTitle','Who can watch'));var seg=mk('div','seg');
+    [['public','🌐 Public'],['link','🔗 Link only'],['private','🔒 Off']].forEach(function(o){var b=mk('button',vis===o[0]?'on':'',o[1]);b.setAttribute('aria-pressed',vis===o[0]?'true':'false');b.onclick=function(){if(aud.visibility!==o[0])setOpt({visibility:o[0]})};seg.appendChild(b)});body.appendChild(seg);
+    body.appendChild(mk('div','hintTxt',vis==='public'?'Anyone can find this match under \u201cWatch live\u201d and join with the room code.':vis==='link'?'Only people with your private watch link can watch. Recommended.':'Nobody can watch. Anyone already watching is removed.'));
+    body.appendChild(mk('div','secTitle','Viewer options'));
+    body.appendChild(switchRow('Allow viewer chat','Players can always chat.',aud.chatEnabled,function(){setOpt({chatEnabled:!aud.chatEnabled})}));
+  }else{body.appendChild(mk('div','hintTxt',vis==='public'?'🌐 This match is public.':vis==='link'?'🔗 Only people with the watch link can watch.':'🔒 Watching is off.'))}
+  body.appendChild(mk('div','secTitle','Watching now ('+aud.audience.length+')'));
+  if(!aud.audience.length)body.appendChild(mk('div','emptyTxt','No viewers yet. Share the link to invite friends!'));
+  aud.audience.slice(0,60).forEach(function(v){var row=mk('div','viewerRow');row.appendChild(mk('span',null,'👁 '+v.name+(v.key===myKey?' (you)':'')));
+    if(host){var muted=aud.muted.indexOf(v.key)>=0,b=mk('button','smallBtn'+(muted?' on':''),muted?'Unmute':'Mute');b.onclick=function(){socket.emit('mute-viewer',{code:ROOM_CODE,key:v.key,muted:!muted})};row.appendChild(b)}body.appendChild(row)});
+  body.appendChild(mk('div','secTitle','Recent moves'));
+  if(!feedItems.length)body.appendChild(mk('div','emptyTxt','Moves will appear here as the match goes on.'));
+  feedItems.slice(-10).reverse().forEach(function(f){body.appendChild(mk('div','fi',f.text))});
+}
+var BADGE={host:'⭐ HOST',player:'🎮 PLAYER',spectator:'👁 VIEWER'};
+function renderChat(){
+  var box=chatMessagesEl;box.innerHTML='';
+  if(!CHAT_MESSAGES.length){box.appendChild(mk('div','emptyTxt','No messages yet — say hi 👋'));return}
+  CHAT_MESSAGES.slice(-60).forEach(function(m){var row=mk('div','chatMsg '+(m.role||'spectator'));row.appendChild(mk('span','badge '+(m.role||'spectator'),BADGE[m.role]||BADGE.spectator));row.appendChild(mk('b',null,(m.name||'Guest')+': '));row.appendChild(mk('span',null,m.text||''));
+    if(isHostUser()&&m.role==='spectator'&&m.key){var mt=aud.muted.indexOf(m.key)>=0,b=mk('button','mute',mt?'unmute':'mute');b.onclick=function(){socket.emit('mute-viewer',{code:ROOM_CODE,key:m.key,muted:!mt})};row.appendChild(b)}box.appendChild(row)});
+  box.scrollTop=box.scrollHeight;
+}
+function addChatMessage(m){if(!m)return;CHAT_MESSAGES.push(m);CHAT_MESSAGES=CHAT_MESSAGES.slice(-100);var mine=SPECTATOR_MODE?(m.key&&m.key===myKey):(m.role!=='spectator'&&m.name===PLAYER_NAME);if(chatOpen)renderChat();else if(!mine){unread++;refreshAudienceUi()}}
+function sendChat(){if(!socket||!ROOM_CODE)return;var text=String(chatInputEl.value||'').trim();if(!text)return;socket.emit('chat-message',{code:ROOM_CODE,text:text});chatInputEl.value=''}
+function renderFeed(){var last=feedItems[feedItems.length-1];$('feedLine').textContent=last?last.text:''}
+function pushFeed(item){feedItems.push(item);feedItems=feedItems.slice(-40);renderFeed();if(watchOpen)renderWatchSheet()}
 function setSpectatorUi(){
   document.getElementById('diceArea').style.display='none';
   document.querySelectorAll('.row').forEach(function(r){r.style.display='none'});
@@ -184,7 +284,7 @@ function showWaitingRoom(html){document.getElementById('waitingRoom').style.disp
 function hideWaitingRoom(){document.getElementById('waitingRoom').style.display='none';document.getElementById('wrap').style.display='block';if(SPECTATOR_MODE){setSpectatorUi()}else{document.getElementById('diceArea').style.display='flex';document.querySelectorAll('.row').forEach(function(r){r.style.display='flex'});renderSocialBar()}}
 document.querySelectorAll('.reactBtn').forEach(function(btn){btn.onclick=function(){sendReaction(btn.dataset.reaction)}});
 document.getElementById('inviteBtn').onclick=inviteFriend;
-chatBtnEl.onclick=openChat;chatCloseBtnEl.onclick=closeChat;chatSendBtnEl.onclick=sendChat;watchLinkBtnEl.onclick=copyWatchLink;visibilityBtnEl.onclick=toggleVisibility;chatInputEl.addEventListener('keydown',function(ev){if(ev.key==='Enter')sendChat()});
+chatBtnEl.onclick=function(){openSheet('chat')};$('viewerBtn').onclick=function(){openSheet('watch')};watchLinkBtnEl.onclick=function(){openSheet('watch')};chatCloseBtnEl.onclick=function(){closeSheets()};$('watchClose').onclick=function(){closeSheets()};$('sheetBack').onclick=function(){closeSheets()};chatSendBtnEl.onclick=sendChat;chatInputEl.addEventListener('keydown',function(ev){if(ev.key==='Enter')sendChat()});addEventListener('keydown',function(ev){if(ev.key==='Escape')closeSheets()});if(window.visualViewport){var upd=function(){var vv=window.visualViewport;document.documentElement.style.setProperty('--kb',Math.max(0,window.innerHeight-vv.height-vv.offsetTop)+'px')};visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
 rematchBtn.onclick=requestRematch;
 shareResultBtn.onclick=shareResult;
 homeBtn.onclick=function(){location.href=location.origin+'/'}
@@ -215,7 +315,7 @@ function promptDieNet(value,isLast,after){var legal=legalMoves(HUMAN_INDEX,value
 function commitNet(mv,value,isLast,after){currentValid=[];modeRow.innerHTML='';render();window._netAfterMove=isLast?null:after;socket.emit('play-move',{code:ROOM_CODE,move:mv,value:value,mode:isLast&&value===d1+d2?'combine':'split',isLastMoveThisTurn:isLast})}
 function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(HUMAN_INDEX,sum,false);if(legal.length===1){commitNet(legal[0],sum,true,null);return}currentValid=legal;wrText('Tap a token to move it by '+sum+'.');window._netPending={value:sum,isLast:true,after:null,mode:'combine'};render()}
 function initFriendsMode(action,existingCode,playerCount){
- GAME_MODE='friends';SPECTATOR_MODE=(new URLSearchParams(location.search).get('action')==='spectate'||new URLSearchParams(location.search).get('mode')==='watch');ROOM_CODE=normalizeRoomCode(existingCode)||ROOM_CODE;WATCH_TOKEN=(new URLSearchParams(location.search).get('watchToken')||'').trim();refreshAudienceUi();renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
+ GAME_MODE='friends';SPECTATOR_MODE=(new URLSearchParams(location.search).get('action')==='spectate'||new URLSearchParams(location.search).get('mode')==='watch');ROOM_CODE=normalizeRoomCode(existingCode)||ROOM_CODE;WATCH_TOKEN=(new URLSearchParams(location.search).get('watchToken')||new URLSearchParams(location.search).get('watch')||'').trim();refreshAudienceUi();renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
  var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode), incomingPlayerToken=(new URLSearchParams(location.search).get('playerToken')||'').trim(), crossTabSaved=(!savedCode||savedCode!==requestedCode)?loadSavedRoomForCode(requestedCode):null;
  var sameTabRoom=!incomingPlayerToken&&!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
  var resumeAcrossTabs=!incomingPlayerToken&&!!(!sameTabRoom&&requestedCode&&crossTabSaved&&crossTabSaved.playerToken);
@@ -228,7 +328,7 @@ function initFriendsMode(action,existingCode,playerCount){
  });
  socket.on('reconnect_attempt',function(){if(seatEstablished&&ROOM_CODE)wrText('Reconnecting to your Ludo room…');else wrText('Reconnecting to the game server…')});
  socket.on('reconnect_failed',function(){showWaitingRoom(seatEstablished?'<p>Could not reconnect to your Ludo room.</p><p class="legend">Your game seat was kept briefly. Tap Retry to reconnect.</p><button onclick="location.reload()">Retry</button>':'<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
- socket.on('error-msg',function(msg){log('Server: '+msg);if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
+ socket.on('error-msg',function(msg){log('Server: '+msg);if(SOFT[msg]){toast(SOFT[msg]);return}if(SPECTATOR_MODE&&FRIENDLY[msg]){showBlocked.apply(null,FRIENDLY[msg]);return}if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
  socket.on('you-are-player',function(x){
    HUMAN_INDEX=x.index;seatEstablished=true;
    if(x.playerToken){playerToken=x.playerToken;saveActiveRoom();}
@@ -247,13 +347,15 @@ function initFriendsMode(action,existingCode,playerCount){
 socket.on('audience-info',function(x){setAudience(x)});
 socket.on('audience-host',function(x){if(x&&x.spectatorToken)WATCH_TOKEN=x.spectatorToken;setAudience(x)});
 socket.on('chat-message',function(x){addChatMessage(x)});
-socket.on('you-are-spectator',function(x){SPECTATOR_MODE=true;GAME_MODE='spectator';HUMAN_INDEX=-1;ROOM_CODE=x.code||ROOM_CODE;if(x.audience)setAudience(x.audience);setSpectatorUi();wrText('Watching room '+ROOM_CODE+' live.');});
+socket.on('feed',pushFeed);
+socket.on('spectator-ended',function(x){closeSheets();showBlocked.apply(null,(x&&x.reason==='spectating-disabled')?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'])});
+socket.on('you-are-spectator',function(x){SPECTATOR_MODE=true;GAME_MODE='spectator';HUMAN_INDEX=-1;ROOM_CODE=x.code||ROOM_CODE;if(x.you){myKey=x.you.key}if(x.audience)setAudience(x.audience);setSpectatorUi();wrText('Watching room '+ROOM_CODE+' live.');});
  socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});
  socket.on('dice-rolled',function(x){d1=x.dice[0];d2=x.dice[1];animateDice(d1,d2).then(function(){if(!x.options.canSplit&&!x.options.canCombine){log('No legal moves for the current roll.');return}if(x.turn!==HUMAN_INDEX){wrText('The other player rolled '+d1+' & '+d2+'...');return}var splitLegal=legalMoves(HUMAN_INDEX,d1,true).length||legalMoves(HUMAN_INDEX,d2,true).length,combineLegal=legalMoves(HUMAN_INDEX,d1+d2,false).length;showModeChoiceNet(splitLegal,combineLegal)})});
  socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture('💥 '+cap(c.color)+' SENT HOME!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)cb()});
  socket.on('turn-passed',function(x){window._netAfterMove=null;window._netPending=null;applyServerState(x.state);currentValid=[];modeRow.innerHTML='';beginNetTurn()});
  socket.on('connect',function(){
-   if(SPECTATOR_MODE){showWaitingRoom('<p>Connecting to live match '+ROOM_CODE+'…</p>');socket.emit('spectate-room',{code:ROOM_CODE,watchToken:WATCH_TOKEN,name:PLAYER_NAME});return;}
+   if(SPECTATOR_MODE){showWaitingRoom('<p>Connecting to live match '+ROOM_CODE+'…</p>');socket.emit('spectate-room',{code:ROOM_CODE,watchToken:WATCH_TOKEN,name:PLAYER_NAME,viewerId:VIEWER_ID});return;}
    // A seat that already exists in this browser tab always reconnects.
    // This covers refreshes as well as Socket.IO transport reconnects after a blip.
    if(seatEstablished&&ROOM_CODE&&playerToken){
@@ -261,7 +363,7 @@ socket.on('you-are-spectator',function(x){SPECTATOR_MODE=true;GAME_MODE='spectat
      socket.emit('reconnect-player',{code:ROOM_CODE,playerToken:playerToken});
      return;
    }
-   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR,whatsappToken:WHATSAPP_GAME_TOKEN});showWaitingRoom('<p>Creating room...</p>')}
+   if(action==='create'){startGame(playerCount);socket.emit('create-room',{playerCount:playerCount,name:PLAYER_NAME,color:PLAYER_COLOR,whatsappToken:WHATSAPP_GAME_TOKEN,visibility:params.get('visibility')||undefined,chatEnabled:params.get('chat')||undefined});showWaitingRoom('<p>Creating room...</p>')}
    else{ROOM_CODE=requestedCode;socket.emit('join-room',{code:ROOM_CODE,name:PLAYER_NAME,color:PLAYER_COLOR,playerToken:resumeAcrossTabs?playerToken:null,whatsappToken:resumeAcrossTabs?'':WHATSAPP_GAME_TOKEN});showWaitingRoom(resumeAcrossTabs?'<p>Returning to room '+ROOM_CODE+'...</p>':'<p>Joining room '+ROOM_CODE+'...</p>')}
  });
 }

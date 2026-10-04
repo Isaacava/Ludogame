@@ -12,9 +12,23 @@
 .screen{display:none;width:100%;max-width:420px;flex:1;flex-direction:column;padding:24px 20px}.screen.active{display:flex}h1{font-size:26px;margin:8px 0 4px}h2{font-size:19px;margin:4px 0 14px}p.sub{color:var(--sub);font-size:14px;margin:0 0 22px}.spacer{flex:1}
 button{border:none;border-radius:10px;padding:14px 18px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-bottom:10px}.btn-primary{background:var(--ink);color:var(--bg)}.btn-whatsapp{background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--ink)}.btn-game{background:var(--panel);border:1.5px solid var(--line);color:var(--ink);text-align:left;font-size:16px;padding:16px}.btn-game .tag{float:right;font-size:11px;color:var(--sub);font-weight:400}
 input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 14px;font-size:16px;background:var(--panel);color:var(--ink);margin-bottom:14px}.hero{background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);border-radius:16px;height:160px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;font-size:48px}.avatarRow{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}.avatar{width:44px;height:44px;border-radius:50%;border:2.5px solid transparent;cursor:pointer}.avatar.selected{border-color:var(--ink)}.countRow{display:flex;gap:8px;margin-bottom:6px}.countBtn{flex:1;margin:0;background:var(--panel);border:1.5px solid var(--line);color:var(--ink)}.countBtn.selected{background:var(--ink);color:var(--bg);border-color:var(--ink)}.hint{font-size:12px;color:var(--sub);margin:0 0 16px;min-height:16px}.err{color:#e53e3e;font-size:13px;margin:-8px 0 12px;min-height:16px}.linkRow{text-align:center;font-size:13px;color:var(--sub);margin-top:8px}.linkRow a{color:var(--ink);font-weight:600;text-decoration:none;cursor:pointer}
+
+.banner{width:100%;max-width:420px;margin:10px 20px 0;padding:11px 14px;border-radius:12px;background:#fff3cd;color:#664d03;font-size:13px;font-weight:600;line-height:1.4}
+.optBox{border:1.5px solid var(--line);border-radius:12px;padding:0 14px;margin-bottom:12px;background:var(--panel)}.optBox summary{min-height:48px;display:flex;align-items:center;font-weight:700;font-size:14px;cursor:pointer;list-style:none}.optBox summary::-webkit-details-marker{display:none}.optBox summary:after{content:"▾";margin-left:auto;color:var(--sub)}.optBox[open] summary:after{content:"▴"}
+.optLabel{font-size:11px;letter-spacing:.07em;font-weight:800;color:var(--sub);text-transform:uppercase;margin:6px 0 8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.seg button{margin:0;min-height:52px;padding:6px 4px;font-size:12px;line-height:1.25;background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:12px}.seg button.on{border-color:#d69e2e;background:rgba(214,158,46,.16)}
+.optHint{font-size:12px;color:var(--sub);line-height:1.45;margin:8px 0 6px}
+.switchRow{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:56px;margin:0;padding:8px 0;border-top:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);text-align:left}.switchRow b{display:block;font-size:14px}.switchRow .d{display:block;font-size:11px;color:var(--sub);font-weight:500;margin-top:2px;line-height:1.35}
+.switch{position:relative;flex:0 0 auto;width:52px;height:31px;border-radius:16px;background:var(--line);transition:.18s}.switch:after{content:"";position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:50%;background:#fff;transition:transform .18s}.switch.on{background:#38a169}.switch.on:after{transform:translateX(21px)}
+.warnTxt{font-size:12px;color:#b7791f;line-height:1.4;margin:0 0 8px}
+.liveCard{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 8px;padding:12px 14px;min-height:64px;text-align:left;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:12px}.liveCard .ic{font-size:26px}.liveCard .tx{flex:1;min-width:0}.liveCard .t{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.liveCard .m{font-size:12px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{flex:0 0 auto;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(229,62,62,.14);color:#e53e3e}.pill.wait{background:rgba(214,158,46,.18);color:#b7791f}
+.emptyLive{text-align:center;color:var(--sub);font-size:14px;line-height:1.5;padding:22px 8px}
+.choiceRow{display:none;gap:8px;margin-bottom:10px}.choiceRow button{margin:0}
 </style>
 </head>
 <body>
+<div class="banner" id="maintBanner" style="display:none"></div>
 <div class="screen active" id="landing">
   <div class="hero">🎲</div>
   <h1>CodePlay</h1>
@@ -23,6 +37,7 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   <button class="btn-whatsapp" onclick="go('signin')">💬 Continue with WhatsApp</button>
   <button class="btn-outline" onclick="startGuest()">🎮 Continue as Guest — no registration</button>
   <div class="linkRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
+  <div class="linkRow">Just want to watch? <a onclick="openLive()">👁 See live games</a></div>
 </div>
 
 <div class="screen" id="signin">
@@ -52,6 +67,7 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   <button class="btn-game" onclick="chooseGame('ludo')">🎲 Ludo <span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('whot')">🃏 Whot <span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('chess')">♟️ Chess <span class="tag">coming soon</span></button>
+  <button class="btn-outline" onclick="openLive()">👁 Watch live games</button>
   <div class="spacer"></div>
   <div class="linkRow">Playing from WhatsApp? Just message the bot instead.</div>
 </div>
@@ -66,9 +82,18 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   </div>
   <p class="hint" id="countHint">4 players — one colour each.</p>
   <button class="btn-primary" onclick="playComputer()">🤖 vs Computer</button>
-  <button class="btn-outline" onclick="createRoom()">👥 Create a room (play with friends)</button>
+  <details class="optBox" id="ludoOpts">
+    <summary>⚙️ Room options</summary>
+    <div class="optLabel">Who can watch your match</div>
+    <div class="seg" id="ludoVis">
+      <button data-v="public">🌐 Public</button><button data-v="link" class="on">🔗 Link only</button><button data-v="private">🔒 Off</button>
+    </div>
+    <p class="optHint" id="ludoVisHint"></p>
+    <button class="switchRow" id="ludoChat" role="switch" aria-checked="true"><span><b>Allow viewer chat</b><span class="d">Players can always chat.</span></span><span class="switch on"></span></button>
+  </details>
+  <button class="btn-outline" id="createLudoBtn" onclick="createRoom()">👥 Create a room (play with friends)</button>
   <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
-  <input id="joinCode" placeholder="e.g. K7QP" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;">
+  <input id="joinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
   <div class="err" id="joinErr"></div>
   <button class="btn-outline" onclick="joinRoom()">Join with code</button>
   <div class="linkRow"><a onclick="go('select')">Back</a></div>
@@ -84,12 +109,36 @@ input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 
   </div>
   <p class="hint" id="whotCountHint">3 players — classic multiplayer.</p>
   <button class="btn-primary" onclick="playWhotComputer()">🤖 Play vs Computer</button>
-  <button class="btn-outline" onclick="createWhotRoom()">👥 Create a room (play with friends)</button>
+  <details class="optBox" id="whotOpts">
+    <summary>⚙️ Room options</summary>
+    <div class="optLabel">Who can watch your match</div>
+    <div class="seg" id="whotVis">
+      <button data-v="public">🌐 Public</button><button data-v="link" class="on">🔗 Link only</button><button data-v="private">🔒 Off</button>
+    </div>
+    <p class="optHint" id="whotVisHint"></p>
+    <button class="switchRow" id="whotHands" role="switch" aria-checked="false"><span><b>Show players’ cards to viewers</b><span class="d">Viewers see every hand live.</span></span><span class="switch"></span></button>
+    <p class="warnTxt" id="whotHandsWarn" style="display:none">⚠️ A viewer could tell a player what the others are holding. Best for casual games with friends.</p>
+    <button class="switchRow" id="whotChat" role="switch" aria-checked="true"><span><b>Allow viewer chat</b><span class="d">Players can always chat.</span></span><span class="switch on"></span></button>
+  </details>
+  <button class="btn-outline" id="createWhotBtn" onclick="createWhotRoom()">👥 Create a room (play with friends)</button>
   <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
-  <input id="whotJoinCode" placeholder="e.g. K7QP" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;">
+  <input id="whotJoinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
   <div class="err" id="whotJoinErr"></div>
   <button class="btn-outline" onclick="joinWhotRoom()">Join with code</button>
   <div class="linkRow"><a onclick="go('select')">Back</a></div>
+</div>
+
+<div class="screen" id="live">
+  <h2>👁 Watch live</h2>
+  <p class="sub" style="margin-bottom:12px;">Public matches happening right now.</p>
+  <div id="liveList"><div class="emptyLive">Loading…</div></div>
+  <button class="btn-outline" onclick="loadLive()">↻ Refresh</button>
+  <p class="sub" style="margin:14px 0 8px;">Have a watch link or room code?</p>
+  <input id="watchInput" placeholder="Paste watch link or room code" maxlength="400" autocomplete="off" spellcheck="false">
+  <div class="err" id="watchErr"></div>
+  <div class="choiceRow" id="watchChoice"><button class="btn-outline" onclick="watchCodeAs('ludo')">🎲 It’s Ludo</button><button class="btn-outline" onclick="watchCodeAs('whot')">🃏 It’s Whot</button></div>
+  <button class="btn-primary" onclick="watchFromInput()">Watch</button>
+  <div class="linkRow"><a onclick="leaveLive()">Back</a></div>
 </div>
 
 <script>
@@ -103,7 +152,7 @@ var botNumber=null,allowedPlayerCounts=[2,3,4],whotEnabled=true,allowedWhotPlaye
 function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
 function applyAllowedPlayerCounts(){document.querySelectorAll('.countBtn').forEach(function(b,i){var n=i+2;b.disabled=allowedPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===ludoCount&&!b.disabled)});if(allowedPlayerCounts.indexOf(ludoCount)===-1&&allowedPlayerCounts.length){setCount(allowedPlayerCounts[0])}}
 function applyWhotConfig(){var buttons=document.querySelectorAll('#whotCountRow .countBtn');buttons.forEach(function(b,i){var n=i+2;b.disabled=allowedWhotPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===whotCount&&!b.disabled)});if(allowedWhotPlayerCounts.indexOf(whotCount)===-1&&allowedWhotPlayerCounts.length)setWhotCount(allowedWhotPlayerCounts[0]);var btn=document.querySelector("button.btn-game[onclick=\"chooseGame('whot')\"]");if(btn){btn.disabled=!whotEnabled;btn.style.opacity=whotEnabled?'1':'.45';btn.querySelector('.tag').textContent=whotEnabled?'2-4 players':'disabled'}}
-async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1})}applyAllowedPlayerCounts();applyWhotConfig()}catch(e){}}
+async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.maintenance&&d.maintenance.siteEnabled===false){siteDown=true;siteMsg=d.maintenance.maintenanceMessage||'CodePlay is down for maintenance — back soon!';var mb=document.getElementById('maintBanner');mb.textContent='🛠 '+siteMsg;mb.style.display='block'}else{siteDown=false;document.getElementById('maintBanner').style.display='none'}if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1})}applyAllowedPlayerCounts();applyWhotConfig()}catch(e){}}
 function openWhatsApp(){var n=String(botNumber||'').replace(/\D/g,'');if(!n)return alert('WhatsApp bot is not configured yet.');window.open('https://wa.me/'+n,'_blank')}
 async function submitLoginCode(){
  const code=document.getElementById('loginCodeInput').value.trim(),errEl=document.getElementById('signinErr');
@@ -134,18 +183,97 @@ function finishOnboarding(){
  errEl.textContent='';session.name=name;localStorage.setItem('codeplay_guest_profile',JSON.stringify({name:name,color:session.color}));document.getElementById('welcomeMsg').textContent=(session.guest?'Playing as guest, ':'Hey ')+name+' — choose a game';go('select')
 }
 let ludoCount=4,whotCount=3;
-function navigate(url){location.href=url}
 function setCount(n){ludoCount=n;document.querySelectorAll('#countRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
 function setWhotCount(n){whotCount=n;document.querySelectorAll('#whotCountRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('whotCountHint').textContent=n+' players — Nigerian Whot multiplayer.'}
 function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest')+'&color='+encodeURIComponent(session.color||'')}
 function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
-function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+profileQuery())}
-function joinRoom(){var code=document.getElementById('joinCode').value.trim().toUpperCase(),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+code+profileQuery())}
+function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+optsQuery('ludo')+profileQuery())}
+function joinRoom(){var p=parseCodeInput(document.getElementById('joinCode').value),errEl=document.getElementById('joinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(PLAY_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
 function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players='+whotCount+profileQuery())}
-function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+profileQuery())}
-function joinWhotRoom(){if(!whotEnabled)return;var code=document.getElementById('whotJoinCode').value.trim().toUpperCase(),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(code)){errEl.textContent='Room codes are 4 letters/numbers, e.g. K7QP.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+code+profileQuery())}
+function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+optsQuery('whot')+profileQuery())}
+function joinWhotRoom(){if(!whotEnabled)return;var p=parseCodeInput(document.getElementById('whotJoinCode').value),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
 function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
-(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null}}catch(e){}})();loadPublicConfig();restoreSession();
+(function(){})();
+
+/* ---------- room options (what the host chooses before creating) ---------- */
+var ROOM_OPTS={ludo:{visibility:'link',chat:true},whot:{visibility:'link',chat:true,hands:false}};
+try{var _ro=JSON.parse(localStorage.getItem('codeplay_room_opts')||'null');if(_ro){['ludo','whot'].forEach(function(g){if(_ro[g]){Object.assign(ROOM_OPTS[g],_ro[g]);if(['public','link','private'].indexOf(ROOM_OPTS[g].visibility)<0)ROOM_OPTS[g].visibility='link'}})}}catch(e){}
+var VIS_HINT={public:'Anyone can find your match under “Watch live” and join with the room code.',link:'Only people with your private watch link can watch. Recommended.',private:'Nobody can watch your match.'};
+function saveOpts(){try{localStorage.setItem('codeplay_room_opts',JSON.stringify(ROOM_OPTS))}catch(e){}}
+function paintOpts(g){
+  var o=ROOM_OPTS[g];
+  document.querySelectorAll('#'+g+'Vis button').forEach(function(b){b.classList.toggle('on',b.dataset.v===o.visibility);b.setAttribute('aria-pressed',b.dataset.v===o.visibility?'true':'false')});
+  document.getElementById(g+'VisHint').textContent=VIS_HINT[o.visibility];
+  var chat=document.getElementById(g+'Chat');chat.setAttribute('aria-checked',o.chat?'true':'false');chat.querySelector('.switch').classList.toggle('on',!!o.chat);
+  if(g==='whot'){var h=document.getElementById('whotHands');h.setAttribute('aria-checked',o.hands?'true':'false');h.querySelector('.switch').classList.toggle('on',!!o.hands);document.getElementById('whotHandsWarn').style.display=o.hands?'block':'none'}
+}
+['ludo','whot'].forEach(function(g){
+  document.querySelectorAll('#'+g+'Vis button').forEach(function(b){b.onclick=function(){ROOM_OPTS[g].visibility=b.dataset.v;saveOpts();paintOpts(g)}});
+  document.getElementById(g+'Chat').onclick=function(){ROOM_OPTS[g].chat=!ROOM_OPTS[g].chat;saveOpts();paintOpts(g)};
+  paintOpts(g);
+});
+document.getElementById('whotHands').onclick=function(){ROOM_OPTS.whot.hands=!ROOM_OPTS.whot.hands;saveOpts();paintOpts('whot')};
+function optsQuery(g){var o=ROOM_OPTS[g];return '&visibility='+o.visibility+'&chat='+(o.chat?'1':'0')+(g==='whot'?'&hands='+(o.hands?'1':'0'):'')}
+
+/* ---------- safer navigation: ignore double taps, respect maintenance ---------- */
+var siteDown=false,siteMsg='',navigating=false;
+function navigate(url){
+  if(siteDown){alert(siteMsg||'CodePlay is down for maintenance — back soon!');return}
+  if(navigating)return;navigating=true;setTimeout(function(){navigating=false},2500);
+  location.href=url;
+}
+/* accepts a 4-character code OR a pasted invite / watch link */
+function parseCodeInput(raw){
+  raw=String(raw||'').trim();var out={code:'',token:'',game:null};
+  if(/^[A-Za-z0-9]{4}$/.test(raw)){out.code=raw.toUpperCase();return out}
+  try{
+    var u=new URL(raw);out.code=(u.searchParams.get('code')||'').toUpperCase();out.token=u.searchParams.get('watchToken')||u.searchParams.get('watch')||'';
+    if(/whot/i.test(u.pathname))out.game='whot';else if(/ludo|play/i.test(u.pathname))out.game='ludo';
+    if(!out.code){var m=u.pathname.match(/\/live\/ludo\/([A-Za-z0-9]{4})/);if(m){out.code=m[1].toUpperCase();out.game='ludo'}}
+  }catch(e){var m2=raw.match(/\b([A-Za-z0-9]{4})\b/);if(m2)out.code=m2[1].toUpperCase()}
+  return out;
+}
+/* ---------- Watch live ---------- */
+var liveTimer=null,lastLive=[],pendingWatch=null;
+function viewerNameQuery(){var n=session.name&&session.name!=='Guest'?session.name:'';return n?'&name='+encodeURIComponent(n):''}
+function watchUrl(game,code,token){
+  if(game==='whot')return WHOT_URL+'?mode=watch&action=spectate&code='+encodeURIComponent(code)+(token?'&watchToken='+encodeURIComponent(token):'')+viewerNameQuery();
+  return (window.CODEPLAY_LIVE_URL||'/live-ludo.html')+'?code='+encodeURIComponent(code)+(token?'&watch='+encodeURIComponent(token):'')+viewerNameQuery();
+}
+function openLive(){go('live');loadLive();clearInterval(liveTimer);liveTimer=setInterval(function(){if(document.getElementById('live').classList.contains('active'))loadLive(true);else clearInterval(liveTimer)},8000)}
+function leaveLive(){clearInterval(liveTimer);go(session.name||session.token?'select':'landing')}
+async function loadLive(quiet){
+  var box=document.getElementById('liveList');
+  if(!quiet)box.innerHTML='<div class="emptyLive">Loading…</div>';
+  try{
+    var r=await fetch(API_BASE+'/api/live-rooms',{cache:'no-store'});if(!r.ok)throw new Error('bad');
+    var d=await r.json();lastLive=d.rooms||[];box.innerHTML='';
+    if(!lastLive.length){box.innerHTML='<div class="emptyLive">No public matches right now.<br>Start one and set “Who can watch” to Public, or paste a watch link below.</div>';return}
+    lastLive.forEach(function(m){
+      var b=document.createElement('button');b.className='liveCard';b.type='button';
+      var ic=document.createElement('span');ic.className='ic';ic.textContent=m.game==='whot'?'🃏':'🎲';
+      var tx=document.createElement('span');tx.className='tx';
+      var t=document.createElement('span');t.className='t';t.style.display='block';t.textContent=m.host+'’s '+(m.game==='whot'?'Whot':'Ludo')+' match';
+      var mm=document.createElement('span');mm.className='m';mm.style.display='block';mm.textContent=m.players.join(', ')+' · 👁 '+m.viewers;
+      tx.appendChild(t);tx.appendChild(mm);
+      var p=document.createElement('span');p.className='pill'+(m.started?'':' wait');p.textContent=m.started?'● LIVE':'WAITING';
+      b.appendChild(ic);b.appendChild(tx);b.appendChild(p);
+      b.onclick=function(){navigate(watchUrl(m.game,m.code,''))};box.appendChild(b);
+    });
+  }catch(e){if(!quiet)box.innerHTML='<div class="emptyLive">Could not load live games. Check your connection and tap Refresh.</div>'}
+}
+function watchFromInput(){
+  var err=document.getElementById('watchErr'),choice=document.getElementById('watchChoice');err.textContent='';choice.style.display='none';
+  var p=parseCodeInput(document.getElementById('watchInput').value);
+  if(!/^[A-Z0-9]{4}$/.test(p.code)){err.textContent='Paste the watch link or enter the 4-character room code.';return}
+  if(!p.game){var hit=lastLive.filter(function(m){return m.code===p.code})[0];if(hit)p.game=hit.game}
+  if(!p.game){pendingWatch=p;choice.style.display='flex';err.textContent='Which game is room '+p.code+'?';return}
+  navigate(watchUrl(p.game,p.code,p.token));
+}
+function watchCodeAs(g){if(pendingWatch)navigate(watchUrl(g,pendingWatch.code,pendingWatch.token))}
+function applyScreenParam(){if(new URLSearchParams(location.search).get('screen')==='live'&&!document.getElementById('live').classList.contains('active'))openLive()}
+
+(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null}}catch(e){}})();loadPublicConfig();applyScreenParam();restoreSession().then(applyScreenParam);
 </script>
 </body>
 </html>

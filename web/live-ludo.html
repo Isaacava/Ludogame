@@ -39,6 +39,16 @@ button,input{font:inherit}
 .floatReaction{position:fixed;left:50%;top:44%;font-size:42px;transform:translate(-50%,-50%);animation:float 1.2s ease-out forwards;pointer-events:none;z-index:30}@keyframes float{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%) scale(1.35)}}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);align-items:center;justify-content:center;padding:20px;z-index:40}.overlay.show{display:flex}.card{width:min(92vw,420px);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;text-align:center}.card h2{margin:0 0 8px}.card p{color:var(--muted);font-size:12px;line-height:1.5}
 @media(max-width:560px){body{padding-left:8px;padding-right:8px}.matchTitle{font-size:16px}.players{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.shareRow{display:flex;gap:8px;margin:0 0 10px}.shareRow button{flex:1;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:800;font-size:13px;cursor:pointer}.shareRow .wa{background:#25d366;color:#04130b;border:0}
+.feed{padding:6px 12px 10px;display:flex;flex-direction:column;gap:2px;max-height:150px;overflow:auto}.feed .fi{font-size:12px;padding:6px 0;border-top:1px solid var(--line)}.feed .fi:first-child{border-top:0}.feedNow{font-size:13px;font-weight:700;color:var(--ink);min-height:18px}
+.badge{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;margin-right:6px;vertical-align:1px}.badge.host{background:rgba(214,158,46,.22);color:#f0c050}.badge.player{background:rgba(56,161,105,.2);color:#6fdc9b}.badge.spectator{background:rgba(49,130,206,.2);color:#8ec2ff}
+.chatNote{margin:0 10px 6px;padding:8px 11px;border-radius:11px;background:rgba(214,158,46,.14);font-size:12px;display:none}.chatNote.show{display:block}
+.composer input:disabled,.composer button:disabled{opacity:.45}
+.reaction{min-width:44px;min-height:44px;font-size:18px}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:14px}
+.blocked{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);align-items:center;justify-content:center;padding:20px}.blocked.show{display:flex}.blocked .card h2{margin:0 0 8px}.blocked .card p{color:var(--muted);font-size:14px;line-height:1.5}.blocked a{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:8px;border-radius:12px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:800}
+.nameInput{width:100%;min-height:48px;margin:12px 0;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:16px}
 </style>
 </head>
 <body>
@@ -47,6 +57,8 @@ button,input{font:inherit}
     <div><div class="brand">🎲 CodePlay Live</div><div class="sub">Ludo spectator view</div></div>
     <div class="live"><span class="dot"></span><span id="statusText">CONNECTING</span><span id="viewsChip">👁 0</span></div>
   </header>
+
+  <div class="shareRow"><button class="wa" id="waBtn">💬 Share on WhatsApp</button><button id="copyBtn">🔗 Copy link</button></div>
 
   <section class="match">
     <div class="matchTop"><div><div class="matchTitle" id="matchTitle">Ludo match</div><div class="room" id="roomLabel"></div></div><div id="stateLabel" class="room">WAITING</div></div>
@@ -67,8 +79,14 @@ button,input{font:inherit}
     <section class="players" id="players"></section>
 
     <section class="panel">
+      <div class="panelHead"><span>⚡ Live moves</span><span class="feedNow" id="feedNow"></span></div>
+      <div class="feed" id="feed"><div class="empty">Moves will appear here as the match goes on.</div></div>
+    </section>
+
+    <section class="panel">
       <div class="panelHead"><span>💬 Live chat</span><span id="chatHint">Read-only game view</span></div>
       <div id="messages" class="messages"></div>
+      <div class="chatNote" id="chatNote"></div>
       <div class="composer"><input id="chatInput" maxlength="280" placeholder="Comment on the match…"><button class="send" id="sendChat">Send</button></div>
     </section>
 
@@ -79,19 +97,21 @@ button,input{font:inherit}
 
     <section class="actions">
       <div class="reactionBar">
-        <button class="actions button reaction" data-r="🔥">🔥</button>
-        <button class="actions button reaction" data-r="😂">😂</button>
-        <button class="actions button reaction" data-r="😱">😱</button>
-        <button class="actions button reaction" data-r="👏">👏</button>
-        <button class="actions button reaction" data-r="💀">💀</button>
-        <button class="actions button reaction" data-r="❤️">❤️</button>
-        <button class="actions button reaction" data-r="🎉">🎉</button>
+        <button class="reaction" data-r="🔥">🔥</button>
+        <button class="reaction" data-r="😂">😂</button>
+        <button class="reaction" data-r="😱">😱</button>
+        <button class="reaction" data-r="👏">👏</button>
+        <button class="reaction" data-r="💀">💀</button>
+        <button class="reaction" data-r="❤️">❤️</button>
+        <button class="reaction" data-r="🎉">🎉</button>
       </div>
     </section>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
+<div id="blocked" class="blocked"><div class="card"><h2 id="blockedTitle"></h2><p id="blockedText"></p><a href="/">⌂ Home</a><a href="/?screen=live">👁 Watch live games</a></div></div>
+<div id="nameOverlay" class="overlay"><div class="card"><h2>👁 Watch live</h2><p>What should we call you in the chat?</p><input class="nameInput" id="nameInput" maxlength="24" placeholder="Your name" autocomplete="nickname"><button class="send" id="nameGo" style="width:100%;min-height:48px">Start watching</button></div></div>
 <div id="finishOverlay" class="overlay"><div class="card"><h2 id="finishTitle">🏆 Match complete</h2><p id="finishText"></p><button class="send" onclick="document.getElementById('finishOverlay').classList.remove('show')">Continue watching</button></div></div>
 
 <script>
@@ -106,8 +126,9 @@ const params=new URLSearchParams(location.search);
 let code=(params.get('code')||location.pathname.split('/').pop()||'').trim().toUpperCase();
 let watchToken=params.get('watch')||'';
 const viewerId=localStorage.getItem('codeplay_viewer_id')||(()=>{const id='v_'+cryptoRandom() ;localStorage.setItem('codeplay_viewer_id',id);return id})();
-const viewerName=(localStorage.getItem('codeplay_name')||'Guest').slice(0,30);
-let socket=null, socketUrl=location.origin;
+let viewerName=(params.get('name')||localStorage.getItem('codeplay_viewer_name')||'').slice(0,24);
+let myKey=null,feedItems=[];
+let socket=null, socketUrl=window.CODEPLAY_SOCKET_URL||location.origin;
 
 function cryptoRandom(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
 function cap(s){return String(s||'Player').replace(/^./,m=>m.toUpperCase())}
@@ -142,7 +163,7 @@ function render(){
         if(pos===-1){const b=slots[ti%slots.length];rr=b[0];cc=b[1]}
         else{rr=slots[0][0];cc=slots[0][1]}
         const onHome=pos===56;
-        if(onHome)continue;
+        if(onHome)return; /* was `continue` inside forEach: a SyntaxError that stopped the whole page script */
         const d=document.createElement('div');
         d.className='tok '+(pi===Number(state.turn)?'active':'');
         d.style.background=COLORS[color]||'#888';
@@ -152,7 +173,7 @@ function render(){
         d.title=cap(p.name||('Player '+(pi+1)))+' — '+color+' '+(ti+1);
         tokensEl.appendChild(d);
       });
-    }
+    }); /* was `}` - missing `)` closed colors.forEach wrongly */
   });
   renderPlayers();
 }
@@ -172,7 +193,7 @@ function renderPlayers(){
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function updateAudience(a){
-  state.audience=a||{};
+  state.audience=a||{};applyChatState(a);
   const watching=Number(a.watching??a.viewerCount??0);
   const views=Number(a.views??a.totalViews??0);
   const messages=Number(a.messages??state.chat.length??0);
@@ -185,9 +206,11 @@ function updateAudience(a){
   document.getElementById('audienceSummary').textContent=watching+' watching';
   document.getElementById('audience').innerHTML=(a.audience||[]).map(v=>'<span class="pill">👤 '+escapeHtml(v.name)+'</span>').join('')||'<span class="pill">No viewers yet</span>';
 }
+const BADGE={host:'⭐ HOST',player:'🎮 PLAYER',spectator:'👁 VIEWER'};
 function renderChat(){
   const el=document.getElementById('messages');el.innerHTML='';
-  state.chat.slice(-100).forEach(m=>{const d=document.createElement('div');d.className='msg';d.innerHTML='<b>'+escapeHtml(m.name||'Guest')+'</b>: '+escapeHtml(m.text||'')+' <span class="time">'+new Date(m.at||m.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span>';el.appendChild(d)});
+  if(!state.chat.length){el.innerHTML='<div class="empty">No messages yet — say hi 👋</div>';return}
+  state.chat.slice(-100).forEach(m=>{const d=document.createElement('div');d.className='msg';const role=m.role||'spectator';d.innerHTML='<span class="badge '+escapeHtml(role)+'">'+(BADGE[role]||BADGE.spectator)+'</span><b>'+escapeHtml(m.name||'Guest')+'</b>: '+escapeHtml(m.text||'')+' <span class="time">'+new Date(m.at||m.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span>';el.appendChild(d)});
   el.scrollTop=el.scrollHeight;
 }
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>el.classList.remove('show'),1800)}
@@ -212,15 +235,28 @@ function showFinished(){
   document.getElementById('finishOverlay').classList.add('show');
 }
 
+
+const FRIENDLY={'spectator-access-denied':['🔗 Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],'watch-not-authorized':['🔗 Link-only match','This watch link is private or has expired. Ask the host for a fresh link.'],'spectating-disabled':['🔒 Watching is off','The host has turned off watching for this match.'],'room-not-found':['Match not found','This room does not exist or the match has already ended.'],'audience-full':['Audience is full','This match has reached its viewer limit. Try again in a moment.']};
+const SOFT={'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little 🙂','empty-message':'Type a message first.','not-in-room':'You are not in this match.'};
+function showBlocked(t,x){document.getElementById('blockedTitle').textContent=t;document.getElementById('blockedText').textContent=x;document.getElementById('blocked').classList.add('show');document.getElementById('statusText').textContent='UNAVAILABLE'}
+function shareUrl(){const u=new URL(location.origin+location.pathname.replace(/\/live\/ludo\/[^/]*$/,'/live-ludo.html'));u.searchParams.set('code',code);if(watchToken)u.searchParams.set('watch',watchToken);return u.toString()}
+function shareText(){return '🎲 Watch this Ludo match live on CodePlay!\nRoom '+code+'\n'+shareUrl()}
+function copyLink(){const text=shareUrl();const done=()=>toast('Watch link copied ✔');const fb=()=>{const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}t.remove();ok?done():prompt('Copy this link',text)};navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text).then(done).catch(fb):fb()}
+document.getElementById('waBtn').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(shareText()),'_blank','noopener');
+document.getElementById('copyBtn').onclick=copyLink;
+function renderFeed(){const box=document.getElementById('feed');box.innerHTML='';const now=document.getElementById('feedNow');const last=feedItems[feedItems.length-1];now.textContent=last?last.text:'';if(!feedItems.length){box.innerHTML='<div class="empty">Moves will appear here as the match goes on.</div>';return}feedItems.slice(-12).reverse().forEach(f=>{const d=document.createElement('div');d.className='fi';d.textContent=f.text;box.appendChild(d)})}
+function applyChatState(a){const off=a&&a.chatEnabled===false;const i=document.getElementById('chatInput'),b=document.getElementById('sendChat'),n=document.getElementById('chatNote');i.disabled=off;b.disabled=off;i.placeholder=off?'Chat is off for viewers':'Comment on the match…';n.textContent=off?'The host turned chat off for viewers.':'';n.classList.toggle('show',!!off)}
 function connect(){
   if(socket)return;
   document.getElementById('statusText').textContent='CONNECTING';
   socket=io(socketUrl,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:Infinity});
-  socket.on('connect',()=>{document.getElementById('statusText').textContent='LIVE';socket.emit('watch-room',{code,watchToken,name:viewerName,viewerId});});
+  socket.on('connect',()=>{document.getElementById('statusText').textContent='LIVE';socket.emit('watch-room',{code,watchToken,name:viewerName||'Guest',viewerId});});
   socket.on('disconnect',()=>{document.getElementById('statusText').textContent='RECONNECTING';});
   socket.on('connect_error',()=>{document.getElementById('statusText').textContent='RECONNECTING';});
-  socket.on('error-msg',m=>{toast(m==='watch-not-authorized'?'This watch link is private or expired.':m);if(m==='room-not-found'||m==='watch-not-authorized')document.getElementById('statusText').textContent='UNAVAILABLE'});
-  socket.on('spectator-ready',p=>{document.getElementById('matchTitle').textContent='CodePlay Ludo · '+code;document.getElementById('roomLabel').textContent='Room '+code;state.chat=p.chat||[];updateAudience(p.audience||{});renderChat();if(p.state)applyState(p.state);else document.getElementById('stateLabel').textContent='WAITING';});
+  socket.on('error-msg',m=>{if(SOFT[m]){toast(SOFT[m]);return}if(FRIENDLY[m]){showBlocked(FRIENDLY[m][0],FRIENDLY[m][1]);return}toast(m)});
+  socket.on('feed',f=>{feedItems.push(f);feedItems=feedItems.slice(-40);renderFeed()});
+  socket.on('spectator-ended',x=>{socket.disconnect();showBlocked.apply(null,x&&x.reason==='spectating-disabled'?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'])});
+  socket.on('spectator-ready',p=>{document.getElementById('matchTitle').textContent='CodePlay Ludo · '+code;document.getElementById('roomLabel').textContent='Room '+code;if(p.you){myKey=p.you.key;viewerName=p.you.name||viewerName}state.chat=(p.audience&&p.audience.chat)||p.chat||[];feedItems=(p.audience&&p.audience.feed)||[];renderFeed();updateAudience(p.audience||{});renderChat();if(p.state)applyState(p.state);else document.getElementById('stateLabel').textContent='WAITING';});
   socket.on('room-status',p=>{document.getElementById('stateLabel').textContent=p.started?'LIVE':'WAITING';if(p.players)state.players=p.players.map(x=>({...x,tokens:{}}));renderPlayers();});
   socket.on('player-joined',p=>{document.getElementById('stateLabel').textContent='WAITING';toast((p.joined||0)+' / '+(p.needed||0)+' players connected');});
   socket.on('player-connection',p=>{if(p.players)renderPlayers();});
@@ -233,14 +269,15 @@ function connect(){
   socket.on('chat-message',m=>{state.chat.push(m);if(state.chat.length>100)state.chat.shift();renderChat();updateAudience({...state.audience,messages:state.chat.length});});
   socket.on('reaction',p=>{burst(p.emoji||p.reaction||'🔥');updateAudience({...state.audience,reactions:p.total??state.audience.reactions});});
   socket.on('watch-link-updated',p=>{toast('Watch link regenerated by host');});
-  socket.on('watch-settings-updated',p=>{toast('Watch settings updated');});
+  socket.on('watch-settings-updated',p=>{toast(p&&p.visibility==='public'?'Match is now public':p&&p.visibility==='link'?'Match is now link-only':'Watch settings updated');});
   socket.on('match-finished',p=>{if(p.state)applyState(p.state);if(p.audience)updateAudience(p.audience);showFinished();});
 }
 document.getElementById('sendChat').onclick=()=>{const input=document.getElementById('chatInput');const text=input.value.trim();if(!text||!socket)return;socket.emit('chat-send',{code,text});input.value=''};
 document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('sendChat').click()});
 document.querySelectorAll('[data-r]').forEach(b=>b.addEventListener('click',()=>{if(socket)socket.emit('reaction',{code,emoji:b.dataset.r})}));
 document.getElementById('roomLabel').textContent='Room '+code;
-fetch('/api/config/public').then(r=>r.json()).then(cfg=>{if(cfg.socketUrl)socketUrl=cfg.socketUrl}).catch(()=>{}).finally(connect);
+function start(){fetch('/api/config/public').then(r=>r.json()).then(cfg=>{if(cfg.socketUrl&&!window.CODEPLAY_SOCKET_URL)socketUrl=cfg.socketUrl}).catch(()=>{}).finally(connect)}
+if(viewerName){start()}else{const ov=document.getElementById('nameOverlay'),inp=document.getElementById('nameInput');ov.classList.add('show');const go=()=>{viewerName=(inp.value.trim()||'Guest').slice(0,24);try{localStorage.setItem('codeplay_viewer_name',viewerName)}catch(e){}ov.classList.remove('show');start()};document.getElementById('nameGo').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})}
 </script>
 </body>
 </html>

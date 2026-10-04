@@ -71,4 +71,29 @@ function roomSummary(room){
   };
 }
 
-module.exports={registerGameManager,getManager,createReservedRoom,findRoom,findOpenRoom,roomHasOpenSeat,roomIsReadyToStart,roomSummary};
+// Public matches for the "Watch live" list. Only rooms the host set to Public are ever listed.
+function listLiveRooms(limit=30){
+  const out=[];
+  for(const game of ['ludo','whot']){
+    const manager=managers[game];if(!manager||!manager.rooms)continue;
+    for(const room of manager.rooms.values()){
+      if(!room||room.visibility!=='public')continue;
+      if(room.engine&&room.engine.gameOver)continue;
+      const humans=(room.players||[]).filter(p=>!p.bot);
+      if(!humans.some(p=>p.socketId))continue; // nobody is actually there
+      out.push({
+        game,code:room.code,
+        started:!!room.engine,
+        playerCount:Number(room.playerCount||0),
+        players:(room.players||[]).map(p=>String(p.name||'Player').slice(0,24)),
+        host:String((room.players&&room.players[0]&&room.players[0].name)||'Player').slice(0,24),
+        viewers:room.spectators?room.spectators.size:0,
+        createdAt:room.createdAt||0
+      });
+    }
+  }
+  out.sort((a,b)=>(b.started-a.started)||(b.viewers-a.viewers)||(b.createdAt-a.createdAt));
+  return out.slice(0,limit);
+}
+
+module.exports={registerGameManager,getManager,createReservedRoom,findRoom,findOpenRoom,roomHasOpenSeat,roomIsReadyToStart,roomSummary,listLiveRooms};
