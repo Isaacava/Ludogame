@@ -82,10 +82,12 @@ this.rooms.set(code, room); return room;
     const index=room.players.findIndex(p=>p.playerToken===playerToken);
     if(index===-1) return {error:'invalid-reconnect-token'};
     const player=room.players[index];
-    if(player.connected && player.socketId && player.socketId!==socketId) return {error:'seat-already-connected'};
+    // The token proves identity. A refresh or a network blip leaves a half-open old socket on the server for up to a minute;
+    // the new connection must take the seat over instead of being locked out.
+    const replacedSocketId=(player.socketId&&player.socketId!==socketId)?player.socketId:null;
     player.socketId=socketId; player.connected=true; player.disconnectedAt=null;
     if(!room.engine&&room.players.length===room.playerCount&&room.players.every(p=>!!p.socketId))this.resetEngine(room);
-    return {index,playerToken:player.playerToken,room};
+    return {index,playerToken:player.playerToken,room,replacedSocketId};
   }
   removeSocket(socketId){
     for(const room of this.rooms.values()){

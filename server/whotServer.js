@@ -4,6 +4,13 @@ const {WhotRoomManager}=require('./rooms/whotRoomManager');
 const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
 const {registerGameManager}=require('./bot/gameControl');
 const {startTurnTimers,normalizeTurnSeconds}=require('./realtime/turnTimer');
+// A player reconnected with their token: retire the old (possibly half-open) socket so it can never act or flag them offline.
+function retireWhotSocket(io,socketId){
+  if(!socketId)return;
+  const old=io.sockets.sockets.get(socketId);if(!old)return;
+  old.emit('whot:session-replaced');old.data.role=null;
+  setTimeout(()=>{try{old.disconnect(true)}catch(e){}},80);
+}
 
 const rooms=new WhotRoomManager(configStore);
 registerGameManager('whot',rooms);
@@ -146,6 +153,7 @@ io.on('connection',socket=>{
     if(existing&&playerToken){
       const resumed=rooms.reconnect(existing,socket.id,playerToken);
       if(!resumed.error){
+        retireWhotSocket(io,resumed.replacedSocketId);
         const room=existing,index=resumed.index;socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
         socket.emit('whot:joined',{code:room.code,index,playerToken:resumed.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
         emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);return;
@@ -161,6 +169,7 @@ io.on('connection',socket=>{
   socket.on('whot:reconnect',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room)return socket.emit('whot:error',{message:'room-not-found'});
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('whot:error',{message:result.error});
+    retireWhotSocket(io,result.replacedSocketId);
     const {index}=result;socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;socket.join(`WHOT_${room.code}`);
     socket.emit('whot:joined',{code:room.code,index,playerToken:result.playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(index):null,reconnected:true,audience:rooms.audienceInfo(room,true,true)});
     emitState(room);if(room.engine&&!room.engine.gameOver)scheduleBot(room);

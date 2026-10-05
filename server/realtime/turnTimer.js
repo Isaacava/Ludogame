@@ -8,7 +8,8 @@ const DEFAULT_SECONDS = (() => {
   const n = Number(process.env.CODEPLAY_TURN_SECONDS);
   return ALLOWED.includes(n) ? n : 60;
 })();
-const DISCONNECTED_MS = 10000;
+const DISCONNECTED_MS = 25000;   // a refresh or a signal blip must not cost anyone their turn
+const OFFLINE_OFF_MS = 60000;    // rooms with the clock Off still never freeze on a seat that left
 const AWAY_MS = 8000;
 
 function normalizeTurnSeconds(value, fallback) {
@@ -39,20 +40,22 @@ function startTurnTimers(cfg) {
 }
 
 function effectiveMs(room, seat, cfg) {
-  const base = Number(room.turnSeconds) * 1000;
   const player = room.players[seat];
   if (!player || player.bot) return 0;
-  let ms = base;
-  if (!player.socketId) ms = Math.min(ms, DISCONNECTED_MS);
+  const offline = !player.socketId;
+  let ms = Number(room.turnSeconds) * 1000;
+  if (!ms) return offline ? OFFLINE_OFF_MS : 0;
+  if (offline) ms = Math.min(ms, DISCONNECTED_MS);
   if ((player.awayStreak || 0) >= 2) ms = Math.min(ms, AWAY_MS);
   return ms;
 }
 
 function tick(room, now, cfg) {
   if (room.turnSeconds === undefined) room.turnSeconds = DEFAULT_SECONDS;
-  if (!room.turnSeconds || !cfg.active(room)) { room.turnDeadline = null; return; }
+  if (!cfg.active(room)) { room.turnDeadline = null; return; }
   const seat = cfg.seat(room);
   const sig = cfg.signature(room);
+  const player = room.players[seat];
   if (sig !== room.turnSig) {
     // Something changed. If a human (not our auto-play) caused it, they are back.
     if (room.turnSig !== undefined && sig !== room.autoSig) {
@@ -61,17 +64,21 @@ function tick(room, now, cfg) {
     }
     room.turnSig = sig;
     room.turnSeat = seat;
-    const ms = effectiveMs(room, seat, cfg);
-    room.turnDeadline = ms ? now + ms : null;
-    cfg.emit(room, 'turn', {
-      code: room.code, turn: seat, seconds: Math.round(ms / 1000), deadline: room.turnDeadline, now,
-      away: !!(room.players[seat] && (room.players[seat].awayStreak || 0) >= 2)
-    });
-    return;
+    room.turnStartedAt = now;
+    room.turnDeadline = undefined;
   }
-  if (!room.turnDeadline || now < room.turnDeadline) return;
-  const player = room.players[seat];
-  if (!player) return;
+  // Disconnected players are timed from the moment they left (not from the start of the turn).
+  const ms = effectiveMs(room, seat, cfg);
+  const from = player && !player.socketId ? Math.max(room.turnStartedAt || now, player.disconnectedAt || now) : (room.turnStartedAt || now);
+  const deadline = ms ? from + ms : null;
+  if (deadline !== room.turnDeadline) {
+    room.turnDeadline = deadline;
+    cfg.emit(room, 'turn', {
+      code: room.code, turn: seat, seconds: Math.round(ms / 1000), deadline, now,
+      away: !!(player && (player.awayStreak || 0) >= 2)
+    });
+  }
+  if (!deadline || now < deadline || !player) return;
   player.awayStreak = (player.awayStreak || 0) + 1;
   room.turnDeadline = null;
   try {
@@ -79,6 +86,7 @@ function tick(room, now, cfg) {
     if (cfg.announce) cfg.announce(room, `${player.name || 'A player'} ran out of time — auto-played ⏱️`);
   } finally {
     room.autoSig = cfg.signature(room);
+    if (room.autoSig === sig) room.turnStartedAt = now; // the auto-play changed nothing: restart the clock instead of looping
   }
 }
 

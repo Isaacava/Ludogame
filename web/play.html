@@ -351,8 +351,31 @@ function loadSavedRoomForCode(code){
 function clearActiveRoom(){localStorage.removeItem(activeRoomKey())}
 function normalizeRoomCode(c){return String(c||'').trim().toUpperCase()}
 function renderWaiting(joined,needed){var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>💬 Share on WhatsApp</button></a>')}
-function applyServerState(st){if(st.rules)RULES=Object.assign(RULES,st.rules);players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});if(connectionStates.length!==players.length)connectionStates=players.map(function(){return true});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)showGameOver()}
-function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(SPECTATOR_MODE){wrText(cap(players[turn]&&players[turn].name||'Player')+'’s turn • you are watching');rollBtn.disabled=true}else if(turn===HUMAN_INDEX){yourTurnCue();wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
+function applyServerState(st){window._srvDice=st.dice||null;window._srvRemaining=st.remainingDice||null;if(st.rules)RULES=Object.assign(RULES,st.rules);players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});if(connectionStates.length!==players.length)connectionStates=players.map(function(){return true});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)showGameOver()}
+function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(SPECTATOR_MODE){wrText(cap(players[turn]&&players[turn].name||'Player')+'’s turn • you are watching');rollBtn.disabled=true}else if(turn===HUMAN_INDEX&&window._srvDice){resumePendingRoll()}else if(turn===HUMAN_INDEX){yourTurnCue();wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
+/* The server still holds the dice this player rolled before a refresh / network drop: restore them instead of offering a second roll. */
+function resumePendingRoll(){
+  var dice=window._srvDice,rem=window._srvRemaining||[true,true];
+  d1=dice[0];d2=dice[1];showFace(face1El,d1);showFace(face2El,d2);
+  rollBtn.disabled=true;modeRow.innerHTML='';currentValid=[];window._netPending=null;window._netAfterMove=null;
+  yourTurnCue();
+  if(!rem[0]&&!rem[1]){socket.emit('end-turn',{code:ROOM_CODE});return}
+  if(rem[0]&&rem[1]){
+    var splitLegal=legalMoves(HUMAN_INDEX,d1,true).length||legalMoves(HUMAN_INDEX,d2,true).length,combineLegal=legalMoves(HUMAN_INDEX,d1+d2,false).length;
+    if(!splitLegal&&!combineLegal){socket.emit('end-turn',{code:ROOM_CODE});return}
+    wrText('Welcome back — you already rolled '+d1+' & '+d2+'.');showModeChoiceNet(splitLegal,combineLegal);
+  }else{
+    var value=rem[0]?d1:d2;wrText('Welcome back — move by '+value+'.');promptDieNet(value,true,null);
+  }
+}
+var hiddenAt=0;
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(!socket||SPECTATOR_MODE||GAME_MODE!=='friends'||!seatEstablished)return;
+  if(!socket.connected){socket.connect();return}
+  if(Date.now()-hiddenAt>3000)setTimeout(function(){socket.emit('request-sync',{code:ROOM_CODE})},250);
+});
+
 function showModeChoiceNet(splitLegal,combineLegal){modeRow.innerHTML='';wrText('Rolled '+d1+' & '+d2+' — split or combine?');if(splitLegal){var b=document.createElement('button');b.textContent='Split ('+d1+' + '+d2+')';b.onclick=startSplitNet;modeRow.appendChild(b)}if(combineLegal){var c=document.createElement('button');c.textContent='Combine ('+(d1+d2)+')';c.onclick=startCombineNet;modeRow.appendChild(c)}}
 function startSplitNet(){modeRow.innerHTML='';promptDieNet(d1,false,function(){promptDieNet(d2,true,null)})}
 function promptDieNet(value,isLast,after){var legal=legalMoves(HUMAN_INDEX,value,true);if(!legal.length){log('No legal move for die '+value+' — skipped.');if(isLast)socket.emit('end-turn',{code:ROOM_CODE});else after();return}if(legal.length===1){commitNet(legal[0],value,isLast,after);return}currentValid=legal;wrText('Tap a token to move it by '+value+'.');window._netPending={value:value,isLast:isLast,after:after,mode:'split'};render()}
@@ -372,7 +395,7 @@ function initFriendsMode(action,existingCode,playerCount){
  });
  socket.on('reconnect_attempt',function(){if(seatEstablished&&ROOM_CODE)wrText('Reconnecting to your Ludo room…');else wrText('Reconnecting to the game server…')});
  socket.on('reconnect_failed',function(){showWaitingRoom(seatEstablished?'<p>Could not reconnect to your Ludo room.</p><p class="legend">Your game seat was kept briefly. Tap Retry to reconnect.</p><button onclick="location.reload()">Retry</button>':'<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
- socket.on('error-msg',function(msg){log('Server: '+msg);if(SOFT[msg]){toast(SOFT[msg]);return}if(SPECTATOR_MODE&&FRIENDLY[msg]){showBlocked.apply(null,FRIENDLY[msg]);return}if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
+ socket.on('error-msg',function(msg){log('Server: '+msg);if(/already rolled/i.test(String(msg))){socket.emit('request-sync',{code:ROOM_CODE});return}if(SOFT[msg]){toast(SOFT[msg]);return}if(SPECTATOR_MODE&&FRIENDLY[msg]){showBlocked.apply(null,FRIENDLY[msg]);return}if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
  socket.on('you-are-player',function(x){
    HUMAN_INDEX=x.index;seatEstablished=true;
    if(x.playerToken){playerToken=x.playerToken;saveActiveRoom();}
@@ -393,6 +416,8 @@ socket.on('audience-host',function(x){if(x&&x.spectatorToken)WATCH_TOKEN=x.spect
 socket.on('chat-message',function(x){addChatMessage(x)});
 socket.on('feed',pushFeed);
 socket.on('turn-timer',function(x){timerInfo=x.seconds?{turn:x.turn,seconds:x.seconds,deadline:Date.now()+(x.deadline-x.now)}:null;updateTimerUi();if(timerInfo&&x.turn===HUMAN_INDEX&&x.away)toast('You were away — the game is playing for you. Tap to take back control.')});
+socket.on('session-replaced',function(){try{socket.io.opts.reconnection=false}catch(e){}showWaitingRoom('<p>This game was opened on another tab or device.</p><p class="legend">Only one screen can play a seat at a time.</p><button onclick="location.reload()">Play here instead</button>')});
+socket.on('disconnect',function(reason){if(reason==='io client disconnect'||SPECTATOR_MODE)return;wrText('Connection lost — reconnecting…');rollBtn.disabled=true});
 socket.on('spectator-ended',function(x){closeSheets();showBlocked.apply(null,(x&&x.reason==='spectating-disabled')?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'])});
 socket.on('you-are-spectator',function(x){SPECTATOR_MODE=true;GAME_MODE='spectator';HUMAN_INDEX=-1;ROOM_CODE=x.code||ROOM_CODE;if(x.you){myKey=x.you.key}if(x.audience)setAudience(x.audience);setSpectatorUi();wrText('Watching room '+ROOM_CODE+' live.');});
  socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});

@@ -51,11 +51,12 @@ class WhotRoomManager{
   playerTokenAt(room,index){return room.players[index]?room.players[index].playerToken:null}
   reconnect(room,socketId,playerToken){
     const index=room.players.findIndex(p=>p.playerToken===playerToken&&!p.bot);if(index<0)return {error:'invalid-reconnect-token'};
-    const player=room.players[index];if(player.connected&&player.socketId&&player.socketId!==socketId)return {error:'seat-already-connected'};
+    const player=room.players[index];
+    const replacedSocketId=(player.socketId&&player.socketId!==socketId)?player.socketId:null; // token = identity: take the seat over
     player.socketId=socketId;player.connected=true;player.disconnectedAt=null;
     if(!room.engine&&room.players.filter(p=>!p.bot).length===room.playerCount&&room.players.filter(p=>!p.bot).every(p=>!!p.socketId))this.resetEngine(room);
-    if(room.engine&&!room.engine.gameOver&&room.mode==='computer')return {index,playerToken:player.playerToken,room};
-    return {index,playerToken:player.playerToken,room};
+    if(room.engine&&!room.engine.gameOver&&room.mode==='computer')return {index,playerToken:player.playerToken,room,replacedSocketId};
+    return {index,playerToken:player.playerToken,room,replacedSocketId};
   }
   removeSocket(socketId){
     for(const room of this.rooms.values()){

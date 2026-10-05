@@ -5,6 +5,7 @@ require('./uiSyntax.test');
 require('./pagesSyntax.test');
 require('./audience.test');
 require('./turnTimer.test');
+require('./reconnect.test');
 require('./whatsappBot.test');
 require('./metaWhatsAppAdapter.test');
 require('./whatsappBridge.test');

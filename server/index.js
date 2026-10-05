@@ -85,6 +85,7 @@ app.get('/api/config/public',(req,res)=>{
 const httpServer=http.createServer(app);
 const allowedOrigins=(process.env.CORS_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean);
 const io=new Server(httpServer,{
+  pingInterval:10000,pingTimeout:8000, // detect a dropped phone within ~18 s instead of ~45 s
   cors:{
     origin:(origin,callback)=>{
       if(!origin || allowedOrigins.includes('*') || allowedOrigins.length===0) return callback(null,true);
@@ -132,6 +133,18 @@ function ludoSpectatorJoin(socket,room,{name,watchToken,viewerId}){
   socket.data.role='spectator';socket.data.game='ludo';socket.data.roomCode=room.code;socket.data.spectatorName=spectator.name;socket.data.spectatorKey=spectator.key;
   socket.join(room.code);
   return spectator;
+}
+// A player reconnected with their token: the old (possibly half-open) socket is retired so it can never act or flag them offline.
+function retireSocket(socketId,event){
+  if(!socketId)return;
+  const old=io.sockets.sockets.get(socketId);if(!old)return;
+  old.emit(event);old.data.role=null;
+  setTimeout(()=>{try{old.disconnect(true)}catch(e){}},80);
+}
+// Sends the current table to ONE player: state, the dice already rolled this turn and which of them are still unused.
+function ludoSyncTo(socket,room){
+  if(!room||!room.engine)return;
+  socket.emit('game-ready',{code:room.code,state:room.engine.toJSON(),resync:true});
 }
 function ludoDoRoll(room){
   const {dice,options}=room.engine.rollDice();room.lastActivityAt=Date.now();
@@ -200,6 +213,7 @@ io.on('connection',socket=>{
       if(!resumed.error){
         const room=existingRoom;
         socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
+        retireSocket(resumed.replacedSocketId,'session-replaced');
         socket.emit('you-are-player',{index:resumed.index,playerToken:resumed.playerToken,reconnected:true});
         io.to(room.code).emit('player-connection',{index:resumed.index,name:room.players[resumed.index].name||`Player ${resumed.index+1}`,connected:true,players:roomPlayers(room)});
         socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
@@ -217,9 +231,14 @@ io.on('connection',socket=>{
   socket.on('reconnect-player',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
     const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
-    socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
+    retireSocket(result.replacedSocketId,'session-replaced');socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
     socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
+  });
+  socket.on('request-sync',({code})=>{
+    const room=rooms.getRoom(code);if(!room||!room.engine)return;
+    if(rooms.playerIndexOf(room,socket.id)<0)return;
+    ludoSyncTo(socket,room);
   });
   socket.on('spectate-room',({code,watchToken,name,viewerId})=>{
     const room=rooms.getRoom(code);
@@ -255,6 +274,7 @@ io.on('connection',socket=>{
   socket.on('roll-dice',({code})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
     const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
+    if(room.engine.dice){ludoSyncTo(socket,room);return;} // already rolled (e.g. before a refresh): hand the player their pending roll back
     try{ludoDoRoll(room);}catch(e){socket.emit('error-msg',e.message);}
   });
   socket.on('play-move',({code,move,value,mode})=>{

@@ -467,7 +467,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const target=String(code||'').trim().toUpperCase(),prefix='codeplay_active_whot_room:';let out=null;
     for(let i=0;i<localStorage.length;i++){
       const key=localStorage.key(i);if(!key||!key.startsWith(prefix))continue;
-      if(key===activeKey()||tabAlive(key.slice(prefix.length)))continue; /* never take a seat from a tab that is still open */
+      {const tid=key.slice(prefix.length);if(tid!==tabId()&&tabAlive(tid))continue;} /* never take a seat from a tab that is still open */
       try{const item=JSON.parse(localStorage.getItem(key)||'null');if(item&&String(item.code||'').toUpperCase()===target&&item.playerToken&&(!out||Number(item.savedAt||0)>Number(out.savedAt||0)))out=item}catch(err){}
     }
     return out;
@@ -928,8 +928,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const saved=loadRoom(),requestedCode=String(roomCode||'').toUpperCase(),incomingPlayerToken=(params.get('playerToken')||'').trim(),creating=mode==='computer'||action==='create';
     if(spectatorMode){roomCode=requestedCode;playerToken=null;me=-1}
     else if(incomingPlayerToken&&requestedCode){roomCode=requestedCode;playerToken=incomingPlayerToken}
-    else if(!creating&&!roomCode&&saved&&saved.playerToken){roomCode=saved.code;playerToken=saved.playerToken}
-    if(!creating&&requestedCode&&!incomingPlayerToken){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
+    else if(!creating&&saved&&saved.playerToken&&(!requestedCode||saved.code===requestedCode)){roomCode=saved.code;playerToken=saved.playerToken}
+    if(!creating&&requestedCode&&!incomingPlayerToken&&!playerToken){const cross=loadSavedRoomForCode(requestedCode);if(cross&&cross.playerToken){roomCode=requestedCode;playerToken=cross.playerToken}}
     socket.on('connect',()=>{
       if(spectatorMode){showWaiting('Connecting to live match '+roomCode+'…');socket.emit('whot:spectate',{code:roomCode,watchToken,name:profileName,viewerId});return}
       if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer',whatsappToken:whatsappGameToken,visibility:params.get('visibility')||undefined,showHands:params.get('hands')||undefined,chatEnabled:params.get('chat')||undefined});showWaiting('Starting your computer match…');return}
@@ -937,7 +937,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
       reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null,whatsappToken:whatsappGameToken});showWaiting('Joining room '+roomCode+'…');
     });
-    socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;roomReady=true;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';e.watchInvite.style.display='inline-block';if(x.audience){watchToken=x.audience.spectatorToken||watchToken;setAudience(x.audience)}renderTopbar();if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
+    socket.on('whot:created',x=>{roomCode=x.code;playerToken=x.playerToken;me=x.index||0;roomReady=true;saveRoom();try{history.replaceState({},'',location.pathname+'?mode=friends&action=reconnect&code='+encodeURIComponent(roomCode)+'&players='+(x.playerCount||(x.state&&x.state.playerCount)||''))}catch(err){}e.roomCode.textContent=roomCode;e.roomCode.style.display='block';e.inviteBtn.style.display='block';e.watchInvite.style.display='inline-block';if(x.audience){watchToken=x.audience.spectatorToken||watchToken;setAudience(x.audience)}renderTopbar();if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:joined',x=>{reconnecting=false;reconnectTries=0;roomCode=x.code;playerToken=x.playerToken||playerToken;me=x.index;roomReady=true;saveRoom();e.roomCode.textContent=roomCode;e.roomCode.style.display='block';if(x.audience)setAudience(x.audience);renderTopbar();if(x.state)setState(x.state,x);else showWaiting((x.joined||1)+' / '+x.needed+' joined — waiting…')});
     socket.on('whot:state',x=>{if(x.spectator){spectatorMode=true;me=-1;setSpectatorUi()}else if(x.index!=null)me=x.index;if(x.playerToken){playerToken=x.playerToken;saveRoom()}setState(x.state,x)});
     socket.on('whot:status',x=>{if(x.roomCode)roomCode=x.roomCode;if(x.waiting===true)showWaiting(x.text||'Waiting for players…');else if(x.text)e.status.textContent=x.text});
@@ -947,6 +947,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     socket.on('whot:chat-message',onChat);
     socket.on('whot:feed',pushFeed);
     socket.on('whot:turn-timer',x=>{timerInfo=x.seconds?{turn:x.turn,seconds:x.seconds,deadline:Date.now()+(x.deadline-x.now)}:null;document.body.classList.toggle('timed',!!timerInfo);updateClock();if(timerInfo&&x.turn===me&&x.away)toast('You were away — the game is playing for you. Make a move to take over.')});
+    socket.on('whot:session-replaced',()=>{try{socket.io.opts.reconnection=false}catch(err){}showBlocked('📱 Opened somewhere else','This game is open on another tab or device. Only one screen can play a seat at a time.');e.waitActions.innerHTML='<button id=\'takeBack\'>Play here instead</button><a href=\'/\'>⌂ Home</a>';e.waitActions.style.display='flex';document.getElementById('takeBack').onclick=()=>location.reload()});
+    socket.on('disconnect',reason=>{if(reason==='io client disconnect'||spectatorMode)return;e.status.textContent='Connection lost — reconnecting…'});
     socket.on('whot:spectator-ended',x=>{closeSheets();roomReady=false;renderTopbar();const t=x&&x.reason==='spectating-disabled'?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'];showBlocked(t[0],t[1])});
     socket.on('whot:error',x=>{const msg=x.message||String(x);
       if(reconnecting&&(msg==='seat-already-connected'||msg==='invalid-reconnect-token')){
@@ -973,6 +975,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   e.chatSend.onclick=sendChat;e.chatInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')sendChat()});
   e.moreLiveBtn.onclick=()=>{location.href='/?screen=live'};
   addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheets()});
+  let hiddenAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();return}if(!socket||spectatorMode||!roomCode||!playerToken)return;if(!socket.connected){socket.connect();return}if(Date.now()-hiddenAt>3000)setTimeout(()=>socket.emit('whot:reconnect',{code:roomCode,playerToken}),250)});
   if(window.visualViewport){const upd=()=>{const vv=window.visualViewport,kb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);document.documentElement.style.setProperty('--kb',kb+'px')};visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
   e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
   if(spectatorMode){me=-1;setSpectatorUi()}
