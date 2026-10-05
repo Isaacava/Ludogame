@@ -102,6 +102,7 @@ const io=new Server(httpServer,{
   pingInterval:25000
 });
 
+const {startTurnTimers,normalizeTurnSeconds}=require('./realtime/turnTimer');
 const pname=(room,i)=>(room.players[i]&&room.players[i].name)||`Player ${Number(i)+1}`;
 function ludoEvict(room){
   rooms.spectatorsToEvict(room).forEach(sid=>{
@@ -132,13 +133,62 @@ function ludoSpectatorJoin(socket,room,{name,watchToken,viewerId}){
   socket.join(room.code);
   return spectator;
 }
+function ludoDoRoll(room){
+  const {dice,options}=room.engine.rollDice();room.lastActivityAt=Date.now();
+  ludoFeed(room,`${pname(room,room.engine.turn)} rolled ${Array.isArray(dice)?dice.join(' & '):dice}`,'roll');
+  io.to(room.code).emit('dice-rolled',{dice,options,turn:room.engine.turn});
+  emitRoomAudio(room,'ludo-dice');
+  if(!options.canSplit&&!options.canCombine){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{reason:'no-legal-moves',...endResult,state:room.engine.toJSON()});}
+  return {dice,options};
+}
+function ludoDoMove(room,pIdx,move,value,mode){
+  const result=room.engine.applyMove(move,value,mode);
+  io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});room.lastActivityAt=Date.now();
+  if(result.captured&&result.captured.length)ludoFeed(room,`${pname(room,pIdx)} captured ${result.captured.map(c=>c.color).join(' & ')}! 💥`,'capture');
+  else if(result.finishedNow)ludoFeed(room,`${pname(room,pIdx)} brought a token home 🏠`,'home');
+  if(result.gameOver)ludoFeed(room,`${pname(room,pIdx)} wins the match! 🏆`,'win');
+  emitLudoResultAudio(room,pIdx,result);
+  if(result.gameOver){
+    const winnerIndex=Array.isArray(result.finishOrder)&&result.finishOrder.length?result.finishOrder[0]:pIdx;
+    notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
+  }
+  const remaining=result.consumedDice||[];
+  const allDiceConsumed=remaining.length>0&&remaining.every(v=>!v);
+  if(allDiceConsumed||result.gameOver){
+    const endResult=room.engine.endTurn();
+    io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
+    if(endResult.gameOver){
+      const winnerIndex=Array.isArray(endResult.finishOrder)&&endResult.finishOrder.length?endResult.finishOrder[0]:pIdx;
+      notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
+    }else emitGameAudio(room,endResult.nextTurn,'ludo-turn');
+  }
+  return result;
+}
+// Plays a whole turn for a seat whose clock ran out: capture > enter the board > advance the leading token.
+function ludoAutoPlay(room,seat){
+  const eng=room.engine;if(!eng||eng.gameOver||eng.turn!==seat)return;
+  if(!eng.dice){const r=ludoDoRoll(room);if(!r.options.canSplit&&!r.options.canCombine)return;}
+  for(let guard=0;guard<4&&!eng.gameOver&&eng.turn===seat&&eng.dice;guard++){
+    const opts=eng.legalOptions(),[d1,d2]=eng.dice,cand=[];
+    (opts.split.d1||[]).forEach(m=>cand.push({move:m,value:d1,mode:'split'}));
+    (opts.split.d2||[]).forEach(m=>cand.push({move:m,value:d2,mode:'split'}));
+    if(!cand.length)(opts.combine||[]).forEach(m=>cand.push({move:m,value:d1+d2,mode:'combine'}));
+    if(!cand.length){const end=eng.endTurn();io.to(room.code).emit('turn-passed',{...end,state:eng.toJSON()});if(!end.gameOver)emitGameAudio(room,end.nextTurn,'ludo-turn');return;}
+    const tokens=eng.currentPlayer().tokens;
+    const score=c=>{const pos=tokens[c.move.color][c.move.idx];let n=pos+c.value;if(pos===-1)n=0;let v=n;if(eng._wouldCapture&&eng._wouldCapture(c.move,c.value))v+=1000;if(pos===-1)v+=200;if(n===56)v+=400;return v;};
+    cand.sort((a,b)=>score(b)-score(a));
+    const best=cand[0];
+    ludoDoMove(room,seat,best.move,best.value,best.mode);
+  }
+}
+
 io.on('connection',socket=>{
-  socket.on('create-room',({playerCount,name,color,whatsappToken,visibility,chatEnabled})=>{
+  socket.on('create-room',({playerCount,name,color,whatsappToken,visibility,chatEnabled,turnSeconds})=>{
     const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const allowedPlayerCounts=configStore.get('rules')?.playerCounts||[2,3,4];
     if(!allowedPlayerCounts.includes(playerCount))return socket.emit('error-msg','player-count-disabled');
-    const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});rooms.applyOptions(room,{visibility,chatEnabled});socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
-    socket.emit('room-created',{code:room.code,playerCount,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room),audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
+    const room=rooms.createRoom(playerCount,socket.id,{name,color,whatsappPhone:whatsapp?.phone||null});rooms.applyOptions(room,{visibility,chatEnabled});room.turnSeconds=normalizeTurnSeconds(turnSeconds);socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);
+    socket.emit('room-created',{code:room.code,playerCount,turnSeconds:room.turnSeconds,joined:room.players.filter(p=>p.socketId).length,needed:playerCount,playerToken:room.players[0].playerToken,players:roomPlayers(room),audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     socket.emit('you-are-player',{index:0,playerToken:room.players[0].playerToken});
   });
   socket.on('join-room',({code,name,color,playerToken,whatsappToken})=>{
@@ -205,40 +255,13 @@ io.on('connection',socket=>{
   socket.on('roll-dice',({code})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
     const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
-    try{
-      const {dice,options}=room.engine.rollDice();room.lastActivityAt=Date.now();
-      ludoFeed(room,`${pname(room,room.engine.turn)} rolled ${Array.isArray(dice)?dice.join(' & '):dice}`,'roll');
-      io.to(room.code).emit('dice-rolled',{dice,options,turn:room.engine.turn});
-      emitRoomAudio(room,'ludo-dice');
-      if(!options.canSplit&&!options.canCombine){const endResult=room.engine.endTurn();io.to(room.code).emit('turn-passed',{reason:'no-legal-moves',...endResult,state:room.engine.toJSON()});}
-    }catch(e){socket.emit('error-msg',e.message);}
+    try{ludoDoRoll(room);}catch(e){socket.emit('error-msg',e.message);}
   });
-  socket.on('play-move',({code,move,value,mode,isLastMoveThisTurn})=>{
+  socket.on('play-move',({code,move,value,mode})=>{
     const room=rooms.getRoom(code);if(!room||!room.engine)return socket.emit('error-msg','room not ready');
     const pIdx=rooms.playerIndexOf(room,socket.id);if(pIdx!==room.engine.turn)return socket.emit('error-msg','not your turn');
     if(!room.engine.dice)return socket.emit('error-msg','roll the dice first');
-    try{
-      const result=room.engine.applyMove(move,value,mode);
-      io.to(room.code).emit('move-applied',{move,value,...result,state:room.engine.toJSON()});room.lastActivityAt=Date.now();
-      if(result.captured&&result.captured.length)ludoFeed(room,`${pname(room,pIdx)} captured ${result.captured.map(c=>c.color).join(' & ')}! 💥`,'capture');
-      else if(result.finishedNow)ludoFeed(room,`${pname(room,pIdx)} brought a token home 🏠`,'home');
-      if(result.gameOver)ludoFeed(room,`${pname(room,pIdx)} wins the match! 🏆`,'win');
-      emitLudoResultAudio(room,pIdx,result);
-      if(result.gameOver){
-        const winnerIndex=Array.isArray(result.finishOrder)&&result.finishOrder.length?result.finishOrder[0]:pIdx;
-        notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
-      }
-      const remaining=result.consumedDice||[];
-      const allDiceConsumed=remaining.length>0&&remaining.every(v=>!v);
-      if(allDiceConsumed||result.gameOver){
-        const endResult=room.engine.endTurn();
-        io.to(room.code).emit('turn-passed',{...endResult,state:room.engine.toJSON()});
-        if(endResult.gameOver){
-          const winnerIndex=Array.isArray(endResult.finishOrder)&&endResult.finishOrder.length?endResult.finishOrder[0]:pIdx;
-          notifyGameResults(room,{winnerIndex,gameName:'Ludo'}).catch(()=>{});
-        }else emitGameAudio(room,endResult.nextTurn,'ludo-turn');
-      }
-    }catch(e){socket.emit('error-msg',e.message);}
+    try{ludoDoMove(room,pIdx,move,value,mode);}catch(e){socket.emit('error-msg',e.message);}
   });
   socket.on('send-reaction',({code,reaction})=>{
     const room=rooms.getRoom(code);
@@ -337,6 +360,16 @@ io.on('connection',socket=>{
   });
 });
 setInterval(()=>rooms.sweepExpired(),60*1000);
+
+startTurnTimers({
+  rooms:()=>rooms.rooms.values(),
+  active:room=>!!room.engine&&!room.engine.gameOver,
+  signature:room=>`${room.engine.turn}:${room.engine.actionSeq||0}:${room.engine.finishOrder.length}`,
+  seat:room=>room.engine.turn,
+  emit:(room,_event,payload)=>io.to(room.code).emit('turn-timer',payload),
+  autoPlay:ludoAutoPlay,
+  announce:(room,text)=>ludoFeed(room,text,'timeout')
+});
 
 async function startServer(){
   try{

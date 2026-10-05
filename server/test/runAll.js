@@ -2,6 +2,9 @@
 require('./whotEngine.test');
 require('./whotRoomManager.test');
 require('./uiSyntax.test');
+require('./pagesSyntax.test');
+require('./audience.test');
+require('./turnTimer.test');
 require('./whatsappBot.test');
 require('./metaWhatsAppAdapter.test');
 require('./whatsappBridge.test');

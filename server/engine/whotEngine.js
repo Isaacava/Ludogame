@@ -125,6 +125,7 @@ class WhotEngine{
     return {type:'play',cardId:move.card.id,call,lastCall};
   }
   playCard(playerIndex,cardIndex,call,lastCall=false){
+    this.actionSeq=(this.actionSeq||0)+1;
     if(this.gameOver)throw new Error('game-over'); if(!this.started)throw new Error('game-not-started'); if(playerIndex!==this.turn)throw new Error('not-your-turn');
     const card=this.players[playerIndex].cards[cardIndex]; if(!card)throw new Error('card-not-found'); if(!this.canPlay(playerIndex,cardIndex))throw new Error('illegal-card');
     this._validateWhotCall(card,call);
@@ -136,6 +137,7 @@ class WhotEngine{
     return {card:cloneCard(card),resolution,wasPending,gameOver,state:this.toJSON()};
   }
   draw(playerIndex){
+    this.actionSeq=(this.actionSeq||0)+1;
     if(this.gameOver)throw new Error('game-over'); if(!this.started)throw new Error('game-not-started'); if(playerIndex!==this.turn)throw new Error('not-your-turn');
     // Market is always available on a player's turn. Playing a card remains fully validated by canPlay().
     const count=this.pendingPick?this.pendingPick.amount:1; this.pendingPick=null; const cards=this._takeFromMarket(playerIndex,count); this._nextTurn(); return {cards,state:this.toJSON()};

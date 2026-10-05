@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CodePlay Whot</title>
+<meta name="theme-color" content="#06100c">
+<meta name="description" content="Play Nigerian Whot with friends in seconds — share a link, no sign-up. Live spectators and chat.">
+<meta property="og:site_name" content="CodePlay">
+<meta property="og:type" content="website">
+<meta property="og:title" content="🃏 CodePlay Whot — play with friends">
+<meta property="og:description" content="Pick two, hold on, general market — tap the link and you're in. No sign-up.">
+<meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-whot.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <script src="/audio.js"></script>
 <style>
@@ -251,6 +260,39 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   .status{padding:3px 10px;font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+/* ===== v3: smooth motion + clean performance ===== */
+.handCard .card,.handCard{transition:transform .2s cubic-bezier(.16,1,.3,1)!important}
+.handCard.playable .card{animation:none!important;filter:none!important}
+.handCard.unplayable .card{filter:none!important;opacity:1!important;position:relative}
+.handCard.unplayable .card:after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(4,12,9,.55);pointer-events:none}
+.handCard.enter{animation:none!important}
+.handCard.sent .card{transform:translateY(-26px) scale(1.1)!important;transition:transform .12s ease-out!important}
+.topCard.cardEnter{animation:none!important}
+.topCard.landed .card{animation:landPop .26s cubic-bezier(.34,1.45,.64,1)}
+@keyframes landPop{0%{transform:scale(.9)}60%{transform:scale(1.045)}100%{transform:scale(1)}}
+.ghost{position:fixed;z-index:90;pointer-events:none;perspective:800px;will-change:translate,scale,rotate}
+.ghost .gi{position:absolute;inset:0;transform-style:preserve-3d}
+.ghost .gf{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.ghost .gf.front{transform:rotateY(180deg)}
+.ghost .gf .card{width:100%;height:100%;box-shadow:0 12px 22px rgba(0,0,0,.45)}
+.cardBack{width:100%;height:100%;border-radius:11px;border:2px solid rgba(255,255,255,.92);background:repeating-linear-gradient(45deg,#153a64 0 6px,#1e4b82 6px 12px);box-shadow:0 12px 22px rgba(0,0,0,.45)}
+.stack{transition:transform .15s cubic-bezier(.16,1,.3,1)}.stack.canDraw:active{transform:scale(.95)}
+.stack.canDraw .stackMain{animation:none}
+.myClock,.turnClock{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin:0 14px 4px}
+.turnClock{margin:5px 0 0;height:3px}
+.myClock i,.turnClock i{display:block;height:100%;width:100%;transform-origin:left center;transform:scaleX(0);background:linear-gradient(90deg,#ffd75a,#f5a524)}
+.urgent i{background:linear-gradient(90deg,#ff7a6a,#ff3b4a)!important}
+.clockTxt{position:absolute;right:6px;top:-18px;font-size:11px;font-weight:900;color:#ff9a8a;display:none}
+.myClock.urgent .clockTxt{display:block}.myClock{overflow:visible}
+.myClock,.turnClock{visibility:hidden}body.timed .myClock,body.timed .turnClock{visibility:visible}
+.turnBanner{position:fixed;left:50%;top:27%;z-index:60;padding:12px 26px;border-radius:18px;font-size:22px;font-weight:1000;letter-spacing:.06em;color:#2b1c00;background:linear-gradient(180deg,#ffe27a,#f2a81d);box-shadow:0 14px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;white-space:nowrap;transform:translate(-50%,-50%) scale(.6)}
+.turnBanner.show{animation:bannerPop 1.15s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes bannerPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}70%{opacity:1;transform:translate(-50%,-56%) scale(1)}100%{opacity:0;transform:translate(-50%,-66%) scale(.95)}}
+.rulesList{display:flex;flex-direction:column;gap:8px}
+.ruleItem{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
+.ruleItem .rn{flex:0 0 auto;min-width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-weight:1000;font-size:16px;color:#2b1c00;background:linear-gradient(145deg,#ffe27a,#f2a81d)}
+.ruleItem b{display:block;font-size:14px}.ruleItem span.d{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -262,6 +304,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       <div><div class="brand">CodePlay Whot</div><div class="room" id="roomLabel">Connecting…</div></div>
     </div>
     <div class="topActions">
+      <button class="iconBtn" id="rulesTopBtn" aria-label="How to play">📖</button>
       <button class="iconBtn" id="chatTopBtn" aria-label="Open chat" style="display:none">💬<span class="dot" id="chatDot"></span></button>
       <button class="iconBtn watchChip" id="watchTopBtn" aria-label="Viewers and sharing">👁 <span id="watchCount">0</span></button>
       <button class="iconBtn" id="soundToggle" aria-label="Toggle sounds">🔊</button>
@@ -313,6 +356,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     </div>
 
     <div class="handPanel">
+      <div class="myClock" id="myClock"><i></i><span class="clockTxt" id="clockTxt"></span></div>
       <div class="handHint">Tap a highlighted card to play • tap <b>MARKET</b> anytime to draw</div>
       <div class="hand" id="hand"></div>
     </div>
@@ -323,6 +367,12 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 </div>
 
 <div class="toast" id="toast" role="status"></div>
+<div class="turnBanner" id="turnBanner" aria-hidden="true">YOUR TURN</div>
+<section class="sheet" id="rulesSheet" role="dialog" aria-label="How to play Whot">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>📖 How to play Whot</span><button id="rulesClose" aria-label="Close">✕</button></div>
+  <div class="sheetBody" id="rulesBody"></div>
+</section>
 <div class="sheetBack" id="sheetBack"></div>
 <section class="sheet" id="watchSheet" role="dialog" aria-label="Viewers and sharing">
   <div class="sheetGrab"></div>
@@ -338,8 +388,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 </section>
 <div class="modal" id="nameModal">
   <div class="modalCard">
-    <h3>👁 Watch live</h3>
-    <div class="sub">What should we call you in the chat?</div>
+    <h3 id="nameTitle">👁 Watch live</h3>
+    <div class="sub" id="nameSub">What should we call you in the chat?</div>
     <input id="nameInput" maxlength="24" placeholder="Your name" autocomplete="nickname" style="width:100%;margin-top:12px;min-height:48px;padding:0 13px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-size:16px">
     <div class="resultActions"><button class="resultAction primary" id="nameGo">Start watching</button></div>
   </div>
@@ -396,7 +446,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     homeBtn:document.getElementById('homeBtn'),inviteBtn:document.getElementById('inviteBtn'),
     callTitle:document.getElementById('callTitle'),callHelp:document.getElementById('callHelp'),
     specialFx:document.getElementById('specialFx'),
-    chatTop:document.getElementById('chatTopBtn'),chatDot:document.getElementById('chatDot'),watchTop:document.getElementById('watchTopBtn'),watchCount:document.getElementById('watchCount'),watchInvite:document.getElementById('watchInviteBtn'),waitActions:document.getElementById('waitActions'),feedLine:document.getElementById('feedLine'),specList:document.getElementById('specList'),toast:document.getElementById('toast'),sheetBack:document.getElementById('sheetBack'),watchSheet:document.getElementById('watchSheet'),watchTitle:document.getElementById('watchTitle'),watchBody:document.getElementById('watchBody'),watchClose:document.getElementById('watchClose'),chatSheet:document.getElementById('chatSheet'),chatMessages:document.getElementById('chatMessages'),chatInput:document.getElementById('chatInput'),chatSend:document.getElementById('chatSend'),chatClose:document.getElementById('chatClose'),chatNote:document.getElementById('chatNote'),nameModal:document.getElementById('nameModal'),nameInput:document.getElementById('nameInput'),nameGo:document.getElementById('nameGo'),moreLiveBtn:document.getElementById('moreLiveBtn')
+    rulesTop:document.getElementById('rulesTopBtn'),rulesSheet:document.getElementById('rulesSheet'),rulesBody:document.getElementById('rulesBody'),rulesClose:document.getElementById('rulesClose'),myClock:document.getElementById('myClock'),clockTxt:document.getElementById('clockTxt'),turnBanner:document.getElementById('turnBanner'),nameTitle:document.getElementById('nameTitle'),nameSub:document.getElementById('nameSub'),chatTop:document.getElementById('chatTopBtn'),chatDot:document.getElementById('chatDot'),watchTop:document.getElementById('watchTopBtn'),watchCount:document.getElementById('watchCount'),watchInvite:document.getElementById('watchInviteBtn'),waitActions:document.getElementById('waitActions'),feedLine:document.getElementById('feedLine'),specList:document.getElementById('specList'),toast:document.getElementById('toast'),sheetBack:document.getElementById('sheetBack'),watchSheet:document.getElementById('watchSheet'),watchTitle:document.getElementById('watchTitle'),watchBody:document.getElementById('watchBody'),watchClose:document.getElementById('watchClose'),chatSheet:document.getElementById('chatSheet'),chatMessages:document.getElementById('chatMessages'),chatInput:document.getElementById('chatInput'),chatSend:document.getElementById('chatSend'),chatClose:document.getElementById('chatClose'),chatNote:document.getElementById('chatNote'),nameModal:document.getElementById('nameModal'),nameInput:document.getElementById('nameInput'),nameGo:document.getElementById('nameGo'),moreLiveBtn:document.getElementById('moreLiveBtn')
   };
 
   function tabId(){
@@ -435,31 +485,55 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(s.whotCall)return s.whotCall.mode==='shape'?card.shape===s.whotCall.value:card.number===s.whotCall.value;
     return !!s.top&&(card.shape===s.activeShape||card.number===s.top.number);
   }
-  function animateFlight(from,to,html,scale=1){
-    if(!from||!to)return;
-    const ghost=document.createElement('div');ghost.className='flying';ghost.innerHTML=html;
-    ghost.style.left=from.left+'px';ghost.style.top=from.top+'px';ghost.style.width=from.width+'px';ghost.style.height=from.height+'px';
-    document.body.appendChild(ghost);
-    requestAnimationFrame(()=>{
-      ghost.style.transform='translate('+(to.left-from.left)+'px,'+(to.top-from.top)+'px) scale('+(to.width/from.width*scale)+') rotate(-6deg)';
-      ghost.style.opacity='.96';
+  /* ================= Motion: every animation is transform/opacity only (compositor), driven by WAAPI ================= */
+  const REDUCED=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cardBase=()=>{const n=e.hand.querySelector('.handCard');const r=n&&n.getBoundingClientRect();return r&&r.width?{w:r.width,h:r.height}:{w:56,h:80}};
+  const centerRect=(r,w,h)=>({left:r.left+r.width/2-w/2,top:r.top+r.height/2-h/2,width:w,height:h});
+  const seatRectOf=i=>{
+    if(spectatorMode){const n=e.specList.querySelector('[data-pi="'+i+'"]');return n&&n.getBoundingClientRect()}
+    const m=e.players.querySelector('.miniHand[data-mini-index="'+i+'"]'),seat=m&&m.closest('.seat');return seat&&seat.getBoundingClientRect()||null;
+  };
+  /* Flies one card between two rects. faceUp: true/false; flip: back→front mid-air. Always resolves. */
+  function flyCard(o){
+    return new Promise(resolve=>{
+      if(REDUCED||!o.from||!o.to||!document.body.animate){resolve();return}
+      const base=cardBase(),from=centerRect(o.from,base.w,base.h),to=o.to,g=document.createElement('div');
+      g.className='ghost handCard';g.style.cssText='left:'+from.left+'px;top:'+from.top+'px;width:'+from.width+'px;height:'+from.height+'px';
+      const back='<div class="gf back"><div class="cardBack"></div></div>',front='<div class="gf front">'+(o.faceHtml||'<div class="cardBack"></div>')+'</div>';
+      g.innerHTML='<div class="gi">'+back+front+'</div>';
+      document.body.appendChild(g);
+      const gi=g.firstChild,dx=to.left+to.width/2-(from.left+from.width/2),dy=to.top+to.height/2-(from.top+from.height/2),s=Math.max(.35,to.width/from.width),dur=o.dur||460,arc=o.arc==null?-46:o.arc;
+      const done=()=>{g.remove();resolve()};
+      const timer=setTimeout(done,dur+(o.delay||0)+250);
+      const a=g.animate([
+        {translate:'0 0',scale:o.startScale||1,rotate:(o.rot0||0)+'deg',opacity:1,offset:0},
+        {translate:(dx*.5)+'px '+(dy*.5+arc)+'px',scale:((1+s)/2)*1.1,rotate:(o.rot1==null?-5:o.rot1)+'deg',opacity:1,offset:.5},
+        {translate:dx+'px '+dy+'px',scale:s,rotate:'0deg',opacity:1,offset:1}
+      ],{duration:dur,delay:o.delay||0,easing:'cubic-bezier(.3,.75,.3,1)',fill:'both'});
+      if(o.flip)gi.animate([{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)',offset:.62},{transform:'rotateY(180deg)'}],{duration:dur,delay:o.delay||0,easing:'ease-in-out',fill:'both'});
+      else if(o.faceUp!==false)gi.style.transform='rotateY(180deg)';
+      g.style.visibility='hidden';
+      setTimeout(()=>{g.style.visibility=''},o.delay||0);
+      a.finished.then(()=>{clearTimeout(timer);done()}).catch(()=>{clearTimeout(timer);done()});
     });
-    setTimeout(()=>ghost.remove(),520);
   }
-  function animateOpponentFlight(from,to,kind){
-    if(!from||!to)return;
-    const ghost=document.createElement('div');ghost.className='flying '+(kind==='draw'?'drawGhost':'');
-    ghost.innerHTML='<div class="marketGhost"></div>';
-    const sx=from.left+from.width*.72, sy=from.top+from.height*.5;
-    ghost.style.left=sx+'px';ghost.style.top=sy+'px';ghost.style.width='42px';ghost.style.height='60px';
-    document.body.appendChild(ghost);
-    requestAnimationFrame(()=>{
-      const tx=to.left+to.width*.5, ty=to.top+to.height*.5;
-      ghost.style.transform='translate3d('+(tx-sx)+'px,'+(ty-sy)+'px,0) scale('+(kind==='play'?.82:'.72')+') rotate('+(kind==='play'?-5:4)+'deg)';
-      ghost.style.opacity='.98';
-    });
-    setTimeout(()=>ghost.remove(),680);
+  function reveal(n,pop){if(!n)return;n.style.visibility='';if(pop&&n.animate&&!REDUCED){const c=n.querySelector('.card')||n;c.animate([{transform:'scale(.92)'},{transform:'scale(1.06)',offset:.6},{transform:'scale(1)'}],{duration:220,easing:'ease-out'})}}
+  function cueTurn(){
+    if(navigator.vibrate)try{navigator.vibrate([35,45,35])}catch(err){}
+    if(document.hidden)document.title='🃏 Your turn! — CodePlay Whot';
+    e.turnBanner.classList.remove('show');void e.turnBanner.offsetWidth;e.turnBanner.classList.add('show');
   }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)document.title='CodePlay Whot'});
+  /* turn clock (server driven) */
+  let timerInfo=null;
+  function updateClock(){
+    const apply=(box,on)=>{const bar=box.querySelector('i');if(!on||!timerInfo){bar.style.transform='scaleX(0)';box.classList.remove('urgent');return null}
+      const left=Math.max(0,timerInfo.deadline-Date.now()),frac=Math.min(1,left/(timerInfo.seconds*1000));bar.style.transform='scaleX('+frac.toFixed(3)+')';box.classList.toggle('urgent',left<=10000);return Math.ceil(left/1000)};
+    const secs=apply(e.myClock,!!timerInfo&&!spectatorMode&&timerInfo.turn===me&&!(state&&state.gameOver));
+    e.clockTxt.textContent=secs!=null&&secs<=10?secs+'s':'';
+    document.querySelectorAll('.turnClock').forEach(c=>apply(c,!!timerInfo&&Number(c.dataset.p)===timerInfo.turn&&!(state&&state.gameOver)&&(spectatorMode||timerInfo.turn!==me)));
+  }
+  setInterval(updateClock,250);
   function special(kind){
     const map={'pick-two':['PICK 2','pick2'],'pick-three':['PICK 3','pick3'],'general-market':['GENERAL MARKET','market'],'hold-on':['HOLD ON',''],'suspension':['SUSPENSION',''],'whot':['WHOT!','whot'],'normal':['','']};
     const item=map[kind]||['',''];if(!item[0])return;
@@ -552,7 +626,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     renderTopbar();
   }
   function closeSheets(keepBack){
-    e.watchSheet.classList.remove('show');e.chatSheet.classList.remove('show');
+    e.watchSheet.classList.remove('show');e.chatSheet.classList.remove('show');e.rulesSheet.classList.remove('show');
     if(!keepBack)e.sheetBack.classList.remove('show');
     chatOpen=false;watchOpen=false;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();renderTopbar();
   }
@@ -652,6 +726,23 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     document.body.appendChild(n);setTimeout(()=>n.remove(),1800);
   }
   /* ---- spectator layout ---- */
+  function renderRules(){
+    const r=(state&&state.rules)||{};const on=k=>r[k]!==false;
+    const items=[
+      ['1','Hold On',on('holdOnExtraTurn')?'Play again straight away.':'The next player is skipped.'],
+      ['2','Pick Two',on('stackPickTwo')?'Next player picks 2 — unless they answer with another 2. Picks stack up!':'Next player picks 2.'],
+      ['5','Pick Three',on('stackPickThree')?'Next player picks 3 — unless they answer with another 5. Picks stack up!':'Next player picks 3.'],
+      ['8','Suspension',on('suspensionSkipsNext')?'The next player misses their turn.':'Next turn is skipped.'],
+      ['14','General Market',on('generalMarketDrawsOthers')?'Everyone else picks 1 card'+(on('generalMarketExtraTurn')?' and you play again.':'.'):'Play passes on.'],
+      ['20','WHOT',(r.whotCallMode==='number'?'Wild card — call any number. ':'Wild card — call any shape. ')+'It beats everything.'],
+      ['🛒','Market','Can’t play or don’t want to? Tap MARKET to pick a card (or the whole pick penalty).'],
+      ['🏆','Winning','Empty your hand first. Everyone else scores penalty points for the cards they still hold — stars count double.']
+    ];
+    e.rulesBody.innerHTML='';const list=document.createElement('div');list.className='rulesList';
+    items.forEach(([n,t,d])=>{const it=document.createElement('div');it.className='ruleItem';const num=document.createElement('div');num.className='rn';num.textContent=n;const tx=document.createElement('div');const b=document.createElement('b');b.textContent=t;const sp=document.createElement('span');sp.className='d';sp.textContent=d;tx.appendChild(b);tx.appendChild(sp);it.appendChild(num);it.appendChild(tx);list.appendChild(it)});
+    e.rulesBody.appendChild(list);
+  }
+  function openRules(){renderRules();closeSheets(true);e.sheetBack.classList.add('show');e.rulesSheet.classList.add('show')}
   function setSpectatorUi(){
     e.inviteBtn.style.display='none';e.watchInvite.style.display='none';e.game.classList.add('spectatorMode');
     e.moreLiveBtn.style.display='inline-flex';e.status.textContent='Watching live — read-only';
@@ -664,36 +755,59 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const list=e.specList;list.innerHTML='';if(!spectatorMode||!state)return;
     (state.players||[]).forEach(p=>{
       const turn=p.index===state.turn&&!state.gameOver;
-      const row=el('div','specRow'+(turn?' turn':''));
+      const row=el('div','specRow'+(turn?' turn':''));row.dataset.pi=p.index;
       row.appendChild(el('div','avatar',(p.name||'P').trim().charAt(0).toUpperCase()));
       const info=el('div','specInfo');info.appendChild(el('div','specName',(p.name||'Player')+(p.bot?' 🤖':'')+(turn?' 🔥':'')));
       info.appendChild(el('div','specMeta',p.handCount+' card'+(p.handCount===1?'':'s')));row.appendChild(info);
       const cards=el('div','specCards');
       if(Array.isArray(p.cards)&&p.cards.length)p.cards.forEach(c=>cards.appendChild(miniCard(c)));
       else{const n=Math.min(p.handCount,10);for(let i=0;i<n;i++)cards.appendChild(el('span','mcBack'));if(p.handCount>n)cards.appendChild(el('span','specMore','+'+(p.handCount-n)))}
-      row.appendChild(cards);list.appendChild(row);
+      row.appendChild(cards);{const tc=el('div','turnClock');tc.dataset.p=p.index;tc.appendChild(document.createElement('i'));tc.style.cssText='position:absolute;left:0;right:0;bottom:0;margin:0;height:3px;border-radius:0';row.style.position='relative';row.appendChild(tc)}list.appendChild(row);
     });
   }
 
+  const handNodes=new Map();
+  let lastOwnIds=null;
+  function renderHand(own){
+    const before=new Map();handNodes.forEach((n,id)=>before.set(id,n.getBoundingClientRect()));
+    const keep=new Set(own.map(c=>String(c.id))),fresh=[];
+    handNodes.forEach((n,id)=>{if(!keep.has(id)){n.remove();handNodes.delete(id)}});
+    own.forEach((card,index)=>{
+      const id=String(card.id);let n=handNodes.get(id);
+      if(!n){n=document.createElement('div');n.setAttribute('data-card-id',id);n.innerHTML=cardHtml(card,true);handNodes.set(id,n);fresh.push(n)}
+      const playable=canPlay(card,state);
+      n.className='handCard '+(playable?'playable':'unplayable');
+      n.setAttribute('role','button');n.setAttribute('aria-label',(card.isWhot?'20 WHOT':card.number+' '+cap(card.shape))+(playable?', tap to play':', not playable'));
+      n.onclick=playable?()=>{n.classList.add('sent');onCard(index,card);setTimeout(()=>n.classList.remove('sent'),900)}:null;
+      if(e.hand.children[index]!==n)e.hand.insertBefore(n,e.hand.children[index]||null);
+    });
+    if(!REDUCED)handNodes.forEach((n,id)=>{
+      const a=before.get(id);if(!a||fresh.includes(n))return;const b2=n.getBoundingClientRect(),dx=a.left-b2.left,dy=a.top-b2.top;
+      if(Math.abs(dx)>1||Math.abs(dy)>1)n.animate([{translate:dx+'px '+dy+'px'},{translate:'0 0'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+    });
+    return fresh;
+  }
   function render(extra){
     if(!state)return;
-    const oldHand={};e.hand.querySelectorAll('[data-card-id]').forEach(n=>{oldHand[n.getAttribute('data-card-id')]=n.getBoundingClientRect()});
+    const oldHandRects={};handNodes.forEach((n,id)=>oldHandRects[id]=n.getBoundingClientRect());
     const oldMarket=e.market.getBoundingClientRect();
-    const oldSeat={};e.players.querySelectorAll('.seat').forEach(n=>{const mini=n.querySelector('.miniHand'),idx=mini?.getAttribute('data-mini-index');if(idx!=null&&mini)oldSeat[idx]=mini.getBoundingClientRect()});
+    const oldSeat={};(state.players||[]).forEach(p=>{const r=seatRectOf(p.index);if(r)oldSeat[p.index]=r});
     const previousCounts=window.__whotHandCounts||{};
     showGame();
     if(!window.__whotHandCounts)window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
     e.roomLabel.textContent=(spectatorMode?'👁 LIVE · ':'Room ')+roomCode+' · '+(state.playerCount||state.players.length)+' players';
     e.marketCount.textContent=String(state.marketCount||0);
 
-    e.topSlot.innerHTML=state.top?'<div class="topCard '+((extra&&extra.played)?'cardEnter':'')+'">'+cardHtml(state.top)+'</div>':'';
+    const flyPlay=!!(extra&&extra.played&&state.top&&!REDUCED);
+    e.topSlot.innerHTML=state.top?'<div class="topCard"'+(flyPlay?' style="visibility:hidden"':'')+'>'+cardHtml(state.top)+'</div>':'';
+    const topEl=e.topSlot.firstChild;
     e.players.innerHTML='';
     (spectatorMode?[]:(state.players||[])).forEach(p=>{
       const d=document.createElement('div');
       const count=Number(state.playerCount||state.players.length||2),rel=(p.index-me+count)%count;
       d.className='seat seat-rel-'+rel+' seat-count-'+count+(p.index===state.turn?' turn':'');
       const initial=(p.name||'P').trim().charAt(0).toUpperCase();
-      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' 🤖':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+(p.index===state.turn?'<span class="turnBadge">'+(p.index===me?'YOUR TURN':'TURN')+'</span>':'')+'</div><div class="miniHand" data-mini-index="'+p.index+'"></div></div>';
+      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' 🤖':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+(p.index===state.turn?'<span class="turnBadge">'+(p.index===me?'YOUR TURN':'TURN')+'</span>':'')+'</div><div class="miniHand" data-mini-index="'+p.index+'"></div><div class="turnClock" data-p="'+p.index+'"><i></i></div></div>';
       const mini=d.querySelector('.miniHand');
       if(p.index!==me){
         const visible=Math.min(p.handCount,6);
@@ -702,65 +816,72 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       }
       e.players.appendChild(d);
     });
-
-    const newSeat={};e.players.querySelectorAll('.seat').forEach(n=>{const idx=n.querySelector('.miniHand')?.getAttribute('data-mini-index');if(idx!=null)newSeat[idx]=n.querySelector('.miniHand').getBoundingClientRect()});
-    (spectatorMode?[]:(state.players||[])).forEach(p=>{
-      if(p.index===me)return;
-      const before=Number(previousCounts[p.index]),after=Number(p.handCount);
-      if(Number.isFinite(before)&&before!==after){
-        const mini=e.players.querySelector('.miniHand[data-mini-index="'+p.index+'"]');
-        mini?.classList.remove('handMotion');void mini?.offsetWidth;mini?.classList.add('handMotion');
-        const from=oldSeat[p.index],to=newSeat[p.index];
-        if(extra&&extra.actor===p.index){
-          if(after<before) animateOpponentFlight(from,e.topSlot.getBoundingClientRect(),'play');
-          else if(after>before) animateOpponentFlight(e.market.getBoundingClientRect(),to,'draw');
-        }
-      }
-    });
-    window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
+    renderSpectatorList();
 
     const own=(state.players[me]&&state.players[me].cards)||[];
-    e.hand.innerHTML='';
-    own.forEach((card,index)=>{
-      const playable=canPlay(card,state),wrap=document.createElement('div');
-      const n=Math.max(own.length,1),mid=(n-1)/2,delta=(index-mid);
-      const rotation=(delta*6).toFixed(2)+'deg',lift=(Math.abs(delta)*2).toFixed(1)+'px';
-      const animateNew=!!extra&&!extra.played&&!extra.drawn;
-      wrap.className='handCard '+(playable?'playable':'unplayable')+(animateNew?' enter':'');
-      wrap.style.setProperty('--r',rotation);wrap.style.setProperty('--y',lift);
-      wrap.style.zIndex='1';
-      wrap.setAttribute('data-card-id',card.id);
-      wrap.innerHTML=cardHtml(card,true);
-      if(playable)wrap.onclick=()=>onCard(index,card);
-      e.hand.appendChild(wrap);
-    });
+    const fresh=renderHand(own);
+    const first=lastOwnIds===null;lastOwnIds=own.map(c=>String(c.id));
 
+    /* ---- text / rule banner / market ---- */
     let prompt='Match '+cap(state.activeShape||'shape')+' or '+(state.top?state.top.number:'number');
     let whotActive=false;
-    if(state.pendingPick)prompt='Pick '+state.pendingPick.amount+' • defend with '+state.pendingPick.number;
+    if(state.pendingPick)prompt='Pick '+state.pendingPick.amount+' — defend with '+state.pendingPick.number;
     if(state.whotCall){
       const called=state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value;
-      prompt='WHOT CALL: '+called+' • play '+called+' or 20 WHOT';
+      prompt='WHOT CALL: '+called+' — play '+called+' or 20 WHOT';
       whotActive=true;
     }
     animateCall(prompt,whotActive);
-
     const isTurn=!spectatorMode&&state.turn===me&&!state.gameOver;
-    const canDraw=isTurn;document.querySelector('.handPanel').classList.toggle('myTurn',!!isTurn);
-    e.market.classList.toggle('canDraw',!!canDraw);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=canDraw?onDraw:null;
-
+    document.querySelector('.handPanel').classList.toggle('myTurn',!!isTurn);
+    e.market.classList.toggle('canDraw',!!isTurn);e.market.classList.toggle('disabled',!isTurn);e.market.onclick=isTurn?onDraw:null;
     e.status.textContent=state.gameOver?'ROUND COMPLETE':isTurn?
-      (state.pendingPick?'YOUR TURN • Match '+state.pendingPick.number+' or take the PICK '+state.pendingPick.amount+' from MARKET':state.whotCall?'YOUR TURN • Play '+(state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value)+' or 20 WHOT':'YOUR TURN • Play a highlighted card or tap MARKET'):
-      'TURN • '+(state.players[state.turn]?state.players[state.turn].name:'Opponent')+' is thinking…';
+      (state.pendingPick?'YOUR TURN — Match '+state.pendingPick.number+' or take the PICK '+state.pendingPick.amount+' from MARKET':state.whotCall?'YOUR TURN — Play '+(state.whotCall.mode==='shape'?cap(state.whotCall.value):state.whotCall.value)+' or 20 WHOT':'YOUR TURN — Play a highlighted card or tap MARKET'):
+      'TURN — '+(state.players[state.turn]?state.players[state.turn].name:'Opponent')+' is thinking…';
+    if(isTurn&&!window.__wasMyTurn)cueTurn();
+    window.__wasMyTurn=isTurn;
+    updateClock();
 
-    if(extra&&extra.played&&oldHand[extra.played]){
-      const top=e.topSlot.getBoundingClientRect();
-      animateFlight(oldHand[extra.played],top,document.querySelector('[data-card-id="'+CSS.escape(extra.played)+'"]')?.outerHTML||cardHtml(state.top));
-    }
-    if(extra&&extra.drawn&&extra.drawn.length&&extra.actor===me){animateFlight(oldMarket,e.hand.getBoundingClientRect(),'<div class="marketGhost"></div>',.7)}
-    if(extra&&extra.resolution&&extra.resolution.kind)special(extra.resolution.kind);
-    renderSpectatorList();
-    if(state.gameOver)showGameOver();
+    /* ---- motion ---- */
+    const base=cardBase();
+    const kind=extra&&extra.resolution&&extra.resolution.kind;
+    let landed=Promise.resolve();
+    if(flyPlay){
+      const topRect=topEl.getBoundingClientRect(),actor=extra.actor;
+      let from=null;
+      if(actor===me&&oldHandRects[extra.played])from=oldHandRects[extra.played];
+      else if(oldSeat[actor])from=oldSeat[actor];
+      else if(oldHandRects[extra.played])from=oldHandRects[extra.played];
+      const faceHtml=cardHtml(state.top,true);
+      landed=flyCard({from,to:topRect,faceHtml,flip:actor!==me&&!!from,faceUp:actor===me,dur:actor===me?400:470,arc:-52});
+      landed.then(()=>{topEl.style.visibility='';topEl.classList.add('landed');if(kind)special(kind)});
+      setTimeout(()=>{if(topEl.style.visibility==='hidden'){topEl.style.visibility='';topEl.classList.add('landed')}},900);
+    }else if(kind&&extra&&extra.resolution)special(kind);
+    /* my new cards: dealt from the market, flipped face-up as they land */
+    const dealt=[];
+    fresh.forEach((n,i)=>{
+      if(REDUCED)return;
+      n.style.visibility='hidden';
+      const id=n.getAttribute('data-card-id'),card=own.find(c=>String(c.id)===id);
+      const delay=(first?i*70:i*120)+(flyPlay&&!first?120:0);
+      const to=n.getBoundingClientRect();
+      dealt.push(flyCard({from:oldMarket,to,faceHtml:cardHtml(card,true),flip:true,dur:first?420:480,delay,arc:-34}).then(()=>reveal(n,true)));
+      setTimeout(()=>{if(n.style.visibility==='hidden')n.style.visibility=''},delay+900);
+    });
+    /* opponents: every hand-size change is shown (draws, general market, pick penalties) */
+    (state.players||[]).forEach(p=>{
+      if(p.index===me&&!spectatorMode)return;
+      const bef=Number(previousCounts[p.index]),aft=Number(p.handCount);
+      if(!Number.isFinite(bef)||bef===aft)return;
+      const seatEl=!spectatorMode&&e.players.querySelector('.miniHand[data-mini-index="'+p.index+'"]');
+      if(seatEl){seatEl.classList.remove('handMotion');void seatEl.offsetWidth;seatEl.classList.add('handMotion')}
+      if(aft>bef&&!REDUCED){
+        const to=seatRectOf(p.index);
+        for(let k=0;k<Math.min(aft-bef,5);k++)flyCard({from:oldMarket,to:to&&centerRect(to,base.w,base.h),faceHtml:null,faceUp:false,dur:440,delay:k*110+(flyPlay?0:0),arc:-30,startScale:1});
+      }
+    });
+    window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
+    if(state.gameOver)Promise.all([landed].concat(dealt)).then(()=>showGameOver());
   }
 
   function shouldAnnounceLastCard(){return !(state&&state.rules&&state.rules.enforceLastCardCall&&state.lastCallRequired)||window.confirm('This play leaves you with one card. Announce your LAST CARD now?')}
@@ -812,7 +933,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     socket.on('connect',()=>{
       if(spectatorMode){showWaiting('Connecting to live match '+roomCode+'…');socket.emit('whot:spectate',{code:roomCode,watchToken,name:profileName,viewerId});return}
       if(mode==='computer'){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'computer',whatsappToken:whatsappGameToken,visibility:params.get('visibility')||undefined,showHands:params.get('hands')||undefined,chatEnabled:params.get('chat')||undefined});showWaiting('Starting your computer match…');return}
-      if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends',whatsappToken:whatsappGameToken,visibility:params.get('visibility')||undefined,showHands:params.get('hands')||undefined,chatEnabled:params.get('chat')||undefined});showWaiting('Creating your Whot room…');return}
+      if(action==='create'||(!action&&!roomCode)){const requested=Number(params.get('players'))||2;socket.emit('whot:create-room',{playerCount:requested,name:profileName,mode:'friends',whatsappToken:whatsappGameToken,visibility:params.get('visibility')||undefined,showHands:params.get('hands')||undefined,chatEnabled:params.get('chat')||undefined,turnSeconds:params.get('turn')||undefined});showWaiting('Creating your Whot room…');return}
       if(playerToken&&roomCode){reconnecting=true;socket.emit('whot:reconnect',{code:roomCode,playerToken});showWaiting('Reconnecting to room '+roomCode+'…');return}
       reconnecting=false;socket.emit('whot:join-room',{code:roomCode,name:profileName,playerToken:null,whatsappToken:whatsappGameToken});showWaiting('Joining room '+roomCode+'…');
     });
@@ -825,6 +946,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     socket.on('whot:audience-host',x=>setAudience(x));
     socket.on('whot:chat-message',onChat);
     socket.on('whot:feed',pushFeed);
+    socket.on('whot:turn-timer',x=>{timerInfo=x.seconds?{turn:x.turn,seconds:x.seconds,deadline:Date.now()+(x.deadline-x.now)}:null;document.body.classList.toggle('timed',!!timerInfo);updateClock();if(timerInfo&&x.turn===me&&x.away)toast('You were away — the game is playing for you. Make a move to take over.')});
     socket.on('whot:spectator-ended',x=>{closeSheets();roomReady=false;renderTopbar();const t=x&&x.reason==='spectating-disabled'?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'];showBlocked(t[0],t[1])});
     socket.on('whot:error',x=>{const msg=x.message||String(x);
       if(reconnecting&&(msg==='seat-already-connected'||msg==='invalid-reconnect-token')){
@@ -846,7 +968,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   e.homeBtn.onclick=()=>location.href='/';
   e.inviteBtn.onclick=()=>{if(roomCode){if(whatsappBotNumber){window.open('https://wa.me/'+whatsappBotNumber+'?text='+encodeURIComponent('JOIN WHOT '+roomCode),'_blank','noopener')}else{const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}}};
   e.rematchBtn.onclick=()=>{if(spectatorMode)return;e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
-  e.chatTop.onclick=()=>openSheet('chat');e.watchTop.onclick=()=>openSheet('watch');e.watchInvite.onclick=()=>openSheet('watch');
+  e.rulesTop.onclick=openRules;e.rulesClose.onclick=()=>closeSheets();e.chatTop.onclick=()=>openSheet('chat');e.watchTop.onclick=()=>openSheet('watch');e.watchInvite.onclick=()=>openSheet('watch');
   e.chatClose.onclick=()=>closeSheets();e.watchClose.onclick=()=>closeSheets();e.sheetBack.onclick=()=>closeSheets();
   e.chatSend.onclick=sendChat;e.chatInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')sendChat()});
   e.moreLiveBtn.onclick=()=>{location.href='/?screen=live'};
@@ -856,11 +978,20 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   if(spectatorMode){me=-1;setSpectatorUi()}
   renderChatState();
   REACTIONS.forEach(r=>{const b=document.createElement('button');b.className='react';b.textContent=r;b.onclick=()=>socket.emit('whot:reaction',{code:roomCode,reaction:r});e.reactions.appendChild(b)});
+  const isGuestName=n=>!n||String(n).trim().toLowerCase()==='guest';
+  function savedName(){try{const n=(localStorage.getItem('codeplay_name')||localStorage.getItem('codeplay_viewer_name')||'').trim();if(!isGuestName(n))return n;const gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp&&!isGuestName(gp.name))return String(gp.name).trim()}catch(err){}return ''}
+  function rememberName(n){try{localStorage.setItem('codeplay_name',n);localStorage.setItem('codeplay_viewer_name',n);const gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){gp.name=n;localStorage.setItem('codeplay_guest_profile',JSON.stringify(gp))}}catch(err){}}
   function startWithName(){
-    if(!(spectatorMode&&!params.get('name'))){loadWhotConfig().then(ok=>{if(ok)connect()});return}
-    let saved='';try{saved=localStorage.getItem('codeplay_viewer_name')||''}catch(err){}
-    e.nameInput.value=saved;e.nameModal.classList.add('show');
-    const go=()=>{const v=String(e.nameInput.value||'').trim().slice(0,24)||'Guest';profileName=v;try{localStorage.setItem('codeplay_viewer_name',v)}catch(err){}e.nameModal.classList.remove('show');loadWhotConfig().then(ok=>{if(ok)connect()})};
+    const boot=()=>loadWhotConfig().then(ok=>{if(ok)connect()});
+    const joiningOrCreating=!spectatorMode&&mode==='friends'&&(action==='join'||action==='create');
+    if(!spectatorMode&&!joiningOrCreating){boot();return}
+    if(!isGuestName(profileName)){rememberName(profileName);boot();return}
+    const saved=savedName();if(saved){profileName=saved;boot();return}
+    e.nameTitle.textContent=spectatorMode?'👁 Watch live':'👋 What’s your name?';
+    e.nameSub.textContent=spectatorMode?'What should we call you in the chat?':'Your friends will see it at the table.';
+    e.nameGo.textContent=spectatorMode?'Start watching':'Let’s play';
+    e.nameModal.classList.add('show');setTimeout(()=>{try{e.nameInput.focus()}catch(err){}},300);
+    const go=()=>{const v=String(e.nameInput.value||'').trim().slice(0,24);if(!v){e.nameInput.focus();e.nameInput.style.borderColor='#ff5a6a';return}profileName=v;rememberName(v);e.nameModal.classList.remove('show');boot()};
     e.nameGo.onclick=go;e.nameInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')go()});
   }
   startWithName();

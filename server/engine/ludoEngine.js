@@ -65,7 +65,7 @@ class LudoEngine {
     if(this.dice)throw new Error('dice already rolled this turn — resolve current moves first');
     let d1=this.rollD6(),d2=this.rollD6();
     if(d2===6&&d1!==6){const t=d1;d1=d2;d2=t;}
-    this.dice=[d1,d2];this.remainingDice=[true,true];
+    this.dice=[d1,d2];this.remainingDice=[true,true];this.actionSeq=(this.actionSeq||0)+1;
     return {dice:this.dice,options:this.legalOptions()};
   }
   legalOptions(){
@@ -92,6 +92,7 @@ class LudoEngine {
     return this.players.some((opp,oi)=>oi!==this.turn&&opp.colors.some(oc=>opp.tokens[oc].some(t=>t>=0&&t<=50&&pathIdx(t,oc)===g)));
   }
   applyMove(move,value,mode){
+    this.actionSeq=(this.actionSeq||0)+1;
     this._ensureDiceState();
     const p=this.currentPlayer(),arr=p.tokens[move.color];
     if(!arr||!Number.isInteger(move.idx)||move.idx<0||move.idx>3)throw new Error('illegal move');
@@ -196,7 +197,7 @@ class LudoEngine {
     return false;
   }
   endTurn(){
-    this._ensureDiceState();
+    this._ensureDiceState();this.actionSeq=(this.actionSeq||0)+1;
     const [d1,d2]=this.dice||[0,0];
     const doubleValueExtra=this.rules.doubleValueGrantsExtraTurn&&d1===d2&&this.rules.extraTurnValues.includes(d1);
     const captureExtra=!!this.captureBonusPending;

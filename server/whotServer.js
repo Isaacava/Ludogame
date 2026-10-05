@@ -3,6 +3,7 @@ const {io,configStore}=require('./index');
 const {WhotRoomManager}=require('./rooms/whotRoomManager');
 const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
 const {registerGameManager}=require('./bot/gameControl');
+const {startTurnTimers,normalizeTurnSeconds}=require('./realtime/turnTimer');
 
 const rooms=new WhotRoomManager(configStore);
 registerGameManager('whot',rooms);
@@ -99,8 +100,33 @@ function scheduleBot(room){
   },650);
 }
 
+// A player whose clock ran out: play like the computer would (best legal card, otherwise take from the Market).
+function whotAutoPlay(room,seat){
+  const eng=room.engine;if(!eng||eng.gameOver||eng.turn!==seat)return;
+  try{
+    const action=eng.chooseComputerMove(seat);
+    if(action.type==='draw'){
+      const r=eng.draw(seat);emitState(room,{drawn:r.cards.map(c=>c.id),actor:seat,auto:true});emitWhotRoomAudio(room,'whot-draw');
+    }else{
+      const ci=eng.players[seat].cards.findIndex(c=>c.id===action.cardId);
+      const r=eng.playCard(seat,ci,action.call,action.lastCall);
+      emitState(room,{played:r.card.id,actor:seat,resolution:r.resolution,auto:true});emitWhotResultAudio(room,seat,r);
+    }
+  }catch(err){emitState(room,{autoError:err.message});}
+  if(!eng.gameOver)scheduleBot(room);
+}
+startTurnTimers({
+  rooms:()=>rooms.rooms.values(),
+  active:room=>!!room.engine&&!room.engine.gameOver&&room.engine.started!==false,
+  signature:room=>`${room.engine.turn}:${room.engine.actionSeq||0}:${room.engine.gameOver?1:0}`,
+  seat:room=>room.engine.turn,
+  emit:(room,_event,payload)=>io.to(`WHOT_${room.code}`).emit('whot:turn-timer',payload),
+  autoPlay:whotAutoPlay,
+  announce:(room,text)=>{const item=rooms.addFeed(room,text,'timeout');io.to(`WHOT_${room.code}`).emit('whot:feed',item);}
+});
+
 io.on('connection',socket=>{
-  socket.on('whot:create-room',({playerCount,name,mode,whatsappToken,visibility,showHands,chatEnabled})=>{
+  socket.on('whot:create-room',({playerCount,name,mode,whatsappToken,visibility,showHands,chatEnabled,turnSeconds})=>{
     const whatsapp=resolveWhatsAppGameToken(whatsappToken);
     const count=Number(playerCount),cfg=configStore.get('whot')||{};
     if(cfg.enabled===false)return socket.emit('whot:error',{message:'whot-disabled'});
@@ -108,9 +134,10 @@ io.on('connection',socket=>{
     if(!allowed.includes(count))return socket.emit('whot:error',{message:'player-count-disabled'});
     const room=rooms.createRoom(count,socket.id,{name,whatsappPhone:whatsapp?.phone||null},mode==='computer'?'computer':'friends');
     rooms.applyOptions(room,{visibility,showHands,chatEnabled});
+    room.turnSeconds=mode==='computer'?0:normalizeTurnSeconds(turnSeconds);
     socket.data.role='player';socket.data.game='whot';socket.data.roomCode=room.code;
     socket.join(`WHOT_${room.code}`);
-    socket.emit('whot:created',{code:room.code,index:0,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null,audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
+    socket.emit('whot:created',{code:room.code,index:0,turnSeconds:room.turnSeconds,playerToken:room.players[0].playerToken,joined:room.players.filter(p=>!p.bot&&p.socketId).length,needed:room.playerCount,started:!!room.engine,state:room.engine?room.engine.stateFor(0):null,audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine){emitState(room);scheduleBot(room)}else emitRoomWaiting(room,'Waiting for players…');
   });
   socket.on('whot:join-room',({code,name,playerToken,whatsappToken})=>{
