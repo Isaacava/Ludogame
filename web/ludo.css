@@ -73,7 +73,7 @@ body.ludoPage{margin:0;display:flex;flex-direction:column;height:100dvh;overflow
 .dieFace{position:absolute;inset:11%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);place-items:center}
 .pip{width:78%;aspect-ratio:1;border-radius:50%;background:#16241e;opacity:0;transform:scale(.3);transition:opacity .12s,transform .2s var(--ease-spring)}.pip.on{opacity:1;transform:scale(1)}
 .pip:nth-child(5).on:only-of-type{background:#e5384c}
-#rollBtn{flex:1;min-height:56px;border-radius:18px;font-size:18px;font-weight:1000;letter-spacing:.02em;color:#2b1c00;background:linear-gradient(180deg,#ffe27a,#f2a81d);box-shadow:0 10px 24px rgba(245,165,36,.3),inset 0 -3px 0 rgba(0,0,0,.14);transition:transform .14s var(--ease-out),opacity .2s,filter .2s}
+#rollBtn{display:flex;align-items:center;justify-content:center;gap:10px;flex:1;min-height:56px;border-radius:18px;font-size:18px;font-weight:1000;letter-spacing:.02em;color:#2b1c00;background:linear-gradient(180deg,#ffe27a,#f2a81d);box-shadow:0 10px 24px rgba(245,165,36,.3),inset 0 -3px 0 rgba(0,0,0,.14);transition:transform .14s var(--ease-out),opacity .2s,filter .2s}
 #rollBtn:active:not(:disabled){transform:scale(.96)}
 #rollBtn:disabled{opacity:.38;filter:grayscale(.5);box-shadow:none}
 #rollBtn:not(:disabled){animation:rollPulse 1.4s ease-in-out infinite}
@@ -134,3 +134,13 @@ body.spectating .dockMain{justify-content:center}
 .dockMain{gap:14px}
 .stage:before{content:"";position:absolute;left:50%;top:50%;width:92%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(47,210,122,.16),transparent 68%);pointer-events:none}
 @media (max-height:700px){.diceBox{width:54px;height:54px}#rollBtn{min-height:54px}}
+
+#rollBtn .ic{width:26px;height:26px}
+.reactBtn,.invite{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.invite .ic{width:19px;height:19px}
+.bigBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.bigBtn .ic{width:19px;height:19px}
+.pcard .pm .ic{width:13px;height:13px;vertical-align:-2px;opacity:.85}
+#waitingRoom button .ic{width:20px;height:20px;vertical-align:-4px;margin-right:4px}
+.resultActions button .ic{width:18px;height:18px;vertical-align:-3px}
+.socialBar{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent);padding-right:18px}

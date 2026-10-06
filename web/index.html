@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-codeplay.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/theme.css?v=3">
+<link rel="stylesheet" href="/theme.css?v=4"><link rel="stylesheet" href="/appbar.css?v=4"><script src="/icons.js?v=4"></script>
 <style>
 html,body{min-height:100%}
 body{display:flex;flex-direction:column;align-items:center;padding-top:var(--safe-t);padding-bottom:var(--safe-b)}
@@ -62,25 +62,51 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 .resume{display:none;align-items:center;gap:12px;margin-bottom:12px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(255,215,90,.18),rgba(245,165,36,.08));border:1px solid rgba(255,215,90,.4);text-align:left;color:var(--ink);min-height:68px;width:100%}
 .resume.show{display:flex}.resume .ic{font-size:26px}.resume .tx{flex:1}.resume b{display:block;font-size:15px}.resume span.d{font-size:12px;color:var(--muted)}
 .rulesBtn{background:none;border:0;color:var(--gold);font-weight:800;min-height:44px;margin:0 0 6px;width:auto;padding:0 6px;font-size:14px}
+
+.hero svg.art{position:absolute;filter:drop-shadow(0 18px 24px rgba(0,0,0,.5));animation:floaty 5s ease-in-out infinite}
+.hero .a1{width:104px;height:104px;transform:translate(-100px,12px) rotate(-10deg)}
+.hero .a2{width:112px;height:150px;transform:translate(0,-8px) rotate(5deg);animation-delay:-1.6s;z-index:2}
+.hero .a3{width:96px;height:96px;transform:translate(102px,22px);animation-delay:-3s}
+.btn-primary,.btn-whatsapp,.btn-outline{display:flex;align-items:center;justify-content:center;gap:9px}
+.btn-primary .ic,.btn-whatsapp .ic,.btn-outline .ic{width:20px;height:20px}
+.btn-game{gap:14px;min-height:78px}
+.btn-game .gi{flex:0 0 auto;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px rgba(0,0,0,.35)}
+.btn-game .gi .ic{width:27px;height:27px}
+.gi-ludo{background:linear-gradient(145deg,#4be08e,#168a4e)}.gi-whot{background:linear-gradient(145deg,#a98bff,#5b3fc4)}.gi-chess{background:linear-gradient(145deg,#8a98a0,#46535a)}
+.btn-game .gt{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.btn-game .gt b{font-size:18px;line-height:1.15}.btn-game .gt small{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.btn-game[disabled],.btn-game.soon{opacity:.6}
+.seg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.seg button .ic{width:19px;height:19px}
+.optBox summary .ic{width:20px;height:20px;margin-right:10px}
+.resume .ic{width:26px;height:26px;color:var(--gold)}
+.liveCard .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.07);padding:10px}
+.liveCard .ic svg{width:100%;height:100%}
+.rulesBtn{display:inline-flex;align-items:center;gap:7px}.rulesBtn .ic{width:18px;height:18px}
+.continueName{font-weight:900}
+.btn-game .tag{white-space:nowrap;flex:0 0 auto}.btn-game .gt{flex:1}
+.screen h2#welcomeMsg{margin-bottom:4px}.screen h2#welcomeMsg+.sub{margin:0 0 16px;font-size:14px}
+.switchLink{display:none}
 </style>
 </head>
 <body>
 <div class="banner" id="maintBanner" style="display:none"></div>
 <div class="screen active" id="landing">
-  <div class="hero" aria-hidden="true"><span class="tile t1">🎲</span><span class="tile t2">🃏</span><span class="tile t3">♟️</span></div>
+  <div class="hero" aria-hidden="true"><svg class="art a1" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cfdcd5"/></linearGradient></defs><rect x="6" y="6" width="88" height="88" rx="24" fill="url(#gd)"/><g fill="#16241e"><circle cx="30" cy="30" r="8"/><circle cx="70" cy="30" r="8"/><circle cx="50" cy="50" r="8" fill="#e5384c"/><circle cx="30" cy="70" r="8"/><circle cx="70" cy="70" r="8"/></g></svg><svg class="art a2" viewBox="0 0 112 150" aria-hidden="true"><rect x="4" y="4" width="104" height="142" rx="18" fill="#fffdf7"/><rect x="4" y="4" width="104" height="142" rx="18" fill="none" stroke="#e7e1cf" stroke-width="2"/><text x="18" y="38" font-family="system-ui,Arial" font-weight="900" font-size="26" fill="#1b1b1b">20</text><path d="M56 52l8.5 17.2 19 2.8-13.8 13.4 3.3 18.9L56 95.4l-17 8.9 3.3-18.9L28.5 72l19-2.8z" fill="#8a68e8"/><text x="94" y="136" text-anchor="end" font-family="system-ui,Arial" font-weight="800" font-size="12" fill="#8c8c8c">WHOT</text></svg><svg class="art a3" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="gt" cx=".34" cy=".28" r=".8"><stop offset="0" stop-color="#ffc2c9"/><stop offset=".45" stop-color="#ff5a6a"/><stop offset="1" stop-color="#9b2233"/></radialGradient></defs><circle cx="50" cy="50" r="40" fill="url(#gt)" stroke="#fff" stroke-width="6"/><text x="50" y="62" text-anchor="middle" font-family="system-ui,Arial" font-weight="900" font-size="34" fill="#fff" style="paint-order:stroke" stroke="rgba(0,0,0,.35)" stroke-width="2">1</text></svg></div>
   <h1>CodePlay</h1>
   <p class="sub">Ludo, Whot &amp; Chess — join with a code, play right from WhatsApp.</p>
   <div class="spacer"></div>
-  <button class="btn-whatsapp" onclick="go('signin')">💬 Continue with WhatsApp</button>
-  <button class="btn-outline" onclick="startGuest()">🎮 Continue as Guest — no registration</button>
-  <div class="linkRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
-  <div class="linkRow">Just want to watch? <a onclick="openLive()">👁 See live games</a></div>
+  <button class="btn-primary" id="continueBtn" style="display:none" onclick="continueAs()"><svg class="ic " aria-hidden="true"><use href="#i-play"/></svg><span>Continue as <span class="continueName" id="continueName"></span></span></button>
+  <button class="btn-whatsapp" id="waBtnLanding" onclick="go('signin')"><svg class="ic " aria-hidden="true"><use href="#i-whatsapp"/></svg> Continue with WhatsApp</button>
+  <button class="btn-outline" id="guestBtnLanding" onclick="startGuest()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Play as guest <small style="color:var(--muted);font-weight:600">· no sign-up</small></button>
+  <div class="linkRow" id="loginRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
+  <div class="linkRow switchLink" id="switchRow">Not you? <a onclick="switchPlayer()">Use a different name</a></div>
+  <div class="linkRow">Just want to watch? <a onclick="openLive()">See live games</a></div>
 </div>
 
 <div class="screen" id="signin">
   <h2>Connect your WhatsApp</h2>
   <p class="sub">Message our bot to get a 6-digit login code, then enter it below.</p>
-  <button class="btn-whatsapp" onclick="openWhatsApp()">💬 Message the CodePlay bot</button>
+  <button class="btn-whatsapp" onclick="openWhatsApp()"><svg class="ic " aria-hidden="true"><use href="#i-whatsapp"/></svg> Message the CodePlay bot</button>
   <div style="height:14px"></div>
   <input id="loginCodeInput" placeholder="Enter your 6-digit code" maxlength="6" inputmode="numeric">
   <div class="err" id="signinErr"></div>
@@ -101,11 +127,12 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 
 <div class="screen" id="select">
   <h2 id="welcomeMsg">Choose a game</h2>
-  <button class="resume" id="resumeCard" onclick="resumeGame()"><span class="ic">▶️</span><span class="tx"><b id="resumeTitle">Resume your game</b><span class="d" id="resumeSub"></span></span><span>›</span></button>
-  <button class="btn-game" onclick="chooseGame('ludo')">🎲 Ludo <span class="tag">2-4 players</span></button>
-  <button class="btn-game" onclick="chooseGame('whot')">🃏 Whot <span class="tag">2-4 players</span></button>
-  <button class="btn-game" onclick="chooseGame('chess')">♟️ Chess <span class="tag">coming soon</span></button>
-  <button class="btn-outline" onclick="openLive()">👁 Watch live games</button>
+  <p class="sub">Pick a game to play with friends.</p>
+  <button class="resume" id="resumeCard" onclick="resumeGame()"><span class="ic"><svg class="ic " aria-hidden="true"><use href="#i-play"/></svg></span><span class="tx"><b id="resumeTitle">Resume your game</b><span class="d" id="resumeSub"></span></span><span class="chev"><svg class="ic sm" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+  <button class="btn-game" onclick="chooseGame('ludo')"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Ludo</b><small>Race your tokens home</small></span><span class="tag">2-4 players</span></button>
+  <button class="btn-game" onclick="chooseGame('whot')"><span class="gi gi-whot"><svg class="ic " aria-hidden="true"><use href="#i-cards"/></svg></span><span class="gt"><b>Whot</b><small>Pick two, hold on, general market</small></span><span class="tag">2-4 players</span></button>
+  <button class="btn-game soon" onclick="chooseGame('chess')"><span class="gi gi-chess"><svg class="ic " aria-hidden="true"><use href="#i-pawn"/></svg></span><span class="gt"><b>Chess</b><small>Classic 1v1</small></span><span class="tag">coming soon</span></button>
+  <button class="btn-outline" onclick="openLive()"><svg class="ic " aria-hidden="true"><use href="#i-eye"/></svg> Watch live games</button>
   <div class="spacer"></div>
   <div class="linkRow">Playing from WhatsApp? Just message the bot instead.</div>
 </div>
@@ -119,20 +146,20 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
     <button class="countBtn selected" onclick="setCount(4)">4</button>
   </div>
   <p class="hint" id="countHint">4 players — one colour each.</p>
-  <button class="btn-primary" onclick="playComputer()">🤖 vs Computer</button>
+  <button class="btn-primary" onclick="playComputer()"><svg class="ic " aria-hidden="true"><use href="#i-bolt"/></svg> Play vs computer</button>
   <details class="optBox" id="ludoOpts">
-    <summary>⚙️ Room options</summary>
+    <summary><svg class="ic " aria-hidden="true"><use href="#i-sliders"/></svg> Room options</summary>
     <div class="optLabel">Turn timer</div>
     <div class="seg four" id="ludoTurn"><button data-t="30">30s</button><button data-t="60" class="on">60s</button><button data-t="90">90s</button><button data-t="0">Off</button></div>
     <p class="optHint">If someone goes quiet, the game plays a move for them so nobody is left waiting.</p>
     <div class="optLabel">Who can watch your match</div>
     <div class="seg" id="ludoVis">
-      <button data-v="public">🌐 Public</button><button data-v="link" class="on">🔗 Link only</button><button data-v="private">🔒 Off</button>
+      <button data-v="public"><svg class="ic " aria-hidden="true"><use href="#i-globe"/></svg><span>Public</span></button><button data-v="link" class="on"><svg class="ic " aria-hidden="true"><use href="#i-link"/></svg><span>Link only</span></button><button data-v="private"><svg class="ic " aria-hidden="true"><use href="#i-lock"/></svg><span>Off</span></button>
     </div>
     <p class="optHint" id="ludoVisHint"></p>
     <button class="switchRow" id="ludoChat" role="switch" aria-checked="true"><span><b>Allow viewer chat</b><span class="d">Players can always chat.</span></span><span class="switch on"></span></button>
   </details>
-  <button class="btn-outline" id="createLudoBtn" onclick="createRoom()">👥 Create a room</button>
+  <button class="btn-outline" id="createLudoBtn" onclick="createRoom()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Create a room</button>
   <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
   <input id="joinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
   <div class="err" id="joinErr"></div>
@@ -141,8 +168,8 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 </div>
 
 <div class="screen" id="whotMode">
-  <h2>🃏 Whot</h2>
-  <button class="rulesBtn" onclick="openRules()">📖 How to play Whot</button>
+  <h2>Whot</h2>
+  <button class="rulesBtn" onclick="openRules()"><svg class="ic " aria-hidden="true"><use href="#i-book"/></svg> How to play Whot</button>
   <p class="sub" style="margin-bottom:10px;">How many players?</p>
   <div class="countRow" id="whotCountRow">
     <button class="countBtn" onclick="setWhotCount(2)">2</button>
@@ -150,22 +177,22 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
     <button class="countBtn" onclick="setWhotCount(4)">4</button>
   </div>
   <p class="hint" id="whotCountHint">3 players — classic multiplayer.</p>
-  <button class="btn-primary" onclick="playWhotComputer()">🤖 Play vs Computer</button>
+  <button class="btn-primary" onclick="playWhotComputer()"><svg class="ic " aria-hidden="true"><use href="#i-bolt"/></svg> Play vs computer</button>
   <details class="optBox" id="whotOpts">
-    <summary>⚙️ Room options</summary>
+    <summary><svg class="ic " aria-hidden="true"><use href="#i-sliders"/></svg> Room options</summary>
     <div class="optLabel">Turn timer</div>
     <div class="seg four" id="whotTurn"><button data-t="30">30s</button><button data-t="60" class="on">60s</button><button data-t="90">90s</button><button data-t="0">Off</button></div>
     <p class="optHint">If someone goes quiet, the game plays a move for them so nobody is left waiting.</p>
     <div class="optLabel">Who can watch your match</div>
     <div class="seg" id="whotVis">
-      <button data-v="public">🌐 Public</button><button data-v="link" class="on">🔗 Link only</button><button data-v="private">🔒 Off</button>
+      <button data-v="public"><svg class="ic " aria-hidden="true"><use href="#i-globe"/></svg><span>Public</span></button><button data-v="link" class="on"><svg class="ic " aria-hidden="true"><use href="#i-link"/></svg><span>Link only</span></button><button data-v="private"><svg class="ic " aria-hidden="true"><use href="#i-lock"/></svg><span>Off</span></button>
     </div>
     <p class="optHint" id="whotVisHint"></p>
     <button class="switchRow" id="whotHands" role="switch" aria-checked="false"><span><b>Show players’ cards to viewers</b><span class="d">Viewers see every hand live.</span></span><span class="switch"></span></button>
-    <p class="warnTxt" id="whotHandsWarn" style="display:none">⚠️ A viewer could tell a player what the others are holding. Best for casual games with friends.</p>
+    <p class="warnTxt" id="whotHandsWarn" style="display:none">A viewer could tell a player what the others are holding. Best for casual games with friends.</p>
     <button class="switchRow" id="whotChat" role="switch" aria-checked="true"><span><b>Allow viewer chat</b><span class="d">Players can always chat.</span></span><span class="switch on"></span></button>
   </details>
-  <button class="btn-outline" id="createWhotBtn" onclick="createWhotRoom()">👥 Create a room</button>
+  <button class="btn-outline" id="createWhotBtn" onclick="createWhotRoom()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Create a room</button>
   <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
   <input id="whotJoinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
   <div class="err" id="whotJoinErr"></div>
@@ -174,21 +201,21 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 </div>
 
 <div class="screen" id="live">
-  <h2>👁 Watch live</h2>
+  <h2>Watch live</h2>
   <p class="sub" style="margin-bottom:12px;">Public matches happening right now.</p>
   <div id="liveList"><div class="emptyLive">Loading…</div></div>
   <button class="btn-outline" onclick="loadLive()">↻ Refresh</button>
   <p class="sub" style="margin:14px 0 8px;">Have a watch link or room code?</p>
   <input id="watchInput" placeholder="Paste watch link or room code" maxlength="400" autocomplete="off" spellcheck="false">
   <div class="err" id="watchErr"></div>
-  <div class="choiceRow" id="watchChoice"><button class="btn-outline" onclick="watchCodeAs('ludo')">🎲 It’s Ludo</button><button class="btn-outline" onclick="watchCodeAs('whot')">🃏 It’s Whot</button></div>
+  <div class="choiceRow" id="watchChoice"><button class="btn-outline" onclick="watchCodeAs('ludo')">It’s Ludo</button><button class="btn-outline" onclick="watchCodeAs('whot')">It’s Whot</button></div>
   <button class="btn-primary" onclick="watchFromInput()">Watch</button>
   <div class="linkRow"><a onclick="leaveLive()">Back</a></div>
 </div>
 
 <div class="modal" id="rulesModal" onclick="if(event.target===this)closeRules()">
   <div class="modalCard">
-    <h3>📖 How to play Whot</h3>
+    <h3>How to play Whot</h3>
     <div class="sub" style="margin-bottom:10px">Match the shape or number of the top card.</div>
     <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.4">
       <div><b>1 · Hold On</b> — play again.</div>
@@ -214,7 +241,7 @@ var botNumber=null,allowedPlayerCounts=[2,3,4],whotEnabled=true,allowedWhotPlaye
 function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active');if(id==='select'&&typeof paintResume==='function')paintResume()}
 function applyAllowedPlayerCounts(){document.querySelectorAll('.countBtn').forEach(function(b,i){var n=i+2;b.disabled=allowedPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===ludoCount&&!b.disabled)});if(allowedPlayerCounts.indexOf(ludoCount)===-1&&allowedPlayerCounts.length){setCount(allowedPlayerCounts[0])}}
 function applyWhotConfig(){var buttons=document.querySelectorAll('#whotCountRow .countBtn');buttons.forEach(function(b,i){var n=i+2;b.disabled=allowedWhotPlayerCounts.indexOf(n)===-1;b.classList.toggle('selected',n===whotCount&&!b.disabled)});if(allowedWhotPlayerCounts.indexOf(whotCount)===-1&&allowedWhotPlayerCounts.length)setWhotCount(allowedWhotPlayerCounts[0]);var btn=document.querySelector("button.btn-game[onclick=\"chooseGame('whot')\"]");if(btn){btn.disabled=!whotEnabled;btn.style.opacity=whotEnabled?'1':'.45';btn.querySelector('.tag').textContent=whotEnabled?'2-4 players':'disabled'}}
-async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.maintenance&&d.maintenance.siteEnabled===false){siteDown=true;siteMsg=d.maintenance.maintenanceMessage||'CodePlay is down for maintenance — back soon!';var mb=document.getElementById('maintBanner');mb.textContent='🛠 '+siteMsg;mb.style.display='block'}else{siteDown=false;document.getElementById('maintBanner').style.display='none'}if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1})}applyAllowedPlayerCounts();applyWhotConfig()}catch(e){}}
+async function loadPublicConfig(){try{const r=await fetch(API_BASE+'/api/config/public',{cache:'no-store'});if(!r.ok)return;const d=await r.json();botNumber=d.bot&&d.bot.whatsappNumber||null;if(d.maintenance&&d.maintenance.siteEnabled===false){siteDown=true;siteMsg=d.maintenance.maintenanceMessage||'CodePlay is down for maintenance — back soon!';var mb=document.getElementById('maintBanner');mb.textContent=siteMsg;mb.style.display='block'}else{siteDown=false;document.getElementById('maintBanner').style.display='none'}if(d.rules&&Array.isArray(d.rules.playerCounts)&&d.rules.playerCounts.length)allowedPlayerCounts=d.rules.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1});if(d.whot){whotEnabled=d.whot.enabled!==false;if(Array.isArray(d.whot.playerCounts)&&d.whot.playerCounts.length)allowedWhotPlayerCounts=d.whot.playerCounts.map(Number).filter(function(n){return[2,3,4].indexOf(n)!==-1})}applyAllowedPlayerCounts();applyWhotConfig()}catch(e){}}
 function openWhatsApp(){var n=String(botNumber||'').replace(/\D/g,'');if(!n)return alert('WhatsApp bot is not configured yet.');window.open('https://wa.me/'+n,'_blank')}
 async function submitLoginCode(){
  const code=document.getElementById('loginCodeInput').value.trim(),errEl=document.getElementById('signinErr');
@@ -231,7 +258,7 @@ async function restoreSession(){
  if(!session.token)return;
  try{const res=await fetch(API_BASE+'/api/auth/session',{headers:{Authorization:'Bearer '+session.token}});
   if(!res.ok){localStorage.removeItem('codeplay_token');session.token=null;return}
-  const data=await res.json();session.name=data.user.name;document.getElementById('welcomeMsg').textContent='Hey '+data.user.name+' — choose a game';go('select')
+  const data=await res.json();session.name=data.user.name;paintLanding()
  }catch(e){}
 }
 function renderAvatars(){
@@ -315,10 +342,10 @@ async function loadLive(quiet){
     if(!lastLive.length){box.innerHTML='<div class="emptyLive">No public matches right now.<br>Start one and set “Who can watch” to Public, or paste a watch link below.</div>';return}
     lastLive.forEach(function(m){
       var b=document.createElement('button');b.className='liveCard';b.type='button';
-      var ic=document.createElement('span');ic.className='ic';ic.textContent=m.game==='whot'?'🃏':'🎲';
+      var ic=document.createElement('span');ic.className='ic';ic.innerHTML=cpIcon(m.game==='whot'?'cards':'dice');
       var tx=document.createElement('span');tx.className='tx';
       var t=document.createElement('span');t.className='t';t.style.display='block';t.textContent=m.host+'’s '+(m.game==='whot'?'Whot':'Ludo')+' match';
-      var mm=document.createElement('span');mm.className='m';mm.style.display='block';mm.textContent=m.players.join(', ')+' · 👁 '+m.viewers;
+      var mm=document.createElement('span');mm.className='m';mm.style.display='block';mm.textContent=m.players.join(', ')+' · '+m.viewers+' watching';
       tx.appendChild(t);tx.appendChild(mm);
       var p=document.createElement('span');p.className='pill'+(m.started?'':' wait');p.textContent=m.started?'● LIVE':'WAITING';
       b.appendChild(ic);b.appendChild(tx);b.appendChild(p);
@@ -353,7 +380,19 @@ function paintResume(){
 function resumeGame(){if(!RESUME)return;navigate(WHOT_URL+'?mode=friends&action=join&code='+encodeURIComponent(RESUME.code)+'&playerToken='+encodeURIComponent(RESUME.playerToken)+profileQuery())}
 function applyScreenParam(){if(new URLSearchParams(location.search).get('screen')==='live'&&!document.getElementById('live').classList.contains('active'))openLive()}
 
-(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null;if(gp.name&&String(gp.name).toLowerCase()!=='guest'){document.getElementById('welcomeMsg').textContent='Hey '+gp.name+' — choose a game';go('select')}}}catch(e){}})();loadPublicConfig();applyScreenParam();restoreSession().then(applyScreenParam);
+function knownName(){var n=session.name;return n&&String(n).toLowerCase()!=='guest'?n:''}
+function paintLanding(){
+  var n=knownName(),on=!!n;
+  document.getElementById('continueBtn').style.display=on?'flex':'none';
+  document.getElementById('waBtnLanding').style.display=on?'none':'flex';
+  document.getElementById('guestBtnLanding').style.display=on?'none':'flex';
+  document.getElementById('loginRow').style.display=on?'none':'block';
+  document.getElementById('switchRow').style.display=on?'block':'none';
+  if(on)document.getElementById('continueName').textContent=n;
+}
+function continueAs(){var n=knownName();document.getElementById('welcomeMsg').textContent=n?'Hey '+n:'Choose a game';go('select')}
+function switchPlayer(){try{localStorage.removeItem('codeplay_guest_profile');localStorage.removeItem('codeplay_guest');localStorage.removeItem('codeplay_name')}catch(e){}session.name=null;session.token=null;session.color=null;session.guest=false;paintLanding();startGuest()}
+(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null;/* the landing page always shows first; paintLanding() offers a one-tap continue */}}catch(e){}})();paintLanding();loadPublicConfig();applyScreenParam();restoreSession().then(function(){paintLanding();applyScreenParam()});
 </script>
 </body>
 </html>

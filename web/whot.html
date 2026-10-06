@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CodePlay Whot</title>
+<link rel="stylesheet" href="/appbar.css?v=4"><script src="/icons.js?v=4"></script>
 <meta name="theme-color" content="#06100c">
 <meta name="description" content="Play Nigerian Whot with friends in seconds — share a link, no sign-up. Live spectators and chat.">
 <meta property="og:site_name" content="CodePlay">
@@ -30,13 +31,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .rotatePrompt{display:none}
 @keyframes rotatePhone{0%,100%{transform:rotate(0)}35%{transform:rotate(-16deg)}65%{transform:rotate(16deg)}}
 .app{width:min(1080px,100%);padding:10px 12px 18px;display:grid;gap:10px}
-.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
-.brandWrap{display:flex;align-items:center;gap:10px}
-.logoMark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#ffdd67,#eb9c2f);color:#1d1b0e;font-weight:950;box-shadow:0 8px 24px rgba(238,168,55,.22);transform:rotate(-7deg)}
-.brand{font-weight:950;letter-spacing:-.02em}
-.room{font-size:11px;color:var(--muted);margin-top:1px}
-.topActions{display:flex;gap:6px}
-.iconBtn{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .15s}
+
+
+
+
+
+
+
 .iconBtn:active{transform:scale(.92);background:rgba(255,255,255,.1)}
 .wait{margin-top:14vh;text-align:center;padding:38px 20px;border:1px solid var(--line);border-radius:24px;background:rgba(10,21,18,.82);box-shadow:var(--shadow)}
 .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.10);border-top-color:var(--gold);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
@@ -125,8 +126,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .status{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:19;padding:8px 12px;border-radius:999px;background:rgba(4,16,12,.46);border:1px solid rgba(255,255,255,.07);font-size:11px;color:#d7e4df;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(10px)}
 .reactions{position:absolute;left:10px;right:10px;bottom:5px;z-index:21;display:flex;gap:5px;overflow:auto;padding:0 3px;justify-content:center}.react{padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:12px}
 /* ============ Audience / spectator UI ============ */
-.iconBtn{position:relative}.iconBtn:before{content:"";position:absolute;inset:-4px}
-.watchChip{display:none;grid-auto-flow:column;gap:5px;width:auto!important;padding:0 11px;font-size:13px;font-weight:850}.watchChip.show{display:inline-grid}
+.iconBtn:before{content:"";position:absolute;inset:-4px}
+
 .dot{position:absolute;top:2px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ff4b4b;color:#fff;font-size:10px;font-weight:900;display:none;place-items:center;line-height:17px;box-shadow:0 0 0 2px #07120e}.dot.show{display:grid}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 58px);transform:translate(-50%,-8px);max-width:min(92vw,420px);padding:10px 15px;border-radius:14px;background:rgba(7,17,14,.97);border:1px solid rgba(255,255,255,.14);font-size:13px;font-weight:700;text-align:center;z-index:140;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
 .feedLine{position:relative;z-index:21;max-width:100%;min-height:15px;margin-top:5px;padding:0 10px;font-size:11px;color:#cfe3da;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feedLine.pop{animation:feedPop .45s ease-out}@keyframes feedPop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -172,7 +173,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .waitActions{display:none;margin-top:12px;gap:8px;justify-content:center;flex-wrap:wrap}.waitActions a,.waitActions button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:13px;background:rgba(255,255,255,.08);font-weight:850;font-size:14px;color:inherit;text-decoration:none}
 .wait.blocked .spinner{display:none}
 .share.alt{background:rgba(255,255,255,.09);margin-left:6px}
-@media(max-width:820px),(max-height:520px){#game.spectatorMode{height:auto;flex:1 1 auto}.topActions{gap:4px}.watchChip{padding:0 9px}}
+@media(max-width:820px),(max-height:520px){#game.spectatorMode{height:auto;flex:1 1 auto}}
 @media(max-height:520px){#game.spectatorMode .specList{max-height:34%}.mc{width:34px;height:42px;margin-left:-15px;font-size:11px;padding:4px 0 0 4px}.specInfo{width:70px}.feedLine{display:none}}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}.modal.show{display:flex}.modal.show .modalCard{animation:modalIn .22s ease-out}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
@@ -187,10 +188,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   body>.page{visibility:visible!important}
   .page{width:100%;height:100vh;height:100dvh;min-height:0}
   .app{width:100%;max-width:none;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:flex;flex-direction:column;gap:0}
-  .topbar{flex:0 0 auto;position:relative;height:44px;padding:4px 10px;background:none}
-  .logoMark{width:28px;height:28px;border-radius:9px;font-size:14px}
-  .brand{font-size:13px}.room{font-size:9px}
-  .iconBtn{width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.06)}
+  
+  
+  
+  
   .wait{margin:6vh 14px 0;padding:26px 16px;border-radius:20px}.roomCode{font-size:34px}
   .arena{flex:1 1 auto;min-height:0;height:auto;position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto}
 
@@ -250,7 +251,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 }
 /* phones held sideways: squeeze vertical chrome */
 @media(max-height:520px){
-  .topbar{height:36px;padding:2px 10px}.iconBtn{width:30px;height:30px}.logoMark{width:24px;height:24px;font-size:12px}
+  
   .seats{padding:0 8px 4px}.seat{padding:3px 7px}.miniHand{display:none}
   .table{padding:5px 0}.ruleEyebrow,#ruleSub,.handHint{display:none}.ruleBanner{padding:4px 12px}
   .stack{width:60px;height:85px}.topCard{width:66px;height:94px}.stackMain:before{width:28px;height:28px}
@@ -293,22 +294,26 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .ruleItem{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
 .ruleItem .rn{flex:0 0 auto;min-width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-weight:1000;font-size:16px;color:#2b1c00;background:linear-gradient(145deg,#ffe27a,#f2a81d)}
 .ruleItem b{display:block;font-size:14px}.ruleItem span.d{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+
+.watchChip{display:none}.watchChip.show{display:inline-flex}
+.share{display:flex!important;align-items:center;justify-content:center;gap:9px;padding:0 16px;width:100%;max-width:340px;margin:12px auto 0!important;min-height:50px;border-radius:15px;font-weight:900;background:linear-gradient(135deg,#25d366,#128c4a);color:#04130b;border:0}
+.share.alt{background:rgba(255,255,255,.09);color:var(--ink);border:1px solid rgba(255,255,255,.12);margin-left:auto!important}
+.waitActions a,.waitActions button,.bigBtn,.resultAction{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.share .ic,.bigBtn .ic,.waitActions .ic,.resultAction .ic{width:19px;height:19px}
+.switch{position:relative;flex:0 0 auto;width:52px;height:31px;border-radius:16px;background:rgba(255,255,255,.16);transition:background .18s}
+.switch:after{content:"";position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:50%;background:#fff;transition:transform .22s cubic-bezier(.34,1.45,.64,1)}.switch.on{background:#28d86d}.switch.on:after{transform:translateX(21px)}
 </style>
 </head>
 <body>
 <div class="page">
 <main class="app">
-  <header class="topbar">
-    <div class="brandWrap">
-      <div class="logoMark">W</div>
-      <div><div class="brand">CodePlay Whot</div><div class="room" id="roomLabel">Connecting…</div></div>
-    </div>
-    <div class="topActions">
-      <button class="iconBtn" id="rulesTopBtn" aria-label="How to play">📖</button>
-      <button class="iconBtn" id="chatTopBtn" aria-label="Open chat" style="display:none">💬<span class="dot" id="chatDot"></span></button>
-      <button class="iconBtn watchChip" id="watchTopBtn" aria-label="Viewers and sharing">👁 <span id="watchCount">0</span></button>
-      <button class="iconBtn" id="soundToggle" aria-label="Toggle sounds">🔊</button>
-      <button class="iconBtn" id="homeBtn" aria-label="Home">⌂</button>
+  <header class="appbar">
+    <a class="brandLink" href="/" aria-label="CodePlay home"><span class="logoMark"><svg class="ic" aria-hidden="true"><use href="#i-cards"/></svg></span></a>
+    <div class="brand"><b>CodePlay Whot</b><span id="roomLabel">Connecting…</span></div>
+    <div class="barActions">
+      <button class="pillBtn watchChip" id="watchTopBtn" aria-label="Viewers and sharing"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="watchCount">0</span></button>
+      <button class="roundBtn" id="chatTopBtn" aria-label="Open chat" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span class="dot" id="chatDot"></span></button>
+      <button class="roundBtn" id="menuBtn" aria-label="Menu"><svg class="ic" aria-hidden="true"><use href="#i-more"/></svg></button>
     </div>
   </header>
 
@@ -317,9 +322,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     <div class="sub">CodePlay Whot</div>
     <div class="roomCode" id="roomCode" style="display:none">----</div>
     <div id="waitingText">Connecting to the game…</div>
-    <button class="share" id="inviteBtn" style="display:none">💬 Invite players on WhatsApp</button>
-    <button class="share alt" id="watchInviteBtn" style="display:none">👁 Share watch link</button>
-    <div class="waitActions" id="waitActions"><a href="/">⌂ Home</a><a href="/?screen=live">👁 Watch live games</a></div>
+    <button class="share" id="inviteBtn" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-whatsapp"/></svg> Invite players on WhatsApp</button>
+    <button class="share alt" id="watchInviteBtn" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg> Share watch link</button>
+    <div class="waitActions" id="waitActions"><a href="/"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg> Home</a><a href="/?screen=live"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg> Watch live games</a></div>
   </section>
 
   <section id="game" class="arena" style="display:none">
@@ -368,27 +373,37 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 <div class="toast" id="toast" role="status"></div>
 <div class="turnBanner" id="turnBanner" aria-hidden="true">YOUR TURN</div>
+<section class="sheet" id="menuSheet" role="dialog" aria-label="Menu">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>Menu</span><button id="menuClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+  <div class="menuList">
+    <button class="menuRow" id="soundToggle" data-svg="1" aria-pressed="true"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-volume"/></svg></span><span class="grow">Game sounds</span><span class="switch on"></span></button>
+    <button class="menuRow" id="rulesTopBtn"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span><span class="grow">How to play<small>Whot rules in this room</small></span><span class="chev"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+    <button class="menuRow" id="watchMenuBtn" style="display:none"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></span><span class="grow">Share &amp; viewers<small>Invite friends to watch</small></span><span class="chev"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+    <button class="menuRow" id="homeBtn"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><span class="grow">Leave to home</span><span class="chev"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+  </div>
+</section>
 <section class="sheet" id="rulesSheet" role="dialog" aria-label="How to play Whot">
   <div class="sheetGrab"></div>
-  <div class="sheetHead"><span>📖 How to play Whot</span><button id="rulesClose" aria-label="Close">✕</button></div>
+  <div class="sheetHead"><span>How to play Whot</span><button id="rulesClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div class="sheetBody" id="rulesBody"></div>
 </section>
 <div class="sheetBack" id="sheetBack"></div>
 <section class="sheet" id="watchSheet" role="dialog" aria-label="Viewers and sharing">
   <div class="sheetGrab"></div>
-  <div class="sheetHead"><span id="watchTitle">👁 Watch &amp; share</span><button id="watchClose" aria-label="Close">✕</button></div>
+  <div class="sheetHead"><span id="watchTitle">Watch &amp; share</span><button id="watchClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div class="sheetBody" id="watchBody"></div>
 </section>
 <section class="sheet chatSheet" id="chatSheet" role="dialog" aria-label="Live chat">
   <div class="sheetGrab"></div>
-  <div class="sheetHead"><span>💬 Live chat</span><button id="chatClose" aria-label="Close chat">✕</button></div>
+  <div class="sheetHead"><span>Live chat</span><button id="chatClose" aria-label="Close chat"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div class="chatMessages" id="chatMessages"></div>
   <div class="chatNote" id="chatNote"></div>
   <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…" enterkeyhint="send" autocomplete="off"><button id="chatSend">Send</button></div>
 </section>
 <div class="modal" id="nameModal">
   <div class="modalCard">
-    <h3 id="nameTitle">👁 Watch live</h3>
+    <h3 id="nameTitle">Watch live</h3>
     <div class="sub" id="nameSub">What should we call you in the chat?</div>
     <input id="nameInput" maxlength="24" placeholder="Your name" autocomplete="nickname" style="width:100%;margin-top:12px;min-height:48px;padding:0 13px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-size:16px">
     <div class="resultActions"><button class="resultAction primary" id="nameGo">Start watching</button></div>
@@ -405,13 +420,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 <div class="modal" id="gameOver">
   <div class="modalCard">
-    <h3 id="winnerTitle">🏆 Round over</h3>
+    <h3 id="winnerTitle">Round over</h3>
     <div class="sub" id="winnerSub"></div>
     <div class="result" id="results"></div>
     <div class="resultActions">
       <button class="resultAction primary" id="rematchBtn">Play Again</button>
-      <button class="resultAction" id="shareBtn">Share Result</button>
-      <button class="resultAction" id="moreLiveBtn" style="display:none">👁 More live</button>
+      <button class="resultAction" id="shareBtn"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Share result</button>
+      <button class="resultAction" id="moreLiveBtn" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg> More live</button>
     </div>
   </div>
 </div>
@@ -474,7 +489,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   }
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function cap(v){v=String(v||'');return v.charAt(0).toUpperCase()+v.slice(1)}
-  function showWaiting(t){e.waiting.style.display='block';e.game.style.display='none';e.waitingText.textContent=t||'Connecting to the game…';e.waiting.classList.remove('blocked');if(e.waitActions)e.waitActions.style.display='none';e.roomCode.style.fontSize=''}
+  function showWaiting(t){e.waiting.style.display='block';e.game.style.display='none';e.waitingText.textContent=t||'Connecting to the game…';if(roomCode&&e.roomLabel)e.roomLabel.textContent=(spectatorMode?'Live · ':'Room ')+roomCode;e.waiting.classList.remove('blocked');if(e.waitActions)e.waitActions.style.display='none';e.roomCode.style.fontSize=''}
   function showGame(){e.waiting.style.display='none';e.game.style.display='grid'}
   function cardClass(card){return 'card'+(card.isWhot?' whot':'')+' shape-'+(card.shape||'')}
   function cardHtml(card,small=false){return '<div class="'+cardClass(card)+'"><div class="num">'+card.number+'</div><div class="shape">'+(SHAPE_GLYPHS[card.shape]||'?')+'</div><div class="tag">'+(card.isWhot?'WHOT':cap(card.shape))+'</div></div>'}
@@ -565,8 +580,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
   function toast(msg,ms){e.toast.textContent=msg;e.toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.toast.classList.remove('show'),ms||2600)}
   const FRIENDLY={
-    'spectator-access-denied':['🔗 Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],
-    'spectating-disabled':['🔒 Watching is off','The host has turned off watching for this match.'],
+    'spectator-access-denied':['Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],
+    'spectating-disabled':['Watching is off','The host has turned off watching for this match.'],
     'room-not-found':['Match not found','This room does not exist or the match has already ended.'],
     'room-full':['Room is full','This match already has all its players. You can still watch it if the host allows.'],
     'audience-full':['Audience is full','This match has reached its viewer limit. Try again in a moment.'],
@@ -574,7 +589,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     'player-count-disabled':['Player count unavailable','That number of players is not available right now.']
   };
   const SOFT={
-    'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little 🙂',
+    'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little',
     'empty-message':'Type a message first.','not-host':'Only the host can change that.','not-in-room':'You are not in this match.'
   };
   function showBlocked(title,text){
@@ -584,7 +599,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   }
   function renderTopbar(){
     e.watchTop.classList.toggle('show',roomReady);
-    e.chatTop.style.display=roomReady?'grid':'none';
+    e.chatTop.style.display=roomReady?'inline-flex':'none';document.getElementById('watchMenuBtn').style.display=roomReady?'flex':'none';
     e.watchCount.textContent=String(aud.viewerCount||0);
     e.chatDot.textContent=unread>9?'9+':String(unread);e.chatDot.classList.toggle('show',unread>0&&!chatOpen);
   }
@@ -615,7 +630,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const fallback=()=>{const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(err){}t.remove();if(ok)toast(okMsg);else window.prompt('Copy this link',text)};
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast(okMsg)).catch(fallback);else fallback();
   }
-  function copyWatchLink(){copyText(watchUrl(),'Watch link copied ✔')}
+  function copyWatchLink(){copyText(watchUrl(),'Link copied')}
   function nativeShare(){if(navigator.share)navigator.share({title:'CodePlay Whot — watch live',text:shareText().split('\n')[0],url:watchUrl()}).catch(()=>{});else copyWatchLink()}
   /* ---- sheets ---- */
   function openSheet(which){
@@ -626,7 +641,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     renderTopbar();
   }
   function closeSheets(keepBack){
-    e.watchSheet.classList.remove('show');e.chatSheet.classList.remove('show');e.rulesSheet.classList.remove('show');
+    e.watchSheet.classList.remove('show');e.chatSheet.classList.remove('show');e.rulesSheet.classList.remove('show');document.getElementById('menuSheet').classList.remove('show');
     if(!keepBack)e.sheetBack.classList.remove('show');
     chatOpen=false;watchOpen=false;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();renderTopbar();
   }
@@ -642,19 +657,19 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function renderWatchSheet(){
     const body=e.watchBody;body.innerHTML='';
     const host=isHost(),vis=aud.visibility;
-    e.watchTitle.textContent=spectatorMode?'👁 You\u2019re watching':'👁 Watch & share';
+    e.watchTitle.textContent=spectatorMode?'You\u2019re watching':'Watch & share';
     const stats=el('div','statRow');
-    stats.appendChild(el('span','statChip','👁 '+aud.viewerCount+' watching now'));
+    stats.appendChild(el('span','statChip',''+aud.viewerCount+' watching now'));
     stats.appendChild(el('span','statChip',aud.totalViews+' total views'));
     body.appendChild(stats);
     if(vis==='private'&&!spectatorMode){
-      body.appendChild(el('div','hintTxt','🔒 Watching is turned off for this match, so nobody can join as a viewer.'));
+      body.appendChild(el('div','hintTxt','Watching is turned off for this match, so nobody can join as a viewer.'));
     }else{
       body.appendChild(el('div','secTitle',spectatorMode?'Invite friends to watch':'Share your match'));
       const btns=el('div','shareBtns');
-      const wa=el('button','bigBtn wa','💬 Share on WhatsApp');wa.onclick=shareWhatsApp;
-      const cp=el('button','bigBtn','🔗 Copy link');cp.onclick=copyWatchLink;
-      const sh=el('button','bigBtn','⬆️ More…');sh.onclick=nativeShare;
+      const wa=el('button','bigBtn wa');wa.innerHTML=cpIcon('whatsapp')+' Share on WhatsApp';wa.onclick=shareWhatsApp;
+      const cp=el('button','bigBtn');cp.innerHTML=cpIcon('link')+' Copy link';cp.onclick=copyWatchLink;
+      const sh=el('button','bigBtn');sh.innerHTML=cpIcon('share')+' More…';sh.onclick=nativeShare;
       btns.append(wa,cp,sh);body.appendChild(btns);
       if(!watchToken&&vis!=='public')body.appendChild(el('div','hintTxt warn','The private watch key is not available yet — reconnect if the link does not work.'));
       body.appendChild(el('div','linkBox',watchUrl()));
@@ -662,23 +677,23 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(host){
       body.appendChild(el('div','secTitle','Who can watch'));
       const seg=el('div','seg');
-      [['public','🌐','Public','Listed in Watch live'],['link','🔗','Link only','Only with your link'],['private','🔒','Off','No viewers']].forEach(([v,ic,t])=>{
+      [['public','globe','Public','Listed in Watch live'],['link','link','Link only','Only with your link'],['private','lock','Off','No viewers']].forEach(([v,ic,t])=>{
         const b=el('button',vis===v?'on':'');b.setAttribute('aria-pressed',vis===v?'true':'false');
-        b.innerHTML='';b.appendChild(document.createTextNode(ic+' '+t));b.onclick=()=>{if(aud.visibility!==v)setOpt({visibility:v})};seg.appendChild(b);
+        b.innerHTML=cpIcon(ic)+'<span>'+t+'</span>';b.onclick=()=>{if(aud.visibility!==v)setOpt({visibility:v})};seg.appendChild(b);
       });
       body.appendChild(seg);
       body.appendChild(el('div','hintTxt',vis==='public'?'Anyone can find this match under \u201cWatch live\u201d and join with the room code.':vis==='link'?'Only people with your private watch link can watch. Recommended.':'Nobody can watch. Anyone already watching is removed.'));
       body.appendChild(el('div','secTitle','Viewer options'));
       body.appendChild(switchRow('Show players\u2019 cards','Viewers see every hand live.',aud.showHands,()=>setOpt({showHands:!aud.showHands})));
-      if(aud.showHands)body.appendChild(el('div','hintTxt warn','⚠️ A viewer could tell a player what the others are holding. Best for casual games with friends.'));
+      if(aud.showHands)body.appendChild(el('div','hintTxt warn','A viewer could tell a player what the others are holding. Best for casual games with friends.'));
       body.appendChild(switchRow('Allow viewer chat','Players can always chat.',aud.chatEnabled,()=>setOpt({chatEnabled:!aud.chatEnabled})));
     }else{
-      body.appendChild(el('div','hintTxt',vis==='public'?'🌐 This match is public.':vis==='link'?'🔗 Only people with the watch link can watch.':'🔒 Watching is off.'));
+      body.appendChild(el('div','hintTxt',vis==='public'?'This match is public.':vis==='link'?'Only people with the watch link can watch.':'Watching is off.'));
     }
     body.appendChild(el('div','secTitle','Watching now ('+aud.audience.length+')'));
     if(!aud.audience.length)body.appendChild(el('div','emptyTxt','No viewers yet. Share the link to invite friends!'));
     aud.audience.slice(0,60).forEach(v=>{
-      const row=el('div','viewerRow');row.appendChild(el('span',null,'👁 '+v.name+(v.key===myKey?' (you)':'')));
+      const row=el('div','viewerRow');row.appendChild(el('span',null,''+v.name+(v.key===myKey?' (you)':'')));
       if(host){const muted=aud.muted.includes(v.key),b=el('button','smallBtn'+(muted?' on':''),muted?'Unmute':'Mute');b.onclick=()=>{socket.emit('whot:mute-viewer',{code:roomCode,key:v.key,muted:!muted})};row.appendChild(b)}
       body.appendChild(row);
     });
@@ -687,11 +702,11 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     feedItems.slice(-10).reverse().forEach(f=>body.appendChild(el('div','fi',f.text)));
   }
   /* ---- chat ---- */
-  const BADGE={host:'⭐ HOST',player:'🎮 PLAYER',spectator:'👁 VIEWER'};
+  const BADGE={host:'⭐ HOST',player:'PLAYER',spectator:'VIEWER'};
   const isMine=m=>spectatorMode?(m.role==='spectator'&&m.key&&m.key===myKey):(m.role!=='spectator'&&m.name===profileName);
   function renderChat(){
     const box=e.chatMessages;box.innerHTML='';
-    if(!chatMessages.length){box.appendChild(el('div','emptyTxt','No messages yet — say hi 👋'));return}
+    if(!chatMessages.length){box.appendChild(el('div','emptyTxt','No messages yet — say hi'));return}
     chatMessages.slice(-60).forEach(m=>{
       const row=el('div','chatMsg '+(m.role||'spectator'));
       row.appendChild(el('span','badge '+(m.role||'spectator'),BADGE[m.role]||BADGE.spectator));
@@ -735,13 +750,14 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       ['8','Suspension',on('suspensionSkipsNext')?'The next player misses their turn.':'Next turn is skipped.'],
       ['14','General Market',on('generalMarketDrawsOthers')?'Everyone else picks 1 card'+(on('generalMarketExtraTurn')?' and you play again.':'.'):'Play passes on.'],
       ['20','WHOT',(r.whotCallMode==='number'?'Wild card — call any number. ':'Wild card — call any shape. ')+'It beats everything.'],
-      ['🛒','Market','Can’t play or don’t want to? Tap MARKET to pick a card (or the whole pick penalty).'],
-      ['🏆','Winning','Empty your hand first. Everyone else scores penalty points for the cards they still hold — stars count double.']
+      ['i-cards','Market','Can’t play or don’t want to? Tap MARKET to pick a card (or the whole pick penalty).'],
+      ['i-trophy','Winning','Empty your hand first. Everyone else scores penalty points for the cards they still hold — stars count double.']
     ];
     e.rulesBody.innerHTML='';const list=document.createElement('div');list.className='rulesList';
-    items.forEach(([n,t,d])=>{const it=document.createElement('div');it.className='ruleItem';const num=document.createElement('div');num.className='rn';num.textContent=n;const tx=document.createElement('div');const b=document.createElement('b');b.textContent=t;const sp=document.createElement('span');sp.className='d';sp.textContent=d;tx.appendChild(b);tx.appendChild(sp);it.appendChild(num);it.appendChild(tx);list.appendChild(it)});
+    items.forEach(([n,t,d])=>{const it=document.createElement('div');it.className='ruleItem';const num=document.createElement('div');num.className='rn';if(String(n).indexOf('i-')===0)num.innerHTML=cpIcon(String(n).slice(2));else num.textContent=n;const tx=document.createElement('div');const b=document.createElement('b');b.textContent=t;const sp=document.createElement('span');sp.className='d';sp.textContent=d;tx.appendChild(b);tx.appendChild(sp);it.appendChild(num);it.appendChild(tx);list.appendChild(it)});
     e.rulesBody.appendChild(list);
   }
+  function openMenu(){closeSheets(true);e.sheetBack.classList.add('show');document.getElementById('menuSheet').classList.add('show')}
   function openRules(){renderRules();closeSheets(true);e.sheetBack.classList.add('show');e.rulesSheet.classList.add('show')}
   function setSpectatorUi(){
     e.inviteBtn.style.display='none';e.watchInvite.style.display='none';e.game.classList.add('spectatorMode');
@@ -757,7 +773,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       const turn=p.index===state.turn&&!state.gameOver;
       const row=el('div','specRow'+(turn?' turn':''));row.dataset.pi=p.index;
       row.appendChild(el('div','avatar',(p.name||'P').trim().charAt(0).toUpperCase()));
-      const info=el('div','specInfo');info.appendChild(el('div','specName',(p.name||'Player')+(p.bot?' 🤖':'')+(turn?' 🔥':'')));
+      const info=el('div','specInfo');info.appendChild(el('div','specName',(p.name||'Player')+(p.bot?' · CPU':'')));
       info.appendChild(el('div','specMeta',p.handCount+' card'+(p.handCount===1?'':'s')));row.appendChild(info);
       const cards=el('div','specCards');
       if(Array.isArray(p.cards)&&p.cards.length)p.cards.forEach(c=>cards.appendChild(miniCard(c)));
@@ -795,7 +811,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     const previousCounts=window.__whotHandCounts||{};
     showGame();
     if(!window.__whotHandCounts)window.__whotHandCounts=Object.fromEntries((state.players||[]).map(p=>[p.index,p.handCount]));
-    e.roomLabel.textContent=(spectatorMode?'👁 LIVE · ':'Room ')+roomCode+' · '+(state.playerCount||state.players.length)+' players';
+    e.roomLabel.textContent=(spectatorMode?'Live · ':'Room ')+roomCode;
     e.marketCount.textContent=String(state.marketCount||0);
 
     const flyPlay=!!(extra&&extra.played&&state.top&&!REDUCED);
@@ -807,7 +823,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       const count=Number(state.playerCount||state.players.length||2),rel=(p.index-me+count)%count;
       d.className='seat seat-rel-'+rel+' seat-count-'+count+(p.index===state.turn?' turn':'');
       const initial=(p.name||'P').trim().charAt(0).toUpperCase();
-      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' 🤖':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+(p.index===state.turn?'<span class="turnBadge">'+(p.index===me?'YOUR TURN':'TURN')+'</span>':'')+'</div><div class="miniHand" data-mini-index="'+p.index+'"></div><div class="turnClock" data-p="'+p.index+'"><i></i></div></div>';
+      d.innerHTML='<div class="avatar">'+esc(initial)+'</div><div class="seatText"><div class="seatName">'+esc(p.name||'Player')+(p.bot?' · CPU':'')+'</div><div class="seatMeta">'+p.handCount+' card'+(p.handCount===1?'':'s')+(p.index===me?' · YOU':'')+(p.index===state.turn?'<span class="turnBadge">'+(p.index===me?'YOUR TURN':'TURN')+'</span>':'')+'</div><div class="miniHand" data-mini-index="'+p.index+'"></div><div class="turnClock" data-p="'+p.index+'"><i></i></div></div>';
       const mini=d.querySelector('.miniHand');
       if(p.index!==me){
         const visible=Math.min(p.handCount,6);
@@ -909,7 +925,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   function showGameOver(){
     if(e.gameOver.classList.contains('show'))return;
     const winner=state.winner!=null&&state.players[state.winner]?state.players[state.winner].name:'Winner';
-    e.winnerTitle.textContent='🏆 '+winner+' wins!';
+    e.winnerTitle.textContent=''+winner+' wins!';
     e.winnerSub.textContent='Penalty points remaining in each hand';
     e.results.innerHTML='';
     (state.players||[]).forEach((p,i)=>{const row=document.createElement('div');row.className='resultRow'+(i===state.winner?' winner':'');row.innerHTML='<span>'+esc(p.name)+'</span><span>'+(state.roundScores?state.roundScores[i]:'—')+' pts</span>';e.results.appendChild(row)});
@@ -947,9 +963,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     socket.on('whot:chat-message',onChat);
     socket.on('whot:feed',pushFeed);
     socket.on('whot:turn-timer',x=>{timerInfo=x.seconds?{turn:x.turn,seconds:x.seconds,deadline:Date.now()+(x.deadline-x.now)}:null;document.body.classList.toggle('timed',!!timerInfo);updateClock();if(timerInfo&&x.turn===me&&x.away)toast('You were away — the game is playing for you. Make a move to take over.')});
-    socket.on('whot:session-replaced',()=>{try{socket.io.opts.reconnection=false}catch(err){}showBlocked('📱 Opened somewhere else','This game is open on another tab or device. Only one screen can play a seat at a time.');e.waitActions.innerHTML='<button id=\'takeBack\'>Play here instead</button><a href=\'/\'>⌂ Home</a>';e.waitActions.style.display='flex';document.getElementById('takeBack').onclick=()=>location.reload()});
+    socket.on('whot:session-replaced',()=>{try{socket.io.opts.reconnection=false}catch(err){}showBlocked('Opened somewhere else','This game is open on another tab or device. Only one screen can play a seat at a time.');e.waitActions.innerHTML='<button id=\'takeBack\'>Play here instead</button><a href=\'/\'>Home</a>';e.waitActions.style.display='flex';document.getElementById('takeBack').onclick=()=>location.reload()});
     socket.on('disconnect',reason=>{if(reason==='io client disconnect'||spectatorMode)return;e.status.textContent='Connection lost — reconnecting…'});
-    socket.on('whot:spectator-ended',x=>{closeSheets();roomReady=false;renderTopbar();const t=x&&x.reason==='spectating-disabled'?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'];showBlocked(t[0],t[1])});
+    socket.on('whot:spectator-ended',x=>{closeSheets();roomReady=false;renderTopbar();const t=x&&x.reason==='spectating-disabled'?FRIENDLY['spectating-disabled']:['Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'];showBlocked(t[0],t[1])});
     socket.on('whot:error',x=>{const msg=x.message||String(x);
       if(reconnecting&&(msg==='seat-already-connected'||msg==='invalid-reconnect-token')){
         if(msg==='seat-already-connected'&&reconnectTries<3){reconnectTries++;showWaiting('Reconnecting to room '+roomCode+'…');setTimeout(()=>socket.emit('whot:reconnect',{code:roomCode,playerToken}),1500);return}
@@ -970,11 +986,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   e.homeBtn.onclick=()=>location.href='/';
   e.inviteBtn.onclick=()=>{if(roomCode){if(whatsappBotNumber){window.open('https://wa.me/'+whatsappBotNumber+'?text='+encodeURIComponent('JOIN WHOT '+roomCode),'_blank','noopener')}else{const u=location.origin+location.pathname+'?mode=friends&action=join&code='+roomCode;window.open('https://wa.me/?text='+encodeURIComponent('Join my CodePlay Whot game! Code: '+roomCode+' 👉 '+u),'_blank','noopener')}}};
   e.rematchBtn.onclick=()=>{if(spectatorMode)return;e.rematchBtn.disabled=true;socket.emit('whot:rematch',{code:roomCode})};
-  e.rulesTop.onclick=openRules;e.rulesClose.onclick=()=>closeSheets();e.chatTop.onclick=()=>openSheet('chat');e.watchTop.onclick=()=>openSheet('watch');e.watchInvite.onclick=()=>openSheet('watch');
+  document.getElementById('menuBtn').onclick=openMenu;document.getElementById('menuClose').onclick=()=>closeSheets();document.getElementById('watchMenuBtn').onclick=()=>openSheet('watch');e.rulesTop.onclick=openRules;e.rulesClose.onclick=()=>closeSheets();e.chatTop.onclick=()=>openSheet('chat');e.watchTop.onclick=()=>openSheet('watch');e.watchInvite.onclick=()=>openSheet('watch');
   e.chatClose.onclick=()=>closeSheets();e.watchClose.onclick=()=>closeSheets();e.sheetBack.onclick=()=>closeSheets();
   e.chatSend.onclick=sendChat;e.chatInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')sendChat()});
   e.moreLiveBtn.onclick=()=>{location.href='/?screen=live'};
   addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheets()});
+  /* Safety net: an update can be lost without the connection reporting a drop. While waiting on someone else, quietly re-sync. */
+  setInterval(()=>{if(!socket||!socket.connected||spectatorMode||document.hidden||!roomCode||!playerToken||!state||state.gameOver||state.turn===me)return;socket.emit('whot:reconnect',{code:roomCode,playerToken})},7000);
   let hiddenAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();return}if(!socket||spectatorMode||!roomCode||!playerToken)return;if(!socket.connected){socket.connect();return}if(Date.now()-hiddenAt>3000)setTimeout(()=>socket.emit('whot:reconnect',{code:roomCode,playerToken}),250)});
   if(window.visualViewport){const upd=()=>{const vv=window.visualViewport,kb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);document.documentElement.style.setProperty('--kb',kb+'px')};visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
   e.shareBtn.onclick=()=>{const text='I just played CodePlay Whot in room '+roomCode+'!';if(navigator.share)navigator.share({title:'CodePlay Whot',text,url:location.href}).catch(()=>{});else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+location.href),'_blank','noopener')};
@@ -990,7 +1008,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     if(!spectatorMode&&!joiningOrCreating){boot();return}
     if(!isGuestName(profileName)){rememberName(profileName);boot();return}
     const saved=savedName();if(saved){profileName=saved;boot();return}
-    e.nameTitle.textContent=spectatorMode?'👁 Watch live':'👋 What’s your name?';
+    e.nameTitle.textContent=spectatorMode?'Watch live':'What’s your name?';
     e.nameSub.textContent=spectatorMode?'What should we call you in the chat?':'Your friends will see it at the table.';
     e.nameGo.textContent=spectatorMode?'Start watching':'Let’s play';
     e.nameModal.classList.add('show');setTimeout(()=>{try{e.nameInput.focus()}catch(err){}},300);

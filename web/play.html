@@ -16,22 +16,20 @@
 <meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-ludo.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/theme.css?v=3"><link rel="stylesheet" href="/ludo.css?v=3">
-<script src="/ludo-board.js?v=3"></script>
+<link rel="stylesheet" href="/theme.css?v=4"><link rel="stylesheet" href="/appbar.css?v=4"><link rel="stylesheet" href="/ludo.css?v=4"><script src="/icons.js?v=4"></script>
+<script src="/ludo-board.js?v=4"></script>
 
 </head>
 <body class="ludoPage">
-<header class="top">
-  <div class="logoMark" aria-hidden="true">L</div>
+<header class="appbar">
+  <a class="brandLink" href="/" aria-label="CodePlay home"><span class="logoMark"><svg class="ic" aria-hidden="true"><use href="#i-dice"/></svg></span></a>
   <div class="brand"><b>CodePlay Ludo</b><span id="roomSub">Getting ready…</span></div>
-  <div class="topActions">
+  <div class="barActions">
     <div id="audienceBar" class="audienceBar">
-      <button id="viewerBtn" class="iconBtn" aria-label="Viewers and sharing">👁 <span id="viewerCount">0</span></button>
-      <button id="chatBtn" class="iconBtn" aria-label="Open chat">💬<span id="chatBadge" class="badgeDot"></span></button>
-      <button id="watchLinkBtn" class="iconBtn" aria-label="Share watch link">🔗</button>
+      <button id="viewerBtn" class="pillBtn" aria-label="Viewers and sharing"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="viewerCount">0</span></button>
+      <button id="chatBtn" class="roundBtn" aria-label="Open chat"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span id="chatBadge" class="badgeDot"></span></button>
     </div>
-    <button id="soundToggle" class="iconBtn" aria-label="Toggle game sounds">🔊</button>
-    <a class="iconBtn" href="/" aria-label="Home" style="text-decoration:none;color:inherit">⌂</a>
+    <button id="menuBtn" class="roundBtn" aria-label="Menu"><svg class="ic" aria-hidden="true"><use href="#i-more"/></svg></button>
   </div>
 </header>
 <div id="playersPanel" aria-label="Players"></div>
@@ -46,25 +44,34 @@
   <div id="modeRow"></div>
   <div class="dockMain">
     <div id="diceArea"><div class="diceBox"><div class="die3d" id="die1"><div class="dieFace" id="face1"></div></div></div><div class="diceBox"><div class="die3d" id="die2"><div class="dieFace" id="face2"></div></div></div></div>
-    <button id="rollBtn">🎲 ROLL</button>
+    <button id="rollBtn"><svg class="ic" aria-hidden="true"><use href="#i-dice"/></svg><span>ROLL</span></button>
   </div>
   <div id="socialBar" class="socialBar">
     <button class="reactBtn" data-reaction="😂" aria-label="Laugh">😂</button><button class="reactBtn" data-reaction="🔥" aria-label="Fire">🔥</button><button class="reactBtn" data-reaction="👏" aria-label="Clap">👏</button><button class="reactBtn" data-reaction="😭" aria-label="Cry">😭</button><button class="reactBtn" data-reaction="Omo!">Omo!</button><button class="reactBtn" data-reaction="Sharp!">Sharp!</button>
-    <button id="inviteBtn" class="invite">📨 Invite</button>
+    <button id="inviteBtn" class="invite"><svg class="ic" aria-hidden="true"><use href="#i-whatsapp"/></svg><span>Invite</span></button>
   </div>
 </footer>
 <div id="log"></div>
 <div id="feedSink" style="display:none"></div>
 <div class="toast" id="toast" role="status"></div>
 <div class="sheetBack" id="sheetBack"></div>
+<section class="sheet" id="menuSheet" role="dialog" aria-label="Menu">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>Menu</span><button id="menuClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+  <div class="menuList">
+    <button class="menuRow" id="soundToggle" data-svg="1" aria-pressed="true"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-volume"/></svg></span><span class="grow">Game sounds</span><span class="switch on"></span></button>
+    <button class="menuRow" id="watchLinkBtn" style="display:none"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></span><span class="grow">Share &amp; viewers<small>Invite friends to watch</small></span><span class="chev"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+    <button class="menuRow" id="homeMenuBtn"><span class="mi"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><span class="grow">Leave to home</span><span class="chev"><svg class="ic" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
+  </div>
+</section>
 <section class="sheet" id="watchSheet" role="dialog" aria-label="Viewers and sharing">
   <div class="sheetGrab"></div>
-  <div class="sheetHead"><span id="watchTitle">👁 Watch &amp; share</span><button id="watchClose" aria-label="Close">✕</button></div>
+  <div class="sheetHead"><span id="watchTitle">Watch &amp; share</span><button id="watchClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div class="sheetBody" id="watchBody"></div>
 </section>
 <section class="sheet" id="chatDrawer" role="dialog" aria-label="Live chat">
   <div class="sheetGrab"></div>
-  <div class="sheetHead"><span>💬 Live chat</span><button id="chatCloseBtn" aria-label="Close chat">✕</button></div>
+  <div class="sheetHead"><span>Live chat</span><button id="chatCloseBtn" aria-label="Close chat"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div id="chatMessages" class="chatMessages"></div>
   <div class="chatNote" id="chatNote"></div>
   <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…" enterkeyhint="send" autocomplete="off"><button id="chatSendBtn">Send</button></div>
@@ -74,7 +81,7 @@
 <div id="reactionBubble" class="reactionBubble"></div>
 <div class="modal" id="nameModal">
   <div class="modalCard">
-    <h3>👋 What's your name?</h3>
+    <h3>What's your name?</h3>
     <div class="sub">Your friends will see it at the table.</div>
     <input class="nameInput" id="nameInput" maxlength="24" placeholder="Your name" autocomplete="nickname" enterkeyhint="go">
     <div class="resultActions"><button class="resultAction primary" id="nameGo">Let's play</button></div>
@@ -82,14 +89,14 @@
 </div>
 <div id="gameOverModal" class="modal">
   <div class="modalCard">
-    <h3 id="gameOverTitle">🏆 Game Over</h3>
+    <h3 id="gameOverTitle">Game Over</h3>
     <div id="gameOverSub" class="resultSub"></div>
     <div id="resultsList"></div>
     <div id="rematchState" class="rematchState"></div>
     <div class="resultActions">
-      <button id="rematchBtn" class="primary">🔁 Play Again</button>
-      <button id="shareResultBtn">📤 Share Result</button>
-      <button id="homeBtn">🏠 Home</button>
+      <button id="rematchBtn" class="primary"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Play again</button>
+      <button id="shareResultBtn"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Share result</button>
+      <button id="homeBtn"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg> Home</button>
     </div>
   </div>
 </div>
@@ -139,7 +146,7 @@ function renderPlayerPanel(){
     pn.appendChild(dots);pn.appendChild(nm);
     var pm=document.createElement('div');pm.className='pm';
     var l=document.createElement('span');var dot=document.createElement('span');dot.className='on'+(online?'':' off');l.appendChild(dot);var ot=document.createElement('span');ot.className='olTxt';ot.textContent=online?'online':'away';l.appendChild(ot);
-    var r=document.createElement('span');r.textContent='🏁 '+countHome(p)+'/'+total;
+    var r=document.createElement('span');r.innerHTML=cpIcon('flag','sm')+' '+countHome(p)+'/'+total;
     pm.appendChild(l);pm.appendChild(r);
     var bar=document.createElement('div');bar.className='pbar';bar.appendChild(document.createElement('i'));
     var cnt=document.createElement('span');cnt.className='pcount';
@@ -174,9 +181,9 @@ function render(){
   board.setLabels(names);board.setTurn(gameOver||!players[turn]?[]:players[turn].colors);
   renderPlayerPanel();setSub();
 }
-function setSub(){var el=document.getElementById('roomSub');if(!el)return;el.textContent=(GAME_MODE==='friends'||SPECTATOR_MODE?'Room '+(ROOM_CODE||'')+' · ':'vs Computer · ')+players.length+' players'+(SPECTATOR_MODE?' · watching':'')}
+function setSub(){var el=document.getElementById('roomSub');if(!el)return;el.textContent=(GAME_MODE==='friends'||SPECTATOR_MODE?(SPECTATOR_MODE?'Watching · ':'Room ')+(ROOM_CODE||''):'vs Computer · '+players.length+' players')}
 function yourTurnCue(){
-  var now=Date.now();if(now-lastCue<1500)return;lastCue=now;
+  if(window._resyncing)return;var now=Date.now();if(now-lastCue<1500)return;lastCue=now;
   var b=document.getElementById('turnBanner');b.classList.remove('show');void b.offsetWidth;b.classList.add('show');
   if(navigator.vibrate)try{navigator.vibrate([35,45,35])}catch(e){}
   if(document.hidden)document.title='🎲 Your turn! — CodePlay Ludo';
@@ -186,7 +193,7 @@ function confetti(){var w=document.createElement('div');w.className='confetti';v
 var pendingAfter=null,pendingValue=null;
 function onTokenTap(color,idx){if(SPECTATOR_MODE||!isCurrentlyValid(color,idx))return;if(GAME_MODE!=='friends'){var value=pendingValue,after=pendingAfter;currentValid=[];applyMove(turn,{color:color,idx:idx},value);render();if(gameOver){rollBtn.disabled=true;return}after();return}if(!window._netPending)return;var net=window._netPending;window._netPending=null;currentValid=[];window._netAfterMove=net.isLast?null:net.after;socket.emit('play-move',{code:ROOM_CODE,move:{color:color,idx:idx},value:net.value,mode:net.mode,isLastMoveThisTurn:net.isLast})}
 // Capture behavior is controlled by the server's public rule configuration; the URL cannot override it.
-function applyMove(pIdx,mv,value){var p=players[pIdx],arr=p.tokens[mv.color],oldPos=arr[mv.idx],newPos=oldPos===-1?0:oldPos+value;if(newPos>56&&!RULES.exactRollToFinish)newPos=56;arr[mv.idx]=newPos;var captured=[];if(newPos<=50&&!(RULES.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,mv.color)))){var g=pathIdx(newPos,mv.color),capturedOne=false;for(var oi=0;oi<players.length&&!capturedOne;oi++){if(oi===pIdx)continue;var opp=players[oi];for(var oci=0;oci<opp.colors.length&&!capturedOne;oci++){var oc=opp.colors[oci];for(var ti=0;ti<opp.tokens[oc].length;ti++){var t=opp.tokens[oc][ti];if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});log(cap(p.name)+' captured '+cap(oc)+'!');flashCapture('💥 '+cap(oc)+' SENT HOME!');capturedOne=true;break}}}}if(captured.length&&RULES.captureSendsCapturerHome){arr[mv.idx]=56;newPos=56;log(cap(p.name)+'’s '+mv.color+' token was removed after the capture!');flashCapture('🏆 '+cap(mv.color)+' REMOVED!');}if(captured.length&&RULES.captureGrantsExtraTurn)captureBonusPending=true}if(captured.length){if(pIdx===HUMAN_INDEX)CodePlayAudio.play('ludo-capture-attacker');else if(captured.some(function(x){return x.player===HUMAN_INDEX}))CodePlayAudio.play('ludo-capture-victim');}else if(newPos===56){CodePlayAudio.play('ludo-piece-home')}if(captured.length&&RULES.captureSendsCapturerHome)CodePlayAudio.play('ludo-capture-finished');if(newPos===56&&!captured.length)log(cap(p.name)+'’s '+mv.color+' token reached home! 🏠');checkWinner(pIdx);render()}
+function applyMove(pIdx,mv,value){var p=players[pIdx],arr=p.tokens[mv.color],oldPos=arr[mv.idx],newPos=oldPos===-1?0:oldPos+value;if(newPos>56&&!RULES.exactRollToFinish)newPos=56;arr[mv.idx]=newPos;var captured=[];if(newPos<=50&&!(RULES.safeZonesEnabled&&SAFE_CELLS.has(pathIdx(newPos,mv.color)))){var g=pathIdx(newPos,mv.color),capturedOne=false;for(var oi=0;oi<players.length&&!capturedOne;oi++){if(oi===pIdx)continue;var opp=players[oi];for(var oci=0;oci<opp.colors.length&&!capturedOne;oci++){var oc=opp.colors[oci];for(var ti=0;ti<opp.tokens[oc].length;ti++){var t=opp.tokens[oc][ti];if(t>=0&&t<=50&&pathIdx(t,oc)===g){opp.tokens[oc][ti]=-1;captured.push({player:oi,color:oc,idx:ti});log(cap(p.name)+' captured '+cap(oc)+'!');flashCapture(cap(oc)+' sent home!');capturedOne=true;break}}}}if(captured.length&&RULES.captureSendsCapturerHome){arr[mv.idx]=56;newPos=56;log(cap(p.name)+'’s '+mv.color+' token was removed after the capture!');flashCapture(''+cap(mv.color)+' REMOVED!');}if(captured.length&&RULES.captureGrantsExtraTurn)captureBonusPending=true}if(captured.length){if(pIdx===HUMAN_INDEX)CodePlayAudio.play('ludo-capture-attacker');else if(captured.some(function(x){return x.player===HUMAN_INDEX}))CodePlayAudio.play('ludo-capture-victim');}else if(newPos===56){CodePlayAudio.play('ludo-piece-home')}if(captured.length&&RULES.captureSendsCapturerHome)CodePlayAudio.play('ludo-capture-finished');if(newPos===56&&!captured.length)log(cap(p.name)+'’s '+mv.color+' token reached home! ');checkWinner(pIdx);render()}
 function checkWinner(pIdx){var p=players[pIdx],allDone=p.colors.every(function(c){return p.tokens[c].every(function(t){return t===56})});if(allDone&&!finishOrder.includes(pIdx)){finishOrder.push(pIdx);CodePlayAudio.play('ludo-piece-home');log(cap(p.name)+' finished — place '+finishOrder.length+'!');if(finishOrder.length===players.length-1){var lastIdx=players.findIndex(function(_,i){return !finishOrder.includes(i)});finishOrder.push(lastIdx);gameOver=true;CodePlayAudio.play(finishOrder[0]===HUMAN_INDEX?'game-winner':'game-loser');showGameOver()}}}
 function nextTurn(){do{turn=(turn+1)%players.length}while(finishOrder.includes(turn))}
 function promptDie(value,after){var legal=legalMoves(turn,value,true);if(!legal.length){log('No legal move for die '+value+' — skipped.');after();return}if(legal.length===1){applyMove(turn,legal[0],value);render();if(!gameOver)after();else rollBtn.disabled=true;return}currentValid=legal;statusEl.textContent='Tap a glowing token to move it by '+value+'.';pendingAfter=after;pendingValue=value;render()}
@@ -219,15 +226,15 @@ function renderChat(){
 }
 var aud={viewerCount:0,totalViews:0,visibility:'link',chatEnabled:true,audience:[],muted:[]},feedItems=[],unread=0,myKey=null,chatOpen=false,watchOpen=false,toastTimer=null;
 var VIEWER_ID=(function(){try{var v=localStorage.getItem('codeplay_viewer_id');if(!v){v='v_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('codeplay_viewer_id',v)}return v}catch(err){return 'v_'+Math.random().toString(36).slice(2)}})();
-var FRIENDLY={'spectator-access-denied':['🔗 Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],'spectating-disabled':['🔒 Watching is off','The host has turned off watching for this match.'],'room-not-found':['Match not found','This room does not exist or the match has already ended.'],'audience-full':['Audience is full','This match has reached its viewer limit. Try again in a moment.']};
-var SOFT={'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little 🙂','empty-message':'Type a message first.','not-host':'Only the host can change that.','not-in-room':'You are not in this match.'};
+var FRIENDLY={'spectator-access-denied':['Link-only match','This match can only be watched with the host\u2019s watch link. Ask the host to send it to you.'],'spectating-disabled':['Watching is off','The host has turned off watching for this match.'],'room-not-found':['Match not found','This room does not exist or the match has already ended.'],'audience-full':['Audience is full','This match has reached its viewer limit. Try again in a moment.']};
+var SOFT={'chat-disabled':'The host turned chat off for viewers.','muted':'The host muted you in this chat.','chat-rate-limit':'Slow down a little','empty-message':'Type a message first.','not-host':'Only the host can change that.','not-in-room':'You are not in this match.'};
 function $(id){return document.getElementById(id)}
 function mk(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
 function isHostUser(){return !SPECTATOR_MODE&&GAME_MODE==='friends'&&HUMAN_INDEX===0}
 function toast(msg,ms){var t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},ms||2600)}
 function showBlocked(title,text){
   var card=mk('div','blockedCard');card.appendChild(mk('h3',null,title));card.appendChild(mk('p',null,text));
-  var home=mk('a',null,'⌂ Home');home.href='/';var live=mk('a',null,'👁 Watch live games');live.href='/?screen=live';card.appendChild(home);card.appendChild(live);
+  var home=mk('a',null,'Home');home.href='/';var live=mk('a',null,'Watch live games');live.href='/?screen=live';card.appendChild(home);card.appendChild(live);
   document.body.classList.add('waiting');var w=$('waitingRoom');w.style.display='block';w.innerHTML='';w.style.background='none';w.style.border='0';w.style.boxShadow='none';w.appendChild(card);
 }
 
@@ -246,10 +253,10 @@ function copyText(text,okMsg){
   function fallback(){var t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand('copy')}catch(err){}t.remove();if(ok)toast(okMsg);else window.prompt('Copy this link',text)}
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){toast(okMsg)}).catch(fallback);else fallback();
 }
-function copyWatchLink(){copyText(liveUrl(),'Watch link copied ✔')}
+function copyWatchLink(){copyText(liveUrl(),'Link copied')}
 function nativeShare(){if(navigator.share)navigator.share({title:'CodePlay Ludo — watch live',text:shareText().split('\n')[0],url:liveUrl()}).catch(function(){});else copyWatchLink()}
 function refreshAudienceUi(){
-  audienceBarEl.style.display=(GAME_MODE==='friends'||SPECTATOR_MODE)&&ROOM_CODE?'flex':'none';
+  var inRoom=(GAME_MODE==='friends'||SPECTATOR_MODE)&&ROOM_CODE;audienceBarEl.style.display=inRoom?'flex':'none';watchLinkBtnEl.style.display=inRoom?'flex':'none';
   viewerCountEl.textContent=String(aud.viewerCount||0);
   chatBadgeEl.textContent=unread>9?'9+':String(unread);chatBadgeEl.classList.toggle('show',unread>0&&!chatOpen);
   var off=SPECTATOR_MODE&&!aud.chatEnabled;chatInputEl.disabled=off;chatSendBtnEl.disabled=off;chatInputEl.placeholder=off?'Chat is off for viewers':'Say something…';
@@ -269,38 +276,38 @@ function setAudience(info){
   refreshAudienceUi();if(watchOpen)renderWatchSheet();
 }
 function openSheet(which){closeSheets(true);chatOpen=which==='chat';watchOpen=which==='watch';$('sheetBack').classList.add('show');(chatOpen?chatDrawerEl:$('watchSheet')).classList.add('show');if(chatOpen){unread=0;renderChat()}else renderWatchSheet();refreshAudienceUi()}
-function closeSheets(keepBack){chatDrawerEl.classList.remove('show');$('watchSheet').classList.remove('show');if(!keepBack)$('sheetBack').classList.remove('show');chatOpen=false;watchOpen=false;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();refreshAudienceUi()}
+function closeSheets(keepBack){chatDrawerEl.classList.remove('show');$('watchSheet').classList.remove('show');$('menuSheet').classList.remove('show');if(!keepBack)$('sheetBack').classList.remove('show');chatOpen=false;watchOpen=false;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();refreshAudienceUi()}
 function setOpt(patch){Object.assign(aud,patch);renderWatchSheet();if(socket&&ROOM_CODE)socket.emit('set-audience-options',Object.assign({code:ROOM_CODE},patch))}
 function switchRow(title,desc,on,onTap){var row=mk('button','switchRow');row.setAttribute('role','switch');row.setAttribute('aria-checked',on?'true':'false');var t=mk('div');t.appendChild(mk('b',null,title));t.appendChild(mk('span','d',desc));row.appendChild(t);row.appendChild(mk('span','switch'+(on?' on':'')));row.onclick=onTap;return row}
 function renderWatchSheet(){
   var body=$('watchBody');body.innerHTML='';var host=isHostUser(),vis=aud.visibility;
-  $('watchTitle').textContent=SPECTATOR_MODE?'👁 You\u2019re watching':'👁 Watch & share';
-  var stats=mk('div','statRow');stats.appendChild(mk('span','statChip','👁 '+aud.viewerCount+' watching now'));stats.appendChild(mk('span','statChip',aud.totalViews+' total views'));body.appendChild(stats);
-  if(vis==='private'&&!SPECTATOR_MODE){body.appendChild(mk('div','hintTxt','🔒 Watching is turned off for this match, so nobody can join as a viewer.'))}
+  $('watchTitle').textContent=SPECTATOR_MODE?'You\u2019re watching':'Watch & share';
+  var stats=mk('div','statRow');stats.appendChild(mk('span','statChip',''+aud.viewerCount+' watching now'));stats.appendChild(mk('span','statChip',aud.totalViews+' total views'));body.appendChild(stats);
+  if(vis==='private'&&!SPECTATOR_MODE){body.appendChild(mk('div','hintTxt','Watching is turned off for this match, so nobody can join as a viewer.'))}
   else{
     body.appendChild(mk('div','secTitle',SPECTATOR_MODE?'Invite friends to watch':'Share your match'));
-    var btns=mk('div','shareBtns');var wa=mk('button','bigBtn wa','💬 Share on WhatsApp');wa.onclick=shareWhatsApp;var cp=mk('button','bigBtn','🔗 Copy link');cp.onclick=copyWatchLink;var sh=mk('button','bigBtn','⬆️ More…');sh.onclick=nativeShare;btns.appendChild(wa);btns.appendChild(cp);btns.appendChild(sh);body.appendChild(btns);
+    var btns=mk('div','shareBtns');var wa=mk('button','bigBtn wa');wa.innerHTML=cpIcon('whatsapp')+' Share on WhatsApp';wa.onclick=shareWhatsApp;var cp=mk('button','bigBtn');cp.innerHTML=cpIcon('link')+' Copy link';cp.onclick=copyWatchLink;var sh=mk('button','bigBtn');sh.innerHTML=cpIcon('share')+' More…';sh.onclick=nativeShare;btns.appendChild(wa);btns.appendChild(cp);btns.appendChild(sh);body.appendChild(btns);
     body.appendChild(mk('div','linkBox',liveUrl()));
   }
   if(host){
     body.appendChild(mk('div','secTitle','Who can watch'));var seg=mk('div','seg');
-    [['public','🌐 Public'],['link','🔗 Link only'],['private','🔒 Off']].forEach(function(o){var b=mk('button',vis===o[0]?'on':'',o[1]);b.setAttribute('aria-pressed',vis===o[0]?'true':'false');b.onclick=function(){if(aud.visibility!==o[0])setOpt({visibility:o[0]})};seg.appendChild(b)});body.appendChild(seg);
+    [['public','globe','Public'],['link','link','Link only'],['private','lock','Off']].forEach(function(o){var b=mk('button',vis===o[0]?'on':'');b.innerHTML=cpIcon(o[1])+'<span>'+o[2]+'</span>';b.setAttribute('aria-pressed',vis===o[0]?'true':'false');b.onclick=function(){if(aud.visibility!==o[0])setOpt({visibility:o[0]})};seg.appendChild(b)});body.appendChild(seg);
     body.appendChild(mk('div','hintTxt',vis==='public'?'Anyone can find this match under \u201cWatch live\u201d and join with the room code.':vis==='link'?'Only people with your private watch link can watch. Recommended.':'Nobody can watch. Anyone already watching is removed.'));
     body.appendChild(mk('div','secTitle','Viewer options'));
     body.appendChild(switchRow('Allow viewer chat','Players can always chat.',aud.chatEnabled,function(){setOpt({chatEnabled:!aud.chatEnabled})}));
-  }else{body.appendChild(mk('div','hintTxt',vis==='public'?'🌐 This match is public.':vis==='link'?'🔗 Only people with the watch link can watch.':'🔒 Watching is off.'))}
+  }else{body.appendChild(mk('div','hintTxt',vis==='public'?'This match is public.':vis==='link'?'Only people with the watch link can watch.':'Watching is off.'))}
   body.appendChild(mk('div','secTitle','Watching now ('+aud.audience.length+')'));
   if(!aud.audience.length)body.appendChild(mk('div','emptyTxt','No viewers yet. Share the link to invite friends!'));
-  aud.audience.slice(0,60).forEach(function(v){var row=mk('div','viewerRow');row.appendChild(mk('span',null,'👁 '+v.name+(v.key===myKey?' (you)':'')));
+  aud.audience.slice(0,60).forEach(function(v){var row=mk('div','viewerRow');row.appendChild(mk('span',null,''+v.name+(v.key===myKey?' (you)':'')));
     if(host){var muted=aud.muted.indexOf(v.key)>=0,b=mk('button','smallBtn'+(muted?' on':''),muted?'Unmute':'Mute');b.onclick=function(){socket.emit('mute-viewer',{code:ROOM_CODE,key:v.key,muted:!muted})};row.appendChild(b)}body.appendChild(row)});
   body.appendChild(mk('div','secTitle','Recent moves'));
   if(!feedItems.length)body.appendChild(mk('div','emptyTxt','Moves will appear here as the match goes on.'));
   feedItems.slice(-10).reverse().forEach(function(f){body.appendChild(mk('div','fi',f.text))});
 }
-var BADGE={host:'⭐ HOST',player:'🎮 PLAYER',spectator:'👁 VIEWER'};
+var BADGE={host:'⭐ HOST',player:'PLAYER',spectator:'VIEWER'};
 function renderChat(){
   var box=chatMessagesEl;box.innerHTML='';
-  if(!CHAT_MESSAGES.length){box.appendChild(mk('div','emptyTxt','No messages yet — say hi 👋'));return}
+  if(!CHAT_MESSAGES.length){box.appendChild(mk('div','emptyTxt','No messages yet — say hi'));return}
   CHAT_MESSAGES.slice(-60).forEach(function(m){var row=mk('div','chatMsg '+(m.role||'spectator'));row.appendChild(mk('span','badge '+(m.role||'spectator'),BADGE[m.role]||BADGE.spectator));row.appendChild(mk('b',null,(m.name||'Guest')+': '));row.appendChild(mk('span',null,m.text||''));
     if(isHostUser()&&m.role==='spectator'&&m.key){var mt=aud.muted.indexOf(m.key)>=0,b=mk('button','mute',mt?'unmute':'mute');b.onclick=function(){socket.emit('mute-viewer',{code:ROOM_CODE,key:m.key,muted:!mt})};row.appendChild(b)}box.appendChild(row)});
   box.scrollTop=box.scrollHeight;
@@ -320,15 +327,16 @@ function inviteFriend(){if(!ROOM_CODE)return;var joinUrl=location.origin+locatio
 function showReaction(name,reaction){reactionBubbleEl.textContent=(name||'Player')+' '+reaction;reactionBubbleEl.classList.remove('show');void reactionBubbleEl.offsetWidth;reactionBubbleEl.classList.add('show')}
 function sendReaction(reaction){if(GAME_MODE==='friends'&&socket&&ROOM_CODE){socket.emit('send-reaction',{code:ROOM_CODE,reaction:reaction})}else showReaction('You',reaction)}
 function getResultText(){return finishOrder.map(function(i,rank){return(rank+1)+'. '+cap(players[i]&&players[i].name||('Player '+(i+1)))}).join(' • ')}
-function showGameOver(){gameOverModalEl.style.display='flex';if(finishOrder[0]===HUMAN_INDEX&&!SPECTATOR_MODE)confetti();socialBarEl.style.display='none';rematchBtn.style.display=SPECTATOR_MODE?'none':'block';var winnerIdx=finishOrder[0],winnerName=winnerIdx!==undefined&&players[winnerIdx]?players[winnerIdx].name:'Winner';gameOverTitleEl.textContent='🏆 '+cap(winnerName)+' wins!';gameOverSubEl.textContent='Final order: '+getResultText();resultsListEl.innerHTML='';finishOrder.forEach(function(i,rank){var row=document.createElement('div');row.className='resultRow'+(rank===0?' winner':'');var rankEl=document.createElement('div');rankEl.className='rank';rankEl.textContent=rank===0?'🥇':String(rank+1);var nameEl=document.createElement('div');nameEl.className='resultName';nameEl.textContent=cap(players[i]&&players[i].name||('Player '+(i+1)));row.appendChild(rankEl);row.appendChild(nameEl);if(i===HUMAN_INDEX){var you=document.createElement('div');you.className='legend';you.textContent='You';row.appendChild(you)}resultsListEl.appendChild(row)});rematchRequested=false;rematchStateEl.textContent=GAME_MODE==='friends'?'Everyone can tap Play Again to request a rematch.':'';rematchBtn.disabled=false;rematchBtn.textContent='🔄 Play Again'}
+function showGameOver(){gameOverModalEl.style.display='flex';if(finishOrder[0]===HUMAN_INDEX&&!SPECTATOR_MODE)confetti();socialBarEl.style.display='none';rematchBtn.style.display=SPECTATOR_MODE?'none':'block';var winnerIdx=finishOrder[0],winnerName=winnerIdx!==undefined&&players[winnerIdx]?players[winnerIdx].name:'Winner';gameOverTitleEl.textContent=''+cap(winnerName)+' wins!';gameOverSubEl.textContent='Final order: '+getResultText();resultsListEl.innerHTML='';finishOrder.forEach(function(i,rank){var row=document.createElement('div');row.className='resultRow'+(rank===0?' winner':'');var rankEl=document.createElement('div');rankEl.className='rank';rankEl.textContent=String(rank+1);var nameEl=document.createElement('div');nameEl.className='resultName';nameEl.textContent=cap(players[i]&&players[i].name||('Player '+(i+1)));row.appendChild(rankEl);row.appendChild(nameEl);if(i===HUMAN_INDEX){var you=document.createElement('div');you.className='legend';you.textContent='You';row.appendChild(you)}resultsListEl.appendChild(row)});rematchRequested=false;rematchStateEl.textContent=GAME_MODE==='friends'?'Everyone can tap Play Again to request a rematch.':'';rematchBtn.disabled=false;rematchBtn.textContent='Play Again'}
 function hideGameOver(){gameOverModalEl.style.display='none';rematchStateEl.textContent='';rematchBtn.style.display='block'}
 function shareResult(){var text='I just played CodePlay Ludo! '+getResultText()+' Room: '+(ROOM_CODE||'local game');var url=location.href;if(navigator.share){navigator.share({title:'CodePlay Ludo',text:text,url:url}).catch(function(){})}else{window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank','noopener')}}
-function requestRematch(){if(SPECTATOR_MODE)return;if(GAME_MODE!=='friends'){startGame(players.length||2);return}if(rematchRequested)return;rematchRequested=true;rematchBtn.disabled=true;rematchBtn.textContent='✅ Rematch Requested';rematchStateEl.textContent='Waiting for the other players…';socket.emit('rematch',{code:ROOM_CODE})}
+function requestRematch(){if(SPECTATOR_MODE)return;if(GAME_MODE!=='friends'){startGame(players.length||2);return}if(rematchRequested)return;rematchRequested=true;rematchBtn.disabled=true;rematchBtn.textContent='Rematch Requested';rematchStateEl.textContent='Waiting for the other players…';socket.emit('rematch',{code:ROOM_CODE})}
 function showWaitingRoom(html){document.body.classList.add('waiting');var w=document.getElementById('waitingRoom');w.style.display='block';w.innerHTML=html;refreshAudienceUi()}
 function hideWaitingRoom(){document.body.classList.remove('waiting');document.getElementById('waitingRoom').style.display='none';if(SPECTATOR_MODE){setSpectatorUi()}else{renderSocialBar()}}
 document.querySelectorAll('.reactBtn').forEach(function(btn){btn.onclick=function(){sendReaction(btn.dataset.reaction)}});
 document.getElementById('inviteBtn').onclick=inviteFriend;
-chatBtnEl.onclick=function(){openSheet('chat')};$('viewerBtn').onclick=function(){openSheet('watch')};watchLinkBtnEl.onclick=function(){openSheet('watch')};chatCloseBtnEl.onclick=function(){closeSheets()};$('watchClose').onclick=function(){closeSheets()};$('sheetBack').onclick=function(){closeSheets()};chatSendBtnEl.onclick=sendChat;chatInputEl.addEventListener('keydown',function(ev){if(ev.key==='Enter')sendChat()});addEventListener('keydown',function(ev){if(ev.key==='Escape')closeSheets()});if(window.visualViewport){var upd=function(){var vv=window.visualViewport;document.documentElement.style.setProperty('--kb',Math.max(0,window.innerHeight-vv.height-vv.offsetTop)+'px')};visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
+function openMenu(){closeSheets(true);$('sheetBack').classList.add('show');$('menuSheet').classList.add('show')}
+$('menuBtn').onclick=openMenu;$('menuClose').onclick=function(){closeSheets()};$('homeMenuBtn').onclick=function(){location.href='/'};chatBtnEl.onclick=function(){openSheet('chat')};$('viewerBtn').onclick=function(){openSheet('watch')};watchLinkBtnEl.onclick=function(){openSheet('watch')};chatCloseBtnEl.onclick=function(){closeSheets()};$('watchClose').onclick=function(){closeSheets()};$('sheetBack').onclick=function(){closeSheets()};chatSendBtnEl.onclick=sendChat;chatInputEl.addEventListener('keydown',function(ev){if(ev.key==='Enter')sendChat()});addEventListener('keydown',function(ev){if(ev.key==='Escape')closeSheets()});if(window.visualViewport){var upd=function(){var vv=window.visualViewport;document.documentElement.style.setProperty('--kb',Math.max(0,window.innerHeight-vv.height-vv.offsetTop)+'px')};visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
 rematchBtn.onclick=requestRematch;
 shareResultBtn.onclick=shareResult;
 homeBtn.onclick=function(){location.href=location.origin+'/'}
@@ -350,7 +358,7 @@ function loadSavedRoomForCode(code){
 }
 function clearActiveRoom(){localStorage.removeItem(activeRoomKey())}
 function normalizeRoomCode(c){return String(c||'').trim().toUpperCase()}
-function renderWaiting(joined,needed){var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>💬 Share on WhatsApp</button></a>')}
+function renderWaiting(joined,needed){setSub();var joinUrl=location.origin+location.pathname+'?mode=friends&action=join&code='+ROOM_CODE,msg=encodeURIComponent('Join my CodePlay Ludo game! Code: '+ROOM_CODE+' 👉 '+joinUrl);showWaitingRoom('<p>Share this code with your friends</p><div class="roomCode">'+ROOM_CODE+'</div><p>'+joined+' / '+needed+' joined — waiting...</p><a href="https://wa.me/?text='+msg+'" target="_blank" rel="noopener"><button>'+cpIcon('whatsapp')+' Share on WhatsApp</button></a>')}
 function applyServerState(st){window._srvDice=st.dice||null;window._srvRemaining=st.remainingDice||null;if(st.rules)RULES=Object.assign(RULES,st.rules);players=st.players.map(function(p,i){return{name:i===HUMAN_INDEX?'You':(p.name||'Player '+(i+1)),isHuman:i===HUMAN_INDEX,colors:p.colors,tokens:p.tokens}});if(connectionStates.length!==players.length)connectionStates=players.map(function(){return true});turn=st.turn;finishOrder=st.finishOrder;gameOver=st.gameOver;render();if(gameOver)showGameOver()}
 function beginNetTurn(){if(gameOver){rollBtn.disabled=true;return}currentValid=[];modeRow.innerHTML='';render();if(SPECTATOR_MODE){wrText(cap(players[turn]&&players[turn].name||'Player')+'’s turn • you are watching');rollBtn.disabled=true}else if(turn===HUMAN_INDEX&&window._srvDice){resumePendingRoll()}else if(turn===HUMAN_INDEX){yourTurnCue();wrText('Your turn — spin the dice.');rollBtn.disabled=false}else{wrText(cap(players[turn].name)+'’s turn...');rollBtn.disabled=true}}
 /* The server still holds the dice this player rolled before a refresh / network drop: restore them instead of offering a second roll. */
@@ -368,6 +376,12 @@ function resumePendingRoll(){
     var value=rem[0]?d1:d2;wrText('Welcome back — move by '+value+'.');promptDieNet(value,true,null);
   }
 }
+/* Safety net: a message can be lost without the connection ever reporting a drop (phone changing networks, a stalled tab). While the table looks idle, quietly ask the server for the truth. */
+setInterval(function(){
+  if(!socket||!socket.connected||SPECTATOR_MODE||GAME_MODE!=='friends'||!seatEstablished||gameOver||document.hidden)return;
+  var mine=turn===HUMAN_INDEX,busy=modeRow.children.length||document.querySelector('.tok.movable')||(mine&&!rollBtn.disabled);
+  if(!busy)socket.emit('request-sync',{code:ROOM_CODE});
+},5000);
 var hiddenAt=0;
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){hiddenAt=Date.now();return}
@@ -418,11 +432,11 @@ socket.on('feed',pushFeed);
 socket.on('turn-timer',function(x){timerInfo=x.seconds?{turn:x.turn,seconds:x.seconds,deadline:Date.now()+(x.deadline-x.now)}:null;updateTimerUi();if(timerInfo&&x.turn===HUMAN_INDEX&&x.away)toast('You were away — the game is playing for you. Tap to take back control.')});
 socket.on('session-replaced',function(){try{socket.io.opts.reconnection=false}catch(e){}showWaitingRoom('<p>This game was opened on another tab or device.</p><p class="legend">Only one screen can play a seat at a time.</p><button onclick="location.reload()">Play here instead</button>')});
 socket.on('disconnect',function(reason){if(reason==='io client disconnect'||SPECTATOR_MODE)return;wrText('Connection lost — reconnecting…');rollBtn.disabled=true});
-socket.on('spectator-ended',function(x){closeSheets();showBlocked.apply(null,(x&&x.reason==='spectating-disabled')?FRIENDLY['spectating-disabled']:['🔗 Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'])});
+socket.on('spectator-ended',function(x){closeSheets();showBlocked.apply(null,(x&&x.reason==='spectating-disabled')?FRIENDLY['spectating-disabled']:['Link-only now','The host switched this match to link-only. Ask them for the watch link to keep watching.'])});
 socket.on('you-are-spectator',function(x){SPECTATOR_MODE=true;GAME_MODE='spectator';HUMAN_INDEX=-1;ROOM_CODE=x.code||ROOM_CODE;if(x.you){myKey=x.you.key}if(x.audience)setAudience(x.audience);setSpectatorUi();wrText('Watching room '+ROOM_CODE+' live.');});
- socket.on('game-ready',function(x){hideWaitingRoom();applyServerState(x.state);beginNetTurn()});
+ socket.on('game-ready',function(x){hideWaitingRoom();var busy=x.resync&&(modeRow.children.length||document.querySelector('.tok.movable'));applyServerState(x.state);if(!busy){window._resyncing=!!x.resync;beginNetTurn();window._resyncing=false}});
  socket.on('dice-rolled',function(x){d1=x.dice[0];d2=x.dice[1];animateDice(d1,d2).then(function(){if(!x.options.canSplit&&!x.options.canCombine){log('No legal moves for the current roll.');return}if(x.turn!==HUMAN_INDEX){wrText('The other player rolled '+d1+' & '+d2+'...');return}var splitLegal=legalMoves(HUMAN_INDEX,d1,true).length||legalMoves(HUMAN_INDEX,d2,true).length,combineLegal=legalMoves(HUMAN_INDEX,d1+d2,false).length;showModeChoiceNet(splitLegal,combineLegal)})});
- socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture('💥 '+cap(c.color)+' SENT HOME!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)board.whenIdle().then(cb)});
+ socket.on('move-applied',function(x){applyServerState(x.state);(x.captured||[]).forEach(function(c){log('Captured '+cap(c.color)+'!');flashCapture(cap(c.color)+' sent home!')});var cb=window._netAfterMove;window._netAfterMove=null;if(cb&&!x.state.gameOver)board.whenIdle().then(cb)});
  socket.on('turn-passed',function(x){window._netAfterMove=null;window._netPending=null;applyServerState(x.state);currentValid=[];modeRow.innerHTML='';board.whenIdle().then(beginNetTurn)});
  socket.on('connect',function(){
    if(SPECTATOR_MODE){showWaitingRoom('<p>Connecting to live match '+ROOM_CODE+'…</p>');socket.emit('spectate-room',{code:ROOM_CODE,watchToken:WATCH_TOKEN,name:PLAYER_NAME,viewerId:VIEWER_ID});return;}

@@ -5,7 +5,14 @@
 
   function setButton(){
     const b=document.getElementById('soundToggle');
-    if(b){b.textContent=enabled?'🔊':'🔇';b.title=enabled?'Mute game sounds':'Enable game sounds';}
+    if(b){
+      b.title=enabled?'Mute game sounds':'Enable game sounds';
+      if(b.dataset.svg){ // menu row with an icon + switch: keep its markup, just update the state
+        b.setAttribute('aria-pressed',enabled?'true':'false');
+        const sw=b.querySelector('.switch');if(sw)sw.classList.toggle('on',enabled);
+        const u=b.querySelector('use');if(u)u.setAttribute('href',enabled?'#i-volume':'#i-mute');
+      }else b.textContent=enabled?'🔊':'🔇';
+    }
   }
   function audioContext(){
     if(!enabled)return null;
