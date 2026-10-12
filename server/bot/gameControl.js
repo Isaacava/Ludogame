@@ -1,6 +1,6 @@
 'use strict';
 
-const managers={ludo:null,whot:null};
+const managers={ludo:null,whot:null,chess:null};
 
 function registerGameManager(game,manager){
   const key=String(game||'').toLowerCase();
@@ -74,7 +74,7 @@ function roomSummary(room){
 // Public matches for the "Watch live" list. Only rooms the host set to Public are ever listed.
 function listLiveRooms(limit=30){
   const out=[];
-  for(const game of ['ludo','whot']){
+  for(const game of ['ludo','whot','chess']){
     const manager=managers[game];if(!manager||!manager.rooms)continue;
     for(const room of manager.rooms.values()){
       if(!room||room.visibility!=='public')continue;

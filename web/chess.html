@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay Chess</title>
+<meta name="theme-color" content="#06100c">
+<meta name="description" content="Play chess with friends in seconds — share a link, no sign-up. Clocks, rematches, live spectators and chat.">
+<meta property="og:site_name" content="CodePlay">
+<meta property="og:type" content="website">
+<meta property="og:title" content="♟️ CodePlay Chess — play with friends">
+<meta property="og:description" content="Tap the link and you're at the board. Real clocks, rematches, live spectators. No sign-up.">
+<meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-chess.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/theme.css?v=5"><link rel="stylesheet" href="/appbar.css?v=5"><link rel="stylesheet" href="/chess.css?v=5">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script src="/icons.js?v=5"></script>
+<script src="/vendor/chess.min.js?v=1"></script>
+<script src="/chess-game.js?v=1"></script>
+<script src="/chess-board.js?v=1"></script>
+<script src="/audio.js"></script>
+</head>
+<body class="chessPage">
+<header class="appbar">
+  <a class="brandLink" href="/" aria-label="CodePlay home"><span class="logoMark"><svg class="ic" aria-hidden="true"><use href="#i-pawn"/></svg></span></a>
+  <div class="brand"><b>Chess</b><span id="roomSub">Getting ready…</span></div>
+  <div class="barActions">
+    <button class="pillBtn watchChip" id="watchTopBtn" aria-label="Viewers and sharing"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="watchCount">0</span></button>
+    <button class="roundBtn" id="chatTopBtn" aria-label="Open chat" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span class="dot" id="chatDot"></span></button>
+    <button class="roundBtn" id="menuBtn" aria-label="Menu"><svg class="ic" aria-hidden="true"><use href="#i-more"/></svg></button>
+  </div>
+</header>
+
+<main class="chessMain">
+  <section class="waitCard" id="waiting">
+    <div class="spin" id="waitSpin"></div>
+    <p id="waitText">Connecting…</p>
+    <div class="roomCode" id="roomCode" style="display:none"></div>
+    <div class="tcChip" id="tcChip" style="display:none"></div>
+    <button class="btn wa" id="inviteBtn" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-whatsapp"/></svg> Invite on WhatsApp</button>
+    <button class="btn" id="copyInviteBtn" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg> Copy invite link</button>
+    <button class="btn" id="waitHome" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg> Home</button>
+  </section>
+
+  <section id="game" aria-label="Chess game">
+    <div class="pbar" id="barTop"><div class="av b" id="avTop">B</div><div class="pi"><span class="pname" id="nameTop">Black</span><div class="pcap" id="capTop"></div></div><div class="clock" id="clockTop">5:00</div></div>
+    <div class="boardWrap"><div id="board"></div><div id="promoHost"></div></div>
+    <div class="pbar" id="barBottom"><div class="av w" id="avBottom">W</div><div class="pi"><span class="pname" id="nameBottom">White</span><div class="pcap" id="capBottom"></div></div><div class="clock" id="clockBottom">5:00</div></div>
+    <div class="drawBanner" id="drawBanner"><span>Your opponent offers a draw</span><button id="drawNo">Decline</button><button class="ok" id="drawYes">Accept</button></div>
+    <div class="status" id="status" role="status" aria-live="polite">&nbsp;</div>
+    <div class="movesRow">
+      <button class="nb" id="navFirst" aria-label="First move"><svg class="ic"><use href="#i-skipL"/></svg></button>
+      <button class="nb" id="navPrev" aria-label="Previous move"><svg class="ic"><use href="#i-chevL"/></svg></button>
+      <div class="moves" id="moves"><span class="none">Moves appear here</span></div>
+      <button class="nb" id="navNext" aria-label="Next move"><svg class="ic"><use href="#i-chevR"/></svg></button>
+      <button class="nb" id="navLast" aria-label="Back to live position"><svg class="ic"><use href="#i-skipR"/></svg></button>
+    </div>
+    <div class="actions" id="actions"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="sheetBack" id="sheetBack"></div>
+
+<section class="sheet" id="menuSheet" role="dialog" aria-label="Menu">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>Menu</span><button id="menuClose" aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+  <div class="menuList">
+    <button class="menuRow" id="soundToggle" data-svg="1" aria-pressed="true"><span class="mi"><svg class="ic"><use href="#i-volume"/></svg></span><span class="grow">Game sounds</span><span class="switch on"></span></button>
+    <button class="menuRow" id="flipMenu"><span class="mi"><svg class="ic"><use href="#i-flip"/></svg></span><span class="grow">Flip board</span></button>
+    <button class="menuRow" id="pgnMenu"><span class="mi"><svg class="ic"><use href="#i-book"/></svg></span><span class="grow">Copy game (PGN)<small>Paste into Lichess or chess.com to analyse</small></span></button>
+    <button class="menuRow" id="watchMenuBtn" style="display:none"><span class="mi"><svg class="ic"><use href="#i-share"/></svg></span><span class="grow">Share &amp; viewers<small>Invite friends to watch</small></span><span class="chev"><svg class="ic"><use href="#i-chevron"/></svg></span></button>
+    <button class="menuRow" id="homeBtn"><span class="mi"><svg class="ic"><use href="#i-home"/></svg></span><span class="grow">Leave to home</span><span class="chev"><svg class="ic"><use href="#i-chevron"/></svg></span></button>
+  </div>
+</section>
+<section class="sheet" id="watchSheet" role="dialog" aria-label="Viewers and sharing">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span id="watchTitle">Watch &amp; share</span><button id="watchClose" aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+  <div class="sheetBody" id="watchBody"></div>
+</section>
+<section class="sheet" id="chatSheet" role="dialog" aria-label="Live chat">
+  <div class="sheetGrab"></div>
+  <div class="sheetHead"><span>Live chat</span><button id="chatClose" aria-label="Close chat"><svg class="ic"><use href="#i-close"/></svg></button></div>
+  <div class="chatMessages" id="chatMessages"></div>
+  <div class="chatNote" id="chatNote"></div>
+  <div class="chatComposer"><input id="chatInput" maxlength="240" placeholder="Say something…" enterkeyhint="send" autocomplete="off"><button id="chatSend">Send</button></div>
+</section>
+
+<div class="modal" id="nameModal"><div class="modalCard"><h3 id="nameTitle">What's your name?</h3><div class="sub" id="nameSub">Your opponent will see it at the board.</div><input class="nameInput" id="nameInput" maxlength="24" placeholder="Your name" autocomplete="nickname" enterkeyhint="go"><div class="resultActions"><button class="resultAction primary" id="nameGo">Continue</button></div></div></div>
+<div class="modal" id="confirmModal"><div class="modalCard"><h3 id="confirmTitle">Resign this game?</h3><div class="sub" id="confirmText">You will lose the game.</div><div class="resultActions"><button class="resultAction" id="confirmNo">Keep playing</button><button class="resultAction primary" id="confirmYes">Resign</button></div></div></div>
+<div class="modal" id="overModal"><div class="modalCard" style="text-align:center"><div class="resultBig" id="overTitle">Game over</div><div class="sub" id="overSub"></div><div class="rematchState" id="overRematch"></div><div class="resultActions" id="overActions"></div></div></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var MODE = params.get('mode') || 'computer', ACTION = params.get('action') || '';
+  var spectatorMode = MODE === 'watch' || ACTION === 'spectate';
+  var isComputer = MODE === 'computer';
+  var profileName = (params.get('name') || '').trim().slice(0, 24);
+  var watchToken = (params.get('watchToken') || params.get('watch') || '').trim();
+  var requestedCode = (params.get('code') || '').trim().toUpperCase();
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var G = window.CPChessGame, PRESET = G.PRESETS;
+  var socket = null, roomCode = '', playerToken = '', myIndex = -1, myColor = null, state = null, roomPlayers = [], tcInfo = null;
+  var game = null, worker = null, aiColor = null, level = 3, thinkId = 0, thinking = false, aiTimer = null;
+  var manualFlip = false, review = null, fenCache = null, anchor = null, over = { seq: -1 }, myRematch = false, drawTone = 0;
+  var aud = { viewerCount: 0, totalViews: 0, visibility: 'link', chatEnabled: true, audience: [], muted: [] };
+  var feedItems = [], chatMessages = [], unread = 0, myKey = null, roomReady = false, lastTurnCue = null, opponentGone = false;
+  var viewerId = (function () { try { var v = localStorage.getItem('codeplay_viewer_id'); if (!v) { v = (crypto.randomUUID ? crypto.randomUUID() : 'v' + Date.now() + Math.random().toString(36).slice(2)); localStorage.setItem('codeplay_viewer_id', v); } return v; } catch (e) { return 'v' + Math.random().toString(36).slice(2); } })();
+  var STORE = 'codeplay_chess_room';
+
+  /* ------------------------------------------------------------------ helpers */
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function icon(name, cls) { return window.cpIcon ? cpIcon(name, cls) : ''; }
+  var toastTimer;
+  function toast(msg, ms) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, ms || 2600); }
+  function play(cue) { if (window.CodePlayAudio) CodePlayAudio.play(cue); }
+  function buzz(ms) { if (navigator.vibrate && !REDUCED) try { navigator.vibrate(ms); } catch (e) { /* ignore */ } }
+  function other(c) { return c === 'w' ? 'b' : 'w'; }
+  function fmt(ms, running) {
+    var s = Math.max(0, ms) / 1000;
+    if (s >= 20 || !running) { var m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + (r < 10 ? '0' : '') + r; }
+    return s.toFixed(1);
+  }
+  function tcLabel(tc) { if (!tc || !tc.base) return 'No clock'; return (tc.base % 60 === 0 ? tc.base / 60 : (tc.base / 60).toFixed(1)) + ' min' + (tc.inc ? ' + ' + tc.inc + 's' : ''); }
+  var REASONS = { checkmate: 'checkmate', resign: 'resignation', timeout: 'time', 'timeout-draw': 'time, but no side can mate', stalemate: 'stalemate', insufficient: 'insufficient material', repetition: 'threefold repetition', 'fifty-move': 'the fifty-move rule', agreement: 'agreement', abandoned: 'abandonment', aborted: 'abort' };
+  function names() {
+    var n = { w: 'White', b: 'Black' };
+    if (isComputer) { n[myColor || 'w'] = profileName || 'You'; n[aiColor || 'b'] = 'Computer · Lv ' + level; return n; }
+    roomPlayers.forEach(function (p) { if (p.color) n[p.color] = p.name; });
+    return n;
+  }
+  function resultText(r) {
+    if (!r) return '';
+    var n = names();
+    if (r.reason === 'aborted') return 'Game aborted';
+    if (!r.winner) return 'Draw by ' + (REASONS[r.reason] || r.reason);
+    return n[r.winner] + (n[r.winner] === 'You' ? ' win' : ' wins') + ' by ' + (REASONS[r.reason] || r.reason);
+  }
+
+  /* ------------------------------------------------------------------ board */
+  var board = CPBoard.mount($('board'), {
+    onMove: function (from, to, promotion) { sendMove(from, to, promotion); },
+    pickPromotion: pickPromotion
+  });
+  function pickPromotion(color, to, orient) {
+    return new Promise(function (resolve) {
+      var host = $('promoHost'), file = 'abcdefgh'.indexOf(to[0]), rank = +to[1], x = orient === 'w' ? file : 7 - file, top = (orient === 'w' && rank === 8) || (orient === 'b' && rank === 1);
+      host.innerHTML = '';
+      var back = el('div', 'promoBack'), box = el('div', 'promo');
+      box.style.left = (x * 12.5) + '%'; box.style[top ? 'top' : 'bottom'] = '0';
+      var order = top ? ['q', 'n', 'r', 'b'] : ['b', 'r', 'n', 'q'];
+      var armed = false; setTimeout(function () { armed = true; }, 380);   // the click that follows the tap which opened the picker must not choose a piece
+      order.forEach(function (p) { var b = el('button', color + p.toUpperCase()); b.setAttribute('aria-label', 'Promote to ' + ({ q: 'queen', r: 'rook', b: 'bishop', n: 'knight' })[p]); b.onclick = function (ev) { ev.stopPropagation(); if (!armed) return; host.innerHTML = ''; resolve(p); }; box.appendChild(b); });
+      back.onclick = function () { if (!armed) return; host.innerHTML = ''; resolve(null); };
+      host.appendChild(back); host.appendChild(box);
+      var wrap = document.querySelector('.boardWrap'); host.style.cssText = 'position:absolute;inset:0;z-index:50';
+    });
+  }
+
+  /* ------------------------------------------------------------------ rendering */
+  function computeFens() {
+    if (fenCache && fenCache.n === state.san.length) return fenCache;
+    var c = new Chess(), fens = [c.fen()], lasts = [null];
+    state.san.forEach(function (s) { var m = c.move(s); fens.push(c.fen()); lasts.push({ from: m.from, to: m.to }); });
+    fenCache = { n: state.san.length, fens: fens, lasts: lasts }; return fenCache;
+  }
+  function orientation() { var base = myColor || 'w'; return manualFlip ? other(base) : base; }
+  function renderCaptured(box, color) {
+    box.innerHTML = '';
+    var list = (state.captured && state.captured[color]) || [], opp = other(color);
+    list.forEach(function (t) { var s = el('span', 'cp ' + opp + t.toUpperCase()); box.appendChild(s); });
+    var diff = state.material[color] - state.material[opp];
+    if (diff > 0) box.appendChild(el('span', 'md', '+' + diff));
+  }
+  function render(extra) {
+    extra = extra || {};
+    if (!state) return;
+    var n = names(), orient = orientation(), top = other(orient), bottom = orient;
+    board.setOrientation(orient);
+    // player bars
+    [['Top', top], ['Bottom', bottom]].forEach(function (pair) {
+      var pos = pair[0], c = pair[1];
+      $('name' + pos).textContent = n[c] + (myColor === c && !isComputer ? ' (you)' : '');
+      var av = $('av' + pos); av.className = 'av ' + c; av.textContent = (n[c] || '?').trim().charAt(0).toUpperCase() || '?';
+      var dot = isComputer ? null : roomPlayers.filter(function (p) { return p.color === c; })[0];
+      if (dot) { var i = el('i', dot.connected ? '' : 'off'); av.appendChild(i); }
+      renderCaptured($('cap' + pos), c);
+      $('bar' + pos).classList.toggle('turn', !state.gameOver && state.turn === c && review == null);
+    });
+    // board
+    var viewing = review != null ? computeFens() : null;
+    if (viewing) {
+      var fake = { fen: viewing.fens[review], turn: 'x', dests: {}, promos: [], last: viewing.lasts[review], check: null };
+      board.set(fake, { animate: extra.animate !== false });
+    } else {
+      board.set(state, { animate: extra.animate !== false && !extra.resync && !extra.first, hint: extra.hint });
+    }
+    var canMove = !!myColor && !state.gameOver && review == null && !spectatorMode && (isComputer ? !thinking : roomReady);
+    board.setInteractive(canMove, myColor);
+    renderStatus(extra); renderMoves(); renderActions(); updateClocks();
+    $('drawBanner').classList.toggle('show', !!(myColor && state.drawOffer && state.drawOffer !== myColor && !state.gameOver));
+    ['navFirst', 'navPrev', 'navNext', 'navLast'].forEach(function (id) { $(id).disabled = state.san.length === 0; });
+    $('navFirst').disabled = state.san.length === 0 || (review === 0);
+    $('navPrev').disabled = state.san.length === 0 || (review === 0);
+    $('navNext').disabled = review == null;
+    $('navLast').disabled = review == null;
+    if (state.gameOver && over.seq !== state.seq) { over.seq = state.seq; setTimeout(showGameOver, review == null ? 700 : 0); }
+    if (!state.gameOver) $('overModal').classList.remove('show');
+  }
+  function renderStatus(extra) {
+    var s = $('status'), msg = '', alert = false;
+    if (state.gameOver) msg = resultText(state.result);
+    else if (review != null) msg = 'Move ' + review + ' of ' + state.san.length + ' — tap ⏭ for the live position';
+    else if (spectatorMode) msg = names()[state.turn] + ' to move' + (state.check ? ' — check!' : '');
+    else if (state.drawOffer && state.drawOffer === myColor) msg = 'Draw offered — waiting for a reply…';
+    else if (state.turn === myColor) { msg = state.check ? 'Check! Your move' : 'Your move'; alert = !!state.check; }
+    else if (isComputer) msg = 'Computer is thinking…';
+    else if (opponentGone) { msg = 'Your opponent disconnected — they have 90 seconds to come back'; alert = true; }
+    else msg = 'Waiting for ' + names()[state.turn];
+    s.textContent = msg; s.classList.toggle('alert', alert);
+  }
+  function renderMoves() {
+    var box = $('moves'), san = state.san, cur = review != null ? review : san.length;
+    if (!san.length) { box.innerHTML = '<span class="none">Moves appear here</span>'; return; }
+    var html = '';
+    san.forEach(function (m, i) { if (i % 2 === 0) html += '<span class="mn">' + (i / 2 + 1) + '.</span>'; html += '<button class="mv' + (i + 1 === cur ? ' cur' : '') + '" data-ply="' + (i + 1) + '">' + m.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</button>'; });
+    box.innerHTML = html;
+    var c = box.querySelector('.cur'); if (c) box.scrollLeft = c.offsetLeft - box.clientWidth / 2 + c.clientWidth / 2;
+  }
+  $('moves').addEventListener('click', function (e) { var b = e.target.closest('.mv'); if (b) goReview(+b.dataset.ply); });
+  function goReview(ply) { if (!state) return; review = ply >= state.san.length ? null : Math.max(0, ply); render({ animate: true }); }
+  $('navFirst').onclick = function () { goReview(0); };
+  $('navPrev').onclick = function () { goReview((review == null ? state.san.length : review) - 1); };
+  $('navNext').onclick = function () { goReview((review == null ? state.san.length : review) + 1); };
+  $('navLast').onclick = function () { goReview(state.san.length); };
+  addEventListener('keydown', function (e) { if (!state || document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return; if (e.key === 'ArrowLeft') $('navPrev').click(); else if (e.key === 'ArrowRight') $('navNext').click(); else if (e.key === 'Escape') closeSheets(); });
+
+  /* clocks */
+  function setAnchor(st) { anchor = { w: st.clocks.w, b: st.clocks.b, running: st.running, at: Date.now(), timed: st.timeControl.base > 0 }; }
+  function liveClock(c) { if (!anchor) return 0; return anchor[c] - (anchor.running === c ? Date.now() - anchor.at : 0); }
+  var lastLowBeep = 0;
+  function updateClocks() {
+    if (!state || !anchor) return;
+    var orient = orientation();
+    [['Top', other(orient)], ['Bottom', orient]].forEach(function (pair) {
+      var node = $('clock' + pair[0]), c = pair[1];
+      if (!anchor.timed) { node.classList.add('none'); return; }
+      node.classList.remove('none');
+      var ms = Math.max(0, liveClock(c)), running = anchor.running === c && !state.gameOver;
+      node.textContent = fmt(ms, running);
+      node.classList.toggle('run', running); node.classList.toggle('low', running && ms < 10000);
+      if (running && ms < 10000 && c === myColor && Date.now() - lastLowBeep > 1000 && ms > 0) { lastLowBeep = Date.now(); play('chess-low'); }
+    });
+  }
+  setInterval(function () {
+    updateClocks();
+    if (isComputer && game && !game.gameOver) { var f = game.tick(Date.now()); if (f || game.gameOver) applyLocal({}); }
+  }, 100);
+
+  function renderActions() {
+    var box = $('actions'); box.innerHTML = '';
+    var plies = state.san.length, ended = state.gameOver;
+    function act(id, ic, label, fn, opts) { opts = opts || {}; var b = el('button', 'act' + (opts.danger ? ' danger' : '')); b.innerHTML = icon(ic) + '<span>' + label + '</span>'; b.disabled = !!opts.disabled; b.onclick = fn; b.id = id; box.appendChild(b); }
+    act('aFlip', 'flip', 'Flip', function () { manualFlip = !manualFlip; render({ animate: false }); });
+    if (spectatorMode) { act('aShare', 'share', 'Share', function () { openSheet('watch'); }); return; }
+    if (isComputer) {
+      act('aUndo', 'undo', 'Undo', undoMove, { disabled: ended || plies < 2 || !!anchor.timed || thinking });
+      act('aHint', 'bulb', 'Hint', hint, { disabled: ended || thinking || state.turn !== myColor });
+      act('aDraw', 'handshake', 'Draw', offerDrawToComputer, { disabled: ended || plies < 2 || thinking });
+    } else {
+      act('aDraw', 'handshake', 'Draw', function () { socket.emit('chess:offer-draw', { code: roomCode }); toast('Draw offered'); }, { disabled: ended || plies < 2 || !!state.drawOffer });
+      act('aShare', 'share', 'Invite', function () { openSheet('watch'); });
+    }
+    act('aResign', 'flag', plies < 2 ? 'Abort' : 'Resign', function () { askConfirm(plies < 2 ? 'Abort this game?' : 'Resign this game?', plies < 2 ? 'No result will be recorded.' : 'Your opponent will win.', plies < 2 ? 'Abort' : 'Resign', resign); }, { danger: true, disabled: ended });
+  }
+  function askConfirm(title, text, yes, fn) {
+    $('confirmTitle').textContent = title; $('confirmText').textContent = text; $('confirmYes').textContent = yes;
+    $('confirmModal').classList.add('show');
+    $('confirmNo').onclick = function () { $('confirmModal').classList.remove('show'); };
+    $('confirmYes').onclick = function () { $('confirmModal').classList.remove('show'); fn(); };
+  }
+
+  /* ------------------------------------------------------------------ game over */
+  function showGameOver() {
+    if (!state || !state.gameOver) return;
+    var r = state.result, t = $('overTitle'), sub = $('overSub'), actions = $('overActions');
+    var mine = r.winner && myColor === r.winner, lost = r.winner && myColor && myColor !== r.winner;
+    t.className = 'resultBig' + (mine ? ' win' : lost ? ' loss' : '');
+    t.textContent = r.reason === 'aborted' ? 'Game aborted' : !r.winner ? 'Draw' : spectatorMode ? names()[r.winner] + ' wins' : mine ? 'You won!' : 'You lost';
+    sub.textContent = r.reason === 'aborted' ? '' : resultText(r);
+    actions.innerHTML = '';
+    function btn(cls, ic, label, fn) { var b = el('button', 'resultAction ' + cls); b.innerHTML = (ic ? icon(ic) + ' ' : '') + label; b.onclick = fn; actions.appendChild(b); return b; }
+    if (!spectatorMode) btn('primary', 'refresh', 'Rematch', function () { requestRematch(); });
+    btn('', 'book', 'PGN', copyPgn);
+    btn('', 'eye', 'Review', function () { $('overModal').classList.remove('show'); goReview(state.san.length ? state.san.length - 1 : 0); });
+    btn('', 'home', 'Home', function () { location.href = '/'; });
+    $('overRematch').textContent = '';
+    $('overModal').classList.add('show');
+    if (mine) buzz([30, 40, 30, 40, 60]);
+  }
+  $('overModal').addEventListener('click', function (e) { if (e.target === $('overModal')) $('overModal').classList.remove('show'); });
+  function pgnText() {
+    var n = names(), res = !state.result ? '*' : state.result.winner === 'w' ? '1-0' : state.result.winner === 'b' ? '0-1' : '1/2-1/2', out = '';
+    out += '[Event "CodePlay game"]\n[Site "CodePlay"]\n[Date "' + new Date().toISOString().slice(0, 10).replace(/-/g, '.') + '"]\n[White "' + n.w + '"]\n[Black "' + n.b + '"]\n[Result "' + res + '"]\n\n';
+    state.san.forEach(function (m, i) { out += (i % 2 === 0 ? (i / 2 + 1) + '. ' : '') + m + ' '; });
+    return out + res;
+  }
+  function copyPgn() { copyText(pgnText(), 'Game copied — paste it into Lichess to analyse'); }
+  function copyText(text, ok) {
+    function fb() { var t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(t); t.select(); var done = false; try { done = document.execCommand('copy'); } catch (e) { /* ignore */ } t.remove(); if (done) toast(ok); else window.prompt('Copy this', text); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(ok); }).catch(fb); else fb();
+  }
+  $('pgnMenu').onclick = function () { closeSheets(); if (state) copyPgn(); };
+
+  /* ------------------------------------------------------------------ moves (local game and network) */
+  function sendMove(from, to, promotion) {
+    review = null;
+    board.setInteractive(false, myColor);
+    if (isComputer) {
+      var r = game.move(myColor, { from: from, to: to, promotion: promotion }, Date.now());
+      if (!r.ok) { toast('That move is not allowed'); return applyLocal({ animate: true }); }
+      cueLocal(r.move); applyLocal({ moved: true }); scheduleAI();
+    } else { socket.emit('chess:move', { code: roomCode, from: from, to: to, promotion: promotion }); }
+  }
+  function cueLocal(m) {
+    var st = game.toJSON(Date.now()), cue = st.result ? 'chess-end' : st.check ? 'chess-check' : m.promotion ? 'chess-promote' : /[kq]/.test(m.flags || '') ? 'chess-castle' : m.captured ? 'chess-capture' : 'chess-move';
+    play(cue); if (st.check) buzz(35); else if (m.captured) buzz(15);
+  }
+  function applyLocal(extra) { var st = game.toJSON(Date.now()); applyState(st, extra || {}); }
+  function applyState(st, extra) {
+    extra = extra || {};
+    var newMove = !state || st.plies !== state.plies || st.fen !== state.fen;
+    if (state && st.plies < state.plies) { fenCache = null; }
+    state = st; setAnchor(st);
+    if (review != null && newMove && st.plies !== (extra.keepReview ? st.plies : 0)) review = null;
+    if (!isComputer && newMove) { /* sounds come from the server (game-audio) so every screen hears the same thing */ }
+    if (extra.first && st.plies === 0) over.seq = -1;
+    render(extra);
+    if (!st.gameOver && myColor && st.turn === myColor && lastTurnCue !== st.plies + ':' + st.seq && st.plies > 0 && !spectatorMode) { lastTurnCue = st.plies + ':' + st.seq; if (document.hidden) document.title = '♟️ Your move! — CodePlay Chess'; buzz(18); }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) document.title = 'CodePlay Chess'; });
+
+  function resign() {
+    if (isComputer) { var r = game.plies() < 2 ? game.abort() : game.resign(myColor); play('chess-end'); applyLocal({}); }
+    else socket.emit('chess:resign', { code: roomCode });
+  }
+  function requestRematch() {
+    if (isComputer) { $('overModal').classList.remove('show'); newComputerGame(true); return; }
+    myRematch = true; socket.emit('chess:rematch', { code: roomCode }); $('overRematch').textContent = 'Waiting for your opponent…';
+  }
+  $('drawYes').onclick = function () { socket.emit('chess:respond-draw', { code: roomCode, accept: true }); };
+  $('drawNo').onclick = function () { socket.emit('chess:respond-draw', { code: roomCode, accept: false }); };
+
+  /* ------------------------------------------------------------------ vs computer */
+  function getWorker() { if (!worker) { worker = new Worker('/chess-worker.js'); worker.onmessage = onWorker; } return worker; }
+  var pending = {};
+  function ask(payload) { return new Promise(function (resolve) { var id = ++thinkId; pending[id] = resolve; payload.id = id; getWorker().postMessage(payload); }); }
+  function onWorker(e) { var d = e.data, f = pending[d.id]; if (f) { delete pending[d.id]; f(d); } }
+  function uciHistory() { return game.moves.map(function (m) { return m.from + m.to + (m.promotion || ''); }); }
+  function scheduleAI() {
+    if (!isComputer || game.gameOver || game.turn() !== aiColor) return;
+    thinking = true; var started = Date.now(), my = ++thinkId; thinkToken = my;
+    render({}); // status "thinking" and a locked board
+    ask({ fen: startFen || undefined, moves: uciHistory(), level: level }).then(function (d) {
+      if (thinkToken !== my || !game || game.gameOver) return;
+      var wait = Math.max(0, 550 - (Date.now() - started));
+      clearTimeout(aiTimer);
+      aiTimer = setTimeout(function () {
+        if (thinkToken !== my || !game || game.gameOver) return;
+        thinking = false;
+        if (!d.result) { applyLocal({}); return; }
+        var u = d.result.move, r = game.move(aiColor, { from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] }, Date.now());
+        if (r.ok) cueLocal(r.move);
+        applyLocal({ moved: true });
+      }, wait);
+    });
+  }
+  var thinkToken = 0, startFen = '';
+  function undoMove() {
+    if (!game || thinking || game.moves.length < 2 || anchorTimed()) return;
+    var keep = game.moves.slice(0, game.moves.length - (game.turn() === myColor ? 2 : 1));
+    var g = new G.ChessGame({ base: 0, inc: 0 });
+    keep.forEach(function (m) { g.move(m.color, { from: m.from, to: m.to, promotion: m.promotion }, Date.now()); });
+    game = g; review = null; fenCache = null; applyLocal({ animate: true });
+    if (game.turn() === aiColor) scheduleAI();
+  }
+  function anchorTimed() { return anchor && anchor.timed; }
+  function hint() {
+    if (!game || game.gameOver || thinking || game.turn() !== myColor) return;
+    toast('Thinking…', 900);
+    ask({ fen: startFen || undefined, moves: uciHistory(), level: 5, movetime: 700 }).then(function (d) { if (d.result) { var u = d.result.move; render({ hint: { from: u.slice(0, 2), to: u.slice(2, 4) }, animate: false }); setTimeout(function () { if (state && !state.gameOver) render({ animate: false }); }, 2600); } });
+  }
+  function newComputerGame(swap) {
+    var pref = params.get('side') || 'random';
+    if (swap && myColor) pref = other(myColor); else if (pref !== 'w' && pref !== 'b') pref = Math.random() < 0.5 ? 'w' : 'b';
+    myColor = pref; aiColor = other(myColor); manualFlip = false; review = null; fenCache = null; thinking = false; thinkToken++; over.seq = -1;
+    var tc = G.normalizeTimeControl({ base: +params.get('base') || 0, inc: +params.get('inc') || 0 });
+    startFen = params.get('fen') || '';
+    game = new G.ChessGame({ base: tc.base, inc: tc.inc, fen: startFen || undefined });
+    tcInfo = tc; roomReady = true; $('waiting').classList.remove('show'); $('game').classList.add('show');
+    $('roomSub').textContent = 'vs Computer · Level ' + level;
+    board.clear(); applyLocal({ first: true }); play('chess-start');
+    if (aiColor === 'w') scheduleAI();
+  }
+  // draw offers: the computer accepts when it is worse off (or the game has dragged on in an equal position)
+  function offerDrawToComputer() {
+    toast('Draw offered');
+    ask({ fen: startFen || undefined, moves: uciHistory(), level: 3, movetime: 300 }).then(function (d) {
+      var s = d.result ? d.result.score : 0, aiToMove = game.turn() === aiColor, aiScore = aiToMove ? s : -s;
+      if (aiScore <= -80 || (aiScore <= 15 && game.plies() > 60)) { game.drawOffer = myColor; game.respondDraw(aiColor, true); play('chess-end'); applyLocal({}); }
+      else toast('The computer declined the draw');
+    });
+  }
+
+  /* ------------------------------------------------------------------ names */
+  function isGuestName(n) { return !n || String(n).trim().toLowerCase() === 'guest'; }
+  function savedName() { try { var n = (localStorage.getItem('codeplay_name') || localStorage.getItem('codeplay_viewer_name') || '').trim(); if (!isGuestName(n)) return n; var gp = JSON.parse(localStorage.getItem('codeplay_guest_profile') || 'null'); if (gp && !isGuestName(gp.name)) return String(gp.name).trim(); } catch (e) { /* ignore */ } return ''; }
+  function rememberName(n) { try { localStorage.setItem('codeplay_name', n); localStorage.setItem('codeplay_viewer_name', n); var gp = JSON.parse(localStorage.getItem('codeplay_guest_profile') || 'null'); if (gp) { gp.name = n; localStorage.setItem('codeplay_guest_profile', JSON.stringify(gp)); } } catch (e) { /* ignore */ } }
+  function ensureName() {
+    return new Promise(function (resolve) {
+      if (isComputer && isGuestName(profileName)) profileName = savedName() || 'You';
+      if (!isGuestName(profileName)) { rememberName(profileName); return resolve(); }
+      var s = savedName(); if (s) { profileName = s; return resolve(); }
+      $('nameTitle').textContent = spectatorMode ? 'Watch live' : "What's your name?";
+      $('nameSub').textContent = spectatorMode ? 'What should we call you in the chat?' : 'Your opponent will see it at the board.';
+      $('nameGo').textContent = spectatorMode ? 'Start watching' : "Let's play";
+      $('nameModal').classList.add('show'); setTimeout(function () { try { $('nameInput').focus(); } catch (e) { /* ignore */ } }, 300);
+      var go = function () { var v = String($('nameInput').value || '').trim().slice(0, 24); if (!v) { $('nameInput').focus(); return; } profileName = v; rememberName(v); $('nameModal').classList.remove('show'); resolve(); };
+      $('nameGo').onclick = go; $('nameInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+    });
+  }
+
+  /* ------------------------------------------------------------------ waiting / blocked screens */
+  function inviteUrl() { return location.origin + '/chess.html?mode=friends&action=join&code=' + encodeURIComponent(roomCode); }
+  function watchUrl() { var u = new URL(location.origin + '/chess.html'); u.searchParams.set('mode', 'watch'); u.searchParams.set('action', 'spectate'); u.searchParams.set('code', roomCode); if (watchToken) u.searchParams.set('watchToken', watchToken); return u.toString(); }
+  function showWaiting(text, o) {
+    o = o || {}; var w = $('waiting');
+    $('game').classList.remove('show'); w.classList.add('show');
+    $('waitText').textContent = text; $('waitSpin').style.display = o.spin === false ? 'none' : 'block';
+    var rc = $('roomCode'); rc.style.display = o.code ? 'block' : 'none'; rc.textContent = o.code || '';
+    var chip = $('tcChip'); chip.style.display = o.chip ? 'inline-flex' : 'none'; chip.innerHTML = o.chip ? icon('timer') + ' ' + o.chip : '';
+    $('inviteBtn').style.display = o.invite ? 'flex' : 'none'; $('copyInviteBtn').style.display = o.invite ? 'flex' : 'none'; $('waitHome').style.display = o.home ? 'flex' : 'none';
+  }
+  function showBlocked(title, text) { showWaiting(text, { spin: false, home: true }); $('roomCode').style.display = 'block'; $('roomCode').style.fontSize = '24px'; $('roomCode').style.letterSpacing = '0'; $('roomCode').textContent = title; }
+  $('waitHome').onclick = function () { location.href = '/'; };
+  $('inviteBtn').onclick = function () { window.open('https://wa.me/?text=' + encodeURIComponent('♟️ Play chess with me on CodePlay!\nRoom ' + roomCode + '\n' + inviteUrl()), '_blank', 'noopener'); };
+  $('copyInviteBtn').onclick = function () { copyText(inviteUrl(), 'Invite link copied'); };
+  $('homeBtn').onclick = function () { location.href = '/'; };
+
+  var FRIENDLY = {
+    'spectator-access-denied': ['Link-only match', 'This match can only be watched with the host’s watch link. Ask the host to send it to you.'],
+    'spectating-disabled': ['Watching is off', 'The host has turned off watching for this match.'],
+    'room-not-found': ['Match not found', 'This room does not exist or the match has already ended.'],
+    'room-full': ['Room is full', 'This game already has both players. You can watch it if the host allows viewers.'],
+    'audience-full': ['Audience is full', 'This match has reached its viewer limit. Try again in a moment.']
+  };
+  var SOFT = { 'not-your-turn': 'Wait for your turn', 'illegal-move': 'That move is not allowed', 'chat-disabled': 'The host turned chat off for viewers.', muted: 'The host muted you in this chat.', 'chat-rate-limit': 'Slow down a little', 'empty-message': 'Type a message first.', 'not-host': 'Only the host can change that.', 'cannot-offer-draw': 'You can offer a draw after the first moves', 'game-over': 'The game is over' };
+
+  /* ------------------------------------------------------------------ networking */
+  function saveRoom() { try { sessionStorage.setItem(STORE, JSON.stringify({ code: roomCode, token: playerToken })); } catch (e) { /* ignore */ } }
+  function connect() {
+    fetch('/api/config/public').then(function (r) { return r.json(); }).catch(function () { return {}; }).then(function (cfg) {
+      var url = window.CODEPLAY_SOCKET_URL || (cfg && cfg.socketUrl) || location.origin;
+      socket = io(url, { transports: ['websocket', 'polling'], reconnection: true, reconnectionAttempts: Infinity });
+      wire(socket);
+    });
+  }
+  function wire(s) {
+    s.on('connect', function () {
+      if (spectatorMode) { s.emit('chess:spectate', { code: requestedCode, watchToken: watchToken, name: profileName || 'Guest', viewerId: viewerId }); return; }
+      if (roomCode && playerToken) { s.emit('chess:reconnect', { code: roomCode, playerToken: playerToken }); showWaiting('Reconnecting…'); return; }
+      if (ACTION === 'create') { s.emit('chess:create-room', { name: profileName, color: params.get('side') || 'random', base: +params.get('base') || 0, inc: +params.get('inc') || 0, visibility: params.get('visibility') || undefined, chatEnabled: params.get('chat') || undefined }); showWaiting('Creating your room…'); return; }
+      if (requestedCode) { s.emit('chess:join-room', { code: requestedCode, name: profileName }); showWaiting('Joining room ' + requestedCode + '…'); return; }
+      showBlocked('No room', 'Open a game link or create a room from the home page.');
+    });
+    s.on('disconnect', function (reason) { if (reason === 'io client disconnect') return; $('status').textContent = 'Connection lost — reconnecting…'; });
+    s.on('chess:created', function (x) {
+      roomCode = x.code; playerToken = x.playerToken; myIndex = 0; tcInfo = x.timeControl; roomReady = true; saveRoom();
+      try { history.replaceState({}, '', location.pathname + '?mode=friends&action=reconnect&code=' + encodeURIComponent(roomCode)); } catch (e) { /* ignore */ }
+      if (x.audience) { watchToken = x.audience.spectatorToken || watchToken; setAudience(x.audience); }
+      $('roomSub').textContent = 'Room ' + roomCode;
+      showWaiting('Waiting for your opponent…', { code: roomCode, chip: tcLabel(x.timeControl) + ' · you play ' + (x.colorPref === 'w' ? 'White' : x.colorPref === 'b' ? 'Black' : 'a random colour'), invite: true });
+      renderTop();
+    });
+    s.on('chess:joined', function (x) {
+      roomCode = x.code; playerToken = x.playerToken || playerToken; myIndex = x.index; tcInfo = x.timeControl; roomReady = true; roomPlayers = x.players || roomPlayers; saveRoom();
+      try { history.replaceState({}, '', location.pathname + '?mode=friends&action=reconnect&code=' + encodeURIComponent(roomCode)); } catch (e) { /* ignore */ }
+      if (x.audience) { if (x.audience.spectatorToken) watchToken = x.audience.spectatorToken; setAudience(x.audience); }
+      $('roomSub').textContent = 'Room ' + roomCode;
+      if (!x.started) showWaiting('Waiting for your opponent…', { code: roomCode, chip: tcLabel(x.timeControl), invite: true });
+      renderTop();
+    });
+    s.on('chess:state', function (x) {
+      var wasFirst = !state;
+      myIndex = x.index; myColor = x.color || null; roomPlayers = x.players || roomPlayers;
+      var me = roomPlayers.filter(function (p) { return p.index === myIndex; })[0], opp = roomPlayers.filter(function (p) { return p.index !== myIndex; }).filter(function (p) { return !spectatorMode || false; })[0];
+      opponentGone = !spectatorMode && !!roomPlayers.filter(function (p) { return p.index !== myIndex && !p.connected; }).length && !x.state.gameOver && x.state.plies > 1;
+      $('waiting').classList.remove('show'); $('game').classList.add('show'); roomReady = true;
+      $('roomSub').textContent = (spectatorMode ? 'Watching · ' : 'Room ') + roomCode;
+      if (x.event === 'rematch-started' || x.started) { over.seq = -1; review = null; fenCache = null; myRematch = false; $('overModal').classList.remove('show'); if (state && state.plies > 0) board.clear(); }
+      if (x.event === 'draw-offered' && x.by !== myColor && myColor) { toast('Your opponent offers a draw'); buzz(30); }
+      if (x.event === 'draw-declined') toast('Draw declined');
+      if (x.event === 'rematch-requested' && $('overModal').classList.contains('show') && !myRematch) $('overRematch').textContent = 'Your opponent wants a rematch';
+      if (x.event === 'opponent-disconnected' && x.who !== myIndex) toast('Your opponent disconnected', 3200);
+      if (x.rejected) { /* the table was re-sent after a refused move: nothing else to do */ }
+      applyState(x.state, { first: wasFirst || x.started || x.event === 'rematch-started', resync: !!x.resync, animate: !x.resync });
+      renderTop();
+    });
+    s.on('chess:error', function (x) {
+      var m = x && x.message;
+      if (SOFT[m]) { toast(SOFT[m]); if (state) render({ animate: true }); return; }
+      if (m === 'invalid-reconnect-token') { playerToken = ''; try { sessionStorage.removeItem(STORE); } catch (e) { /* ignore */ } if (requestedCode) { s.emit('chess:join-room', { code: requestedCode || roomCode, name: profileName }); return; } }
+      if (FRIENDLY[m]) { showBlocked(FRIENDLY[m][0], FRIENDLY[m][1]); return; }
+      toast(String(m || 'Something went wrong'));
+    });
+    s.on('chess:session-replaced', function () { try { s.io.opts.reconnection = false; } catch (e) { /* ignore */ } showWaiting('This game was opened on another tab or device. Only one screen can play a seat at a time.', { spin: false, home: true }); var b = $('copyInviteBtn'); b.style.display = 'flex'; b.innerHTML = icon('refresh') + ' Play here instead'; b.onclick = function () { location.reload(); }; });
+    s.on('game-audio', function (x) { play(x.cue); });
+    s.on('chess:spectator-joined', function (x) {
+      roomReady = true; roomCode = x.code || requestedCode; tcInfo = x.timeControl; roomPlayers = x.players || [];
+      if (x.you) { myKey = x.you.key; profileName = x.you.name || profileName; }
+      setAudience(x.audience); renderTop();
+      if (!x.started) showWaiting('Waiting for the players to start…', { code: roomCode, chip: tcLabel(x.timeControl), home: true });
+    });
+    s.on('chess:spectator-ended', function (x) { closeSheets(); roomReady = false; renderTop(); var f = x && x.reason === 'spectating-disabled' ? FRIENDLY['spectating-disabled'] : ['Link-only now', 'The host switched this match to link-only. Ask them for the watch link to keep watching.']; showBlocked(f[0], f[1]); });
+    s.on('chess:audience-info', function (x) { setAudience(x); });
+    s.on('chess:audience-host', function (x) { setAudience(x); });
+    s.on('chess:chat-message', onChat);
+    s.on('chess:feed', function (f) { feedItems.push(f); feedItems = feedItems.slice(-40); if (watchOpen) renderWatchSheet(); });
+  }
+  addEventListener('online', function () { if (socket && !socket.connected) socket.connect(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden || !socket || isComputer) return;
+    if (!socket.connected) { socket.connect(); return; }
+    if (roomCode && !spectatorMode) socket.emit('chess:request-sync', { code: roomCode });
+  });
+  // safety net: while waiting on the opponent, quietly confirm the table (a lost message must never freeze a game)
+  setInterval(function () { if (!socket || !socket.connected || isComputer || !state || state.gameOver || document.hidden || !roomCode) return; if (state.turn !== myColor || spectatorMode) socket.emit('chess:request-sync', { code: roomCode }); }, 8000);
+
+  /* ------------------------------------------------------------------ audience: viewers, share, chat */
+  var chatOpen = false, watchOpen = false;
+  function isHost() { return !spectatorMode && !isComputer && myIndex === 0; }
+  function renderTop() {
+    var friends = !isComputer;
+    $('watchTopBtn').classList.toggle('show', friends && roomReady);
+    $('chatTopBtn').style.display = friends && roomReady ? 'inline-flex' : 'none';
+    $('watchMenuBtn').style.display = friends && roomReady ? 'flex' : 'none';
+    $('watchCount').textContent = String(aud.viewerCount || 0);
+    var d = $('chatDot'); d.textContent = unread > 9 ? '9+' : String(unread); d.classList.toggle('show', unread > 0 && !chatOpen);
+  }
+  function setAudience(info) {
+    if (!info) return;
+    ['viewerCount', 'totalViews', 'visibility', 'chatEnabled'].forEach(function (k) { if (info[k] !== undefined) aud[k] = info[k]; });
+    if (Array.isArray(info.audience)) aud.audience = info.audience;
+    if (Array.isArray(info.muted)) aud.muted = info.muted;
+    if (info.spectatorToken) watchToken = info.spectatorToken;
+    if (Array.isArray(info.chat)) { chatMessages = info.chat.slice(-100); renderChat(); }
+    if (Array.isArray(info.feed)) { feedItems = info.feed.slice(-40); }
+    renderTop(); renderChatState(); if (watchOpen) renderWatchSheet();
+  }
+  function openSheet(which) {
+    closeSheets(true); chatOpen = which === 'chat'; watchOpen = which === 'watch';
+    $('sheetBack').classList.add('show'); (chatOpen ? $('chatSheet') : $('watchSheet')).classList.add('show');
+    if (chatOpen) { unread = 0; renderChat(); renderChatState(); } else renderWatchSheet();
+    renderTop();
+  }
+  function openMenu() { closeSheets(true); $('sheetBack').classList.add('show'); $('menuSheet').classList.add('show'); }
+  function closeSheets(keepBack) {
+    ['menuSheet', 'watchSheet', 'chatSheet'].forEach(function (id) { $(id).classList.remove('show'); });
+    if (!keepBack) $('sheetBack').classList.remove('show');
+    chatOpen = false; watchOpen = false; if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); renderTop();
+  }
+  function setOpt(patch) { Object.assign(aud, patch); renderWatchSheet(); if (socket && roomCode) socket.emit('chess:set-audience-options', Object.assign({ code: roomCode }, patch)); }
+  function switchRow(title, desc, on, tap) { var row = el('button', 'switchRow'); row.setAttribute('role', 'switch'); row.setAttribute('aria-checked', on ? 'true' : 'false'); var t = el('div'); t.appendChild(el('b', null, title)); t.appendChild(el('span', 'd', desc)); row.appendChild(t); row.appendChild(el('span', 'switch' + (on ? ' on' : ''))); row.onclick = tap; return row; }
+  function shareText() { return '♟️ ' + (spectatorMode ? 'I’m watching' : 'Watch my') + ' chess game live on CodePlay!\nRoom ' + roomCode + '\n' + watchUrl(); }
+  function renderWatchSheet() {
+    var body = $('watchBody'); body.innerHTML = ''; var host = isHost(), vis = aud.visibility;
+    $('watchTitle').textContent = spectatorMode ? 'You’re watching' : 'Watch & share';
+    var stats = el('div', 'statRow'); stats.appendChild(el('span', 'statChip', aud.viewerCount + ' watching now')); stats.appendChild(el('span', 'statChip', aud.totalViews + ' total views')); body.appendChild(stats);
+    if (!spectatorMode) {
+      body.appendChild(el('div', 'secTitle', 'Invite your opponent'));
+      var inv = el('div', 'shareBtns'), wa = el('button', 'bigBtn wa'); wa.innerHTML = icon('whatsapp') + ' Invite on WhatsApp'; wa.onclick = function () { $('inviteBtn').click(); };
+      var cp = el('button', 'bigBtn'); cp.innerHTML = icon('link') + ' Copy invite link'; cp.onclick = function () { copyText(inviteUrl(), 'Invite link copied'); };
+      inv.appendChild(wa); inv.appendChild(cp); body.appendChild(inv);
+    }
+    if (vis === 'private' && !spectatorMode) body.appendChild(el('div', 'hintTxt', 'Watching is turned off, so nobody can join as a viewer.'));
+    else {
+      body.appendChild(el('div', 'secTitle', spectatorMode ? 'Invite friends to watch' : 'Share for spectators'));
+      var btns = el('div', 'shareBtns'), w2 = el('button', 'bigBtn'), c2 = el('button', 'bigBtn'), m2 = el('button', 'bigBtn');
+      w2.innerHTML = icon('whatsapp') + ' WhatsApp'; w2.onclick = function () { window.open('https://wa.me/?text=' + encodeURIComponent(shareText()), '_blank', 'noopener'); };
+      c2.innerHTML = icon('link') + ' Copy link'; c2.onclick = function () { copyText(watchUrl(), 'Watch link copied'); };
+      m2.innerHTML = icon('share') + ' More…'; m2.style.gridColumn = '1/-1'; m2.onclick = function () { if (navigator.share) navigator.share({ title: 'CodePlay Chess — watch live', text: shareText().split('\n')[0], url: watchUrl() }).catch(function () { /* cancelled */ }); else copyText(watchUrl(), 'Watch link copied'); };
+      btns.appendChild(w2); btns.appendChild(c2); btns.appendChild(m2); body.appendChild(btns); body.appendChild(el('div', 'linkBox', watchUrl()));
+    }
+    if (host) {
+      body.appendChild(el('div', 'secTitle', 'Who can watch')); var seg = el('div', 'seg');
+      [['public', 'globe', 'Public'], ['link', 'link', 'Link only'], ['private', 'lock', 'Off']].forEach(function (o) { var b = el('button', vis === o[0] ? 'on' : ''); b.innerHTML = icon(o[1]) + '<span>' + o[2] + '</span>'; b.onclick = function () { if (aud.visibility !== o[0]) setOpt({ visibility: o[0] }); }; seg.appendChild(b); });
+      body.appendChild(seg);
+      body.appendChild(el('div', 'hintTxt', vis === 'public' ? 'Anyone can find this match under “Watch live”.' : vis === 'link' ? 'Only people with your private watch link can watch. Recommended.' : 'Nobody can watch. Anyone already watching is removed.'));
+      body.appendChild(el('div', 'secTitle', 'Viewer options'));
+      body.appendChild(switchRow('Allow viewer chat', 'Players can always chat.', aud.chatEnabled, function () { setOpt({ chatEnabled: !aud.chatEnabled }); }));
+    }
+    body.appendChild(el('div', 'secTitle', 'Watching now (' + aud.audience.length + ')'));
+    if (!aud.audience.length) body.appendChild(el('div', 'emptyTxt', 'No viewers yet. Share the link to invite friends!'));
+    aud.audience.slice(0, 60).forEach(function (v) {
+      var row = el('div', 'viewerRow'); row.appendChild(el('span', null, v.name + (v.key === myKey ? ' (you)' : '')));
+      if (host) { var muted = aud.muted.indexOf(v.key) >= 0, b = el('button', 'smallBtn' + (muted ? ' on' : ''), muted ? 'Unmute' : 'Mute'); b.onclick = function () { socket.emit('chess:mute-viewer', { code: roomCode, key: v.key, muted: !muted }); }; row.appendChild(b); }
+      body.appendChild(row);
+    });
+    body.appendChild(el('div', 'secTitle', 'Recent activity'));
+    if (!feedItems.length) body.appendChild(el('div', 'emptyTxt', 'Moves will appear here as the game goes on.'));
+    feedItems.slice(-10).reverse().forEach(function (f) { body.appendChild(el('div', 'fi', f.text)); });
+  }
+  var BADGE = { host: 'HOST', player: 'PLAYER', spectator: 'VIEWER' };
+  function renderChat() {
+    var box = $('chatMessages'); box.innerHTML = '';
+    if (!chatMessages.length) { box.appendChild(el('div', 'emptyTxt', 'No messages yet — say hi')); return; }
+    chatMessages.slice(-60).forEach(function (m) {
+      var row = el('div', 'chatMsg ' + (m.role || 'spectator')); row.appendChild(el('span', 'badge ' + (m.role || 'spectator'), BADGE[m.role] || BADGE.spectator));
+      row.appendChild(el('b', null, (m.name || 'Guest') + ': ')); row.appendChild(el('span', null, m.text || ''));
+      if (isHost() && m.role === 'spectator' && m.key) { var mt = aud.muted.indexOf(m.key) >= 0, b = el('button', 'mute', mt ? 'unmute' : 'mute'); b.onclick = function () { socket.emit('chess:mute-viewer', { code: roomCode, key: m.key, muted: !mt }); }; row.appendChild(b); }
+      box.appendChild(row);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+  function renderChatState() { var off = spectatorMode && !aud.chatEnabled; $('chatInput').disabled = off; $('chatSend').disabled = off; $('chatInput').placeholder = off ? 'Chat is off for viewers' : 'Say something…'; $('chatNote').textContent = off ? 'The host turned chat off for viewers.' : ''; $('chatNote').classList.toggle('show', off); }
+  function onChat(m) { chatMessages.push(m); chatMessages = chatMessages.slice(-100); var mine = spectatorMode ? (m.role === 'spectator' && m.key && m.key === myKey) : (m.role !== 'spectator' && m.name === profileName); if (chatOpen) renderChat(); else if (!mine) { unread++; renderTop(); } }
+  function sendChat() { var t = String($('chatInput').value || '').trim(); if (!t || !socket || !roomCode) return; socket.emit('chess:chat-message', { code: roomCode, text: t }); $('chatInput').value = ''; }
+
+  $('menuBtn').onclick = openMenu; $('menuClose').onclick = function () { closeSheets(); };
+  $('watchTopBtn').onclick = function () { openSheet('watch'); }; $('watchMenuBtn').onclick = function () { openSheet('watch'); };
+  $('chatTopBtn').onclick = function () { openSheet('chat'); };
+  $('watchClose').onclick = function () { closeSheets(); }; $('chatClose').onclick = function () { closeSheets(); }; $('sheetBack').onclick = function () { closeSheets(); };
+  $('chatSend').onclick = sendChat; $('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
+  $('flipMenu').onclick = function () { closeSheets(); manualFlip = !manualFlip; if (state) render({ animate: false }); };
+  if (window.visualViewport) { var upd = function () { var vv = window.visualViewport; document.documentElement.style.setProperty('--kb', Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + 'px'); }; visualViewport.addEventListener('resize', upd); visualViewport.addEventListener('scroll', upd); }
+
+  /* ------------------------------------------------------------------ start */
+  level = Math.max(1, Math.min(6, +params.get('level') || 3));
+  if (!isComputer) {
+    try { var saved = JSON.parse(sessionStorage.getItem(STORE) || 'null'); if (saved && saved.token && !spectatorMode && (ACTION === 'create' || ACTION === 'reconnect' || saved.code === requestedCode)) { roomCode = saved.code; playerToken = saved.token; if (!requestedCode) requestedCode = saved.code; } } catch (e) { /* ignore */ }
+  }
+  var needsName = !(roomCode && playerToken);
+  (needsName ? ensureName() : Promise.resolve()).then(function () {
+    if (isComputer) newComputerGame(false);
+    else { showWaiting('Connecting…'); connect(); }
+  });
+  window.__chess = { get state() { return state; }, get game() { return game; }, board: board };
+})();
+</script>
+</body>
+</html>

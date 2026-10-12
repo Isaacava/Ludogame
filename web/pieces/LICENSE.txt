@@ -1,0 +1,6 @@
+Chess piece graphics ("cburnett" set) — Copyright Colin M.L. Burnett (Wikimedia Commons, "Cburnett").
+Published by the author under a choice of GFDL, BSD and GPL licences. CodePlay uses them under the BSD licence option.
+Source: https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
+
+BSD licence (as chosen): redistribution and use, with or without modification, are permitted provided that this
+copyright notice and attribution are retained. The graphics are provided "as is", without warranty of any kind.

@@ -1,0 +1,11 @@
+Third-party material used by CodePlay chess
+
+1. chess.js v1.4.0 — Copyright (c) 2025, Jeff Hlywa. BSD 2-Clause licence.
+   Used for move validation and game-end detection (web/vendor/chess.min.js, server dependency "chess.js").
+   https://github.com/jhlywa/chess.js
+
+2. Chess piece graphics ("cburnett" set, web/pieces/*.svg) — Copyright Colin M.L. Burnett.
+   Published by the author under a choice of GFDL, BSD and GPL licences; used here under the BSD licence option.
+   https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
+
+The computer opponent (web/chess-engine.js) and everything else in the chess game were written for CodePlay.

@@ -408,5 +408,6 @@ module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,s
 
 // Register Whot Socket.IO handlers only after index exports are initialized.
 require('./whotServer');
+require('./chessServer');
 
 startServer();

@@ -4,8 +4,8 @@
 .appbar .brandLink{display:flex;flex:0 0 auto;text-decoration:none;color:inherit}
 .logoMark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#2b1c00;background:linear-gradient(145deg,#ffe27a,#f2a81d);box-shadow:0 6px 16px rgba(245,165,36,.28),inset 0 1px 0 rgba(255,255,255,.55);transform:none;font-size:0}
 .logoMark .ic{width:23px;height:23px}
-.appbar .brand{min-width:0;flex:1;font-size:inherit;font-weight:inherit;letter-spacing:0;line-height:1.15}
-.appbar .brand b{display:block;font-size:16px;font-weight:850;letter-spacing:-.01em;white-space:nowrap}
+.appbar .brand{min-width:0;flex:1;overflow:hidden;font-size:inherit;font-weight:inherit;letter-spacing:0;line-height:1.15}
+.appbar .brand b{display:block;font-size:16px;font-weight:850;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appbar .brand span{display:block;font-size:11.5px;color:var(--muted,#93a99f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .barActions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .audienceBar{display:none;align-items:center;gap:8px}

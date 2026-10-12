@@ -72,7 +72,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 .btn-game{gap:14px;min-height:78px}
 .btn-game .gi{flex:0 0 auto;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px rgba(0,0,0,.35)}
 .btn-game .gi .ic{width:27px;height:27px}
-.gi-ludo{background:linear-gradient(145deg,#4be08e,#168a4e)}.gi-whot{background:linear-gradient(145deg,#a98bff,#5b3fc4)}.gi-chess{background:linear-gradient(145deg,#8a98a0,#46535a)}
+.gi-ludo{background:linear-gradient(145deg,#4be08e,#168a4e)}.gi-whot{background:linear-gradient(145deg,#a98bff,#5b3fc4)}.gi-chess{background:linear-gradient(145deg,#f0b34a,#b76e12)}
 .btn-game .gt{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.btn-game .gt b{font-size:18px;line-height:1.15}.btn-game .gt small{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
 .btn-game[disabled],.btn-game.soon{opacity:.6}
 .seg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
@@ -86,6 +86,12 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 .btn-game .tag{white-space:nowrap;flex:0 0 auto}.btn-game .gt{flex:1}
 .screen h2#welcomeMsg{margin-bottom:4px}.screen h2#welcomeMsg+.sub{margin:0 0 16px;font-size:14px}
 .switchLink{display:none}
+
+.tcGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.tcGrid button{margin:0;min-height:62px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink)}
+.tcGrid button b{font-size:16px}.tcGrid button small{font-size:11px;color:var(--muted);font-weight:700}
+.tcGrid button.on{border-color:var(--gold);background:rgba(255,215,90,.13)}.tcGrid button.on b{color:#fff2b8}
+#chessLevel{grid-template-columns:repeat(3,1fr)}#chessLevel button{min-height:46px}
 </style>
 </head>
 <body>
@@ -131,7 +137,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <button class="resume" id="resumeCard" onclick="resumeGame()"><span class="ic"><svg class="ic " aria-hidden="true"><use href="#i-play"/></svg></span><span class="tx"><b id="resumeTitle">Resume your game</b><span class="d" id="resumeSub"></span></span><span class="chev"><svg class="ic sm" aria-hidden="true"><use href="#i-chevron"/></svg></span></button>
   <button class="btn-game" onclick="chooseGame('ludo')"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Ludo</b><small>Race your tokens home</small></span><span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('whot')"><span class="gi gi-whot"><svg class="ic " aria-hidden="true"><use href="#i-cards"/></svg></span><span class="gt"><b>Whot</b><small>Pick two, hold on, general market</small></span><span class="tag">2-4 players</span></button>
-  <button class="btn-game soon" onclick="chooseGame('chess')"><span class="gi gi-chess"><svg class="ic " aria-hidden="true"><use href="#i-pawn"/></svg></span><span class="gt"><b>Chess</b><small>Classic 1v1</small></span><span class="tag">coming soon</span></button>
+  <button class="btn-game" onclick="chooseGame('chess')"><span class="gi gi-chess"><svg class="ic " aria-hidden="true"><use href="#i-pawn"/></svg></span><span class="gt"><b>Chess</b><small>Real clocks, rematches, vs computer</small></span><span class="tag">2 players</span></button>
   <button class="btn-outline" onclick="openLive()"><svg class="ic " aria-hidden="true"><use href="#i-eye"/></svg> Watch live games</button>
   <div class="spacer"></div>
   <div class="linkRow">Playing from WhatsApp? Just message the bot instead.</div>
@@ -200,6 +206,38 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <div class="linkRow"><a onclick="go('select')">Back</a></div>
 </div>
 
+<div class="screen" id="chessMode">
+  <h2>Chess</h2>
+  <div class="optLabel">Time control</div>
+  <div class="tcGrid" id="chessTc">
+    <button data-id="1+0" data-b="60" data-i="0"><b>1 min</b><small>Bullet</small></button>
+    <button data-id="3+2" data-b="180" data-i="2"><b>3 | 2</b><small>Blitz</small></button>
+    <button data-id="5+0" data-b="300" data-i="0"><b>5 min</b><small>Blitz</small></button>
+    <button data-id="10+0" data-b="600" data-i="0"><b>10 min</b><small>Rapid</small></button>
+    <button data-id="15+10" data-b="900" data-i="10"><b>15 | 10</b><small>Rapid</small></button>
+    <button data-id="0+0" data-b="0" data-i="0"><b>No clock</b><small>Casual</small></button>
+  </div>
+  <div class="optLabel">Play as</div>
+  <div class="seg" id="chessSide"><button data-s="w">White</button><button data-s="random" class="on">Random</button><button data-s="b">Black</button></div>
+  <div class="optLabel" style="margin-top:14px">Computer level</div>
+  <div class="seg" id="chessLevel"><button data-l="1">Beginner</button><button data-l="2">Casual</button><button data-l="3" class="on">Club</button><button data-l="4">Strong</button><button data-l="5">Expert</button><button data-l="6">Master</button></div>
+  <p class="hint" id="chessLevelHint" style="margin-top:8px"></p>
+  <button class="btn-primary" onclick="playChessComputer()"><svg class="ic " aria-hidden="true"><use href="#i-bolt"/></svg> Play vs computer</button>
+  <details class="optBox" id="chessOpts">
+    <summary><svg class="ic " aria-hidden="true"><use href="#i-sliders"/></svg> Room options</summary>
+    <div class="optLabel">Who can watch your game</div>
+    <div class="seg" id="chessVis"><button data-v="public"><svg class="ic " aria-hidden="true"><use href="#i-globe"/></svg><span>Public</span></button><button data-v="link" class="on"><svg class="ic " aria-hidden="true"><use href="#i-link"/></svg><span>Link only</span></button><button data-v="private"><svg class="ic " aria-hidden="true"><use href="#i-lock"/></svg><span>Off</span></button></div>
+    <p class="optHint" id="chessVisHint"></p>
+    <button class="switchRow" id="chessChat" role="switch" aria-checked="true"><span><b>Allow viewer chat</b><span class="d">Players can always chat.</span></span><span class="switch on"></span></button>
+  </details>
+  <button class="btn-outline" onclick="createChessRoom()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Create a room</button>
+  <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
+  <input id="chessJoinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
+  <div class="err" id="chessJoinErr"></div>
+  <button class="btn-outline" onclick="joinChessRoom()">Join with code</button>
+  <div class="linkRow"><a onclick="go('select')">Back</a></div>
+</div>
+
 <div class="screen" id="live">
   <h2>Watch live</h2>
   <p class="sub" style="margin-bottom:12px;">Public matches happening right now.</p>
@@ -208,7 +246,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <p class="sub" style="margin:14px 0 8px;">Have a watch link or room code?</p>
   <input id="watchInput" placeholder="Paste watch link or room code" maxlength="400" autocomplete="off" spellcheck="false">
   <div class="err" id="watchErr"></div>
-  <div class="choiceRow" id="watchChoice"><button class="btn-outline" onclick="watchCodeAs('ludo')">It’s Ludo</button><button class="btn-outline" onclick="watchCodeAs('whot')">It’s Whot</button></div>
+  <div class="choiceRow" id="watchChoice"><button class="btn-outline" onclick="watchCodeAs('ludo')">It’s Ludo</button><button class="btn-outline" onclick="watchCodeAs('chess')">It’s Chess</button><button class="btn-outline" onclick="watchCodeAs('whot')">It’s Whot</button></div>
   <button class="btn-primary" onclick="watchFromInput()">Watch</button>
   <div class="linkRow"><a onclick="leaveLive()">Back</a></div>
 </div>
@@ -281,7 +319,7 @@ function joinRoom(){var p=parseCodeInput(document.getElementById('joinCode').val
 function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players='+whotCount+profileQuery())}
 function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+optsQuery('whot')+profileQuery())}
 function joinWhotRoom(){if(!whotEnabled)return;var p=parseCodeInput(document.getElementById('whotJoinCode').value),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
-function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
+function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}if(game==='chess'){go('chessMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
 (function(){})();
 
 /* ---------- room options (what the host chooses before creating) ---------- */
@@ -319,7 +357,7 @@ function parseCodeInput(raw){
   if(/^[A-Za-z0-9]{4}$/.test(raw)){out.code=raw.toUpperCase();return out}
   try{
     var u=new URL(raw);out.code=(u.searchParams.get('code')||'').toUpperCase();out.token=u.searchParams.get('watchToken')||u.searchParams.get('watch')||'';
-    if(/whot/i.test(u.pathname))out.game='whot';else if(/ludo|play/i.test(u.pathname))out.game='ludo';
+    if(/chess/i.test(u.pathname))out.game='chess';else if(/whot/i.test(u.pathname))out.game='whot';else if(/ludo|play/i.test(u.pathname))out.game='ludo';
     if(!out.code){var m=u.pathname.match(/\/live\/ludo\/([A-Za-z0-9]{4})/);if(m){out.code=m[1].toUpperCase();out.game='ludo'}}
   }catch(e){var m2=raw.match(/\b([A-Za-z0-9]{4})\b/);if(m2)out.code=m2[1].toUpperCase()}
   return out;
@@ -328,6 +366,7 @@ function parseCodeInput(raw){
 var liveTimer=null,lastLive=[],pendingWatch=null;
 function viewerNameQuery(){var n=session.name&&session.name!=='Guest'?session.name:'';return n?'&name='+encodeURIComponent(n):''}
 function watchUrl(game,code,token){
+  if(game==='chess')return CHESS_URL+'?mode=watch&action=spectate&code='+encodeURIComponent(code)+(token?'&watchToken='+encodeURIComponent(token):'')+viewerNameQuery();
   if(game==='whot')return WHOT_URL+'?mode=watch&action=spectate&code='+encodeURIComponent(code)+(token?'&watchToken='+encodeURIComponent(token):'')+viewerNameQuery();
   return (window.CODEPLAY_LIVE_URL||'/live-ludo.html')+'?code='+encodeURIComponent(code)+(token?'&watch='+encodeURIComponent(token):'')+viewerNameQuery();
 }
@@ -342,9 +381,9 @@ async function loadLive(quiet){
     if(!lastLive.length){box.innerHTML='<div class="emptyLive">No public matches right now.<br>Start one and set “Who can watch” to Public, or paste a watch link below.</div>';return}
     lastLive.forEach(function(m){
       var b=document.createElement('button');b.className='liveCard';b.type='button';
-      var ic=document.createElement('span');ic.className='ic';ic.innerHTML=cpIcon(m.game==='whot'?'cards':'dice');
+      var ic=document.createElement('span');ic.className='ic';ic.innerHTML=cpIcon(m.game==='whot'?'cards':m.game==='chess'?'pawn':'dice');
       var tx=document.createElement('span');tx.className='tx';
-      var t=document.createElement('span');t.className='t';t.style.display='block';t.textContent=m.host+'’s '+(m.game==='whot'?'Whot':'Ludo')+' match';
+      var t=document.createElement('span');t.className='t';t.style.display='block';t.textContent=m.host+'’s '+(m.game==='whot'?'Whot':m.game==='chess'?'Chess':'Ludo')+' match';
       var mm=document.createElement('span');mm.className='m';mm.style.display='block';mm.textContent=m.players.join(', ')+' · '+m.viewers+' watching';
       tx.appendChild(t);tx.appendChild(mm);
       var p=document.createElement('span');p.className='pill'+(m.started?'':' wait');p.textContent=m.started?'● LIVE':'WAITING';
@@ -392,6 +431,33 @@ function paintLanding(){
 }
 function continueAs(){var n=knownName();document.getElementById('welcomeMsg').textContent=n?'Hey '+n:'Choose a game';go('select')}
 function switchPlayer(){try{localStorage.removeItem('codeplay_guest_profile');localStorage.removeItem('codeplay_guest');localStorage.removeItem('codeplay_name')}catch(e){}session.name=null;session.token=null;session.color=null;session.guest=false;paintLanding();startGuest()}
+
+/* ---------- chess ---------- */
+var CHESS_URL=window.CODEPLAY_CHESS_URL||'/chess.html';
+var CHESS_OPTS={tc:'5+0',base:300,inc:0,side:'random',level:3,visibility:'link',chat:true};
+try{var _co=JSON.parse(localStorage.getItem('codeplay_chess_opts')||'null');if(_co)Object.assign(CHESS_OPTS,_co)}catch(e){}
+var LEVEL_HINT={1:'Beginner — makes plenty of mistakes.',2:'Casual — spots simple threats.',3:'Club — a solid, fair opponent.',4:'Strong — punishes loose pieces.',5:'Expert — thinks several moves ahead.',6:'Master — takes its time and plays to win.'};
+function saveChess(){try{localStorage.setItem('codeplay_chess_opts',JSON.stringify(CHESS_OPTS))}catch(e){}}
+function paintChess(){
+  document.querySelectorAll('#chessTc button').forEach(function(b){b.classList.toggle('on',b.dataset.id===CHESS_OPTS.tc)});
+  document.querySelectorAll('#chessSide button').forEach(function(b){b.classList.toggle('on',b.dataset.s===CHESS_OPTS.side)});
+  document.querySelectorAll('#chessLevel button').forEach(function(b){b.classList.toggle('on',Number(b.dataset.l)===CHESS_OPTS.level)});
+  document.querySelectorAll('#chessVis button').forEach(function(b){b.classList.toggle('on',b.dataset.v===CHESS_OPTS.visibility)});
+  document.getElementById('chessLevelHint').textContent=LEVEL_HINT[CHESS_OPTS.level]||'';
+  document.getElementById('chessVisHint').textContent=VIS_HINT[CHESS_OPTS.visibility];
+  var c=document.getElementById('chessChat');c.setAttribute('aria-checked',CHESS_OPTS.chat?'true':'false');c.querySelector('.switch').classList.toggle('on',!!CHESS_OPTS.chat);
+}
+document.querySelectorAll('#chessTc button').forEach(function(b){b.onclick=function(){CHESS_OPTS.tc=b.dataset.id;CHESS_OPTS.base=Number(b.dataset.b);CHESS_OPTS.inc=Number(b.dataset.i);saveChess();paintChess()}});
+document.querySelectorAll('#chessSide button').forEach(function(b){b.onclick=function(){CHESS_OPTS.side=b.dataset.s;saveChess();paintChess()}});
+document.querySelectorAll('#chessLevel button').forEach(function(b){b.onclick=function(){CHESS_OPTS.level=Number(b.dataset.l);saveChess();paintChess()}});
+document.querySelectorAll('#chessVis button').forEach(function(b){b.onclick=function(){CHESS_OPTS.visibility=b.dataset.v;saveChess();paintChess()}});
+document.getElementById('chessChat').onclick=function(){CHESS_OPTS.chat=!CHESS_OPTS.chat;saveChess();paintChess()};
+paintChess();
+function chessTcQuery(){return '&base='+CHESS_OPTS.base+'&inc='+CHESS_OPTS.inc+'&side='+CHESS_OPTS.side}
+function playChessComputer(){navigate(CHESS_URL+'?mode=computer&level='+CHESS_OPTS.level+chessTcQuery()+profileQuery())}
+function createChessRoom(){navigate(CHESS_URL+'?mode=friends&action=create'+chessTcQuery()+'&visibility='+CHESS_OPTS.visibility+'&chat='+(CHESS_OPTS.chat?'1':'0')+profileQuery())}
+function joinChessRoom(){var p=parseCodeInput(document.getElementById('chessJoinCode').value),errEl=document.getElementById('chessJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(CHESS_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
+
 (function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null;/* the landing page always shows first; paintLanding() offers a one-tap continue */}}catch(e){}})();paintLanding();loadPublicConfig();applyScreenParam();restoreSession().then(function(){paintLanding();applyScreenParam()});
 </script>
 </body>

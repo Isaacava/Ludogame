@@ -5,14 +5,14 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const root = path.join(__dirname, '..', '..');
-for (const file of ['index.html', 'play.html', 'whot.html', 'live-ludo.html', 'admin.html']) {
+for (const file of ['index.html', 'play.html', 'whot.html', 'live-ludo.html', 'chess.html', 'admin.html']) {
   const html = fs.readFileSync(path.join(root, 'web', file), 'utf8');
   const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]).filter(s => s.trim());
   assert(scripts.length > 0, `${file} has no inline script`);
   scripts.forEach((source, i) => assert.doesNotThrow(() => new vm.Script(source, { filename: `${file}#${i + 1}` }), `${file} script ${i + 1} failed to compile`));
 }
 // Shared browser scripts must compile too.
-for (const file of ['ludo-board.js', 'audio.js']) {
+for (const file of ['ludo-board.js', 'audio.js', 'icons.js', 'chess-game.js', 'chess-board.js', 'chess-engine.js', 'chess-worker.js']) {
   const fp = path.join(root, 'web', file);
   if (fs.existsSync(fp)) assert.doesNotThrow(() => new vm.Script(fs.readFileSync(fp, 'utf8'), { filename: file }), `${file} failed to compile`);
 }
