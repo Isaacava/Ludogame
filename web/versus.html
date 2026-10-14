@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay — Versus</title>
+<meta name="theme-color" content="#06100c">
+<link rel="stylesheet" href="theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100%;padding:calc(14px + var(--safe-t)) 16px calc(24px + var(--safe-b))}
+.wrap{max-width:460px;margin:0 auto}
+h1{font-size:22px;margin:4px 0 2px}.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.bal{font-size:28px;font-weight:800;color:var(--gold)}.small{font-size:12px;color:var(--muted)}
+.stats{display:flex;gap:16px;margin-top:6px;font-size:13px;color:var(--muted)}.stats b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.stake{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 4px;color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;text-align:center}
+.stake small{display:block;font-weight:500;color:var(--muted);font-size:11px;margin-top:2px}
+.stake.on{border-color:var(--gold);background:rgba(255,215,90,.12)}.stake:disabled{opacity:.35}
+.games{display:flex;gap:8px;margin:8px 0 4px}.game{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:700;cursor:pointer}
+.game.on{border-color:var(--green);background:rgba(47,210,122,.12)}.game:disabled{opacity:.4;cursor:not-allowed}
+button.primary{width:100%;padding:14px;border:0;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2a1c00;font-weight:800;font-size:16px;cursor:pointer}
+button.primary:disabled{opacity:.5}button.ghost{width:100%;padding:12px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;cursor:pointer;margin-top:8px}
+.msg{min-height:20px;font-size:14px;margin:8px 0;color:var(--muted)}.msg.bad{color:var(--red)}.msg.ok{color:var(--green)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes s{to{transform:rotate(360deg)}}
+label.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:8px 0}
+.tabs{display:flex;gap:8px;margin-bottom:8px}.tab{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;cursor:pointer}.tab.on{color:var(--ink);border-color:var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:7px 4px;border-bottom:1px solid var(--line)}td.r{text-align:right;color:var(--gold);font-weight:700}
+a.back{color:var(--muted);font-size:14px;text-decoration:none}.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Back</a>
+  <h1>Versus</h1>
+  <p class="sub">Stake chips, get paired with a random opponent, winner takes the pot.</p>
+
+  <div class="card hide" id="signedOut">
+    <b>Sign in to play for chips</b>
+    <p class="small">Chips and versus matches need a CodePlay account (Google sign-in). Guests can still play friends rooms.</p>
+    <button class="primary" onclick="location.href='index.html'">Go to sign in</button>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="card">
+      <div class="row"><div><div class="small">Your chips</div><div class="bal" id="bal">0</div><div class="small" id="usd"></div></div>
+        <div style="text-align:right"><div class="small">Points</div><div style="font-size:22px;font-weight:800" id="pts">1000</div></div></div>
+      <div class="stats"><span><b id="wins">0</b> wins</span><span><b id="losses">0</b> losses</span><span>This week <b id="wk">0</b></span></div>
+      <button class="ghost" onclick="location.href='wallet.html'">Wallet · add chips</button>
+      <button class="ghost hide" id="topup" onclick="testTopup()">+ 1,000 test chips</button>
+    </div>
+
+    <div class="card" id="ageBox">
+      <label class="chk"><input type="checkbox" id="age"> <span>I am 18 or older, and I understand chips staked in a match are lost if I lose.</span></label>
+    </div>
+
+    <div class="card">
+      <div class="small">Game</div>
+      <div class="games" id="games"></div>
+      <div class="small" style="margin-top:10px">Stake</div>
+      <div class="grid" id="stakes"></div>
+      <div class="small" id="potInfo"></div>
+      <div class="msg" id="msg"></div>
+      <button class="primary" id="findBtn" onclick="findMatch()">Find opponent</button>
+      <button class="ghost hide" id="cancelBtn" onclick="cancelQueue()">Cancel</button>
+    </div>
+
+    <div class="card">
+      <div class="tabs"><button class="tab on" id="tabW" onclick="board('weekly')">This week</button><button class="tab" id="tabA" onclick="board('all')">All time</button></div>
+      <table id="lb"></table>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+var API=window.CODEPLAY_API_BASE||'';
+var TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
+var cfg=null,me=null,socket=null,game='ludo',stake=100,queued=false,GAME_LABEL={ludo:'Ludo',whot:'Whot',chess:'Chess'};
+function $(id){return document.getElementById(id)}
+function say(t,cls){var m=$('msg');m.textContent=t||'';m.className='msg'+(cls?' '+cls:'')}
+function fmt(n){return Number(n).toLocaleString('en-US')}
+function authFetch(path,opts){opts=opts||{};var h={'Content-Type':'application/json'};if(TOKEN)h.Authorization='Bearer '+TOKEN;return fetch(API+path,{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined})}
+var ERR={'insufficient-chips':'Not enough chips for that stake.','age-confirmation-required':'Please confirm you are 18 or older.','username-required':'Choose a username first (back on the home page).','already-queued':'You are already waiting for an opponent.','match-in-progress':'You already have a match in progress.','stake-too-high-for-new-account':'New accounts have a lower stake limit for the first 24 hours.','game-unavailable':'That game is not open for versus yet.','invalid-stake':'Pick one of the stake options.','no-session':'Your session expired — sign in again.','server-error':'Something went wrong. Try again.','match-failed':'Could not start the match — your stake was returned.'};
+async function load(){
+  if(!TOKEN){$('signedOut').classList.remove('hide');return}
+  try{
+    var c=await (await fetch(API+'/api/versus/config')).json();cfg=c;
+    var r=await authFetch('/api/versus/me');if(r.status===401){$('signedOut').classList.remove('hide');return}
+    me=await r.json();$('app').classList.remove('hide');
+    drawGames();drawStakes();drawMe();if(c.testTopup)$('topup').classList.remove('hide');
+    if(me.ageConfirmed){$('age').checked=true;$('ageBox').classList.add('hide')}
+    board('weekly');connect();
+    var a=await (await authFetch('/api/versus/active')).json();if(a.match)go(a.match);
+  }catch(e){say('Could not reach the game server.','bad')}
+}
+function drawMe(){$('bal').textContent=fmt(me.balance)+' chips';$('usd').textContent='≈ $'+(me.balance/cfg.chipsPerUsd).toFixed(2);$('pts').textContent=fmt(me.points);$('wins').textContent=me.wins;$('losses').textContent=me.losses;$('wk').textContent=me.weekly?fmt(me.weekly.points):0}
+function drawGames(){var h='';['ludo','whot','chess'].forEach(function(g){var on=cfg.games.indexOf(g)>-1;h+='<button class="game'+(g===game?' on':'')+'" '+(on?'':'disabled ')+'onclick="pickGame(\''+g+'\')">'+GAME_LABEL[g]+(on?'':'<br><small class="small">soon</small>')+'</button>'});$('games').innerHTML=h}
+function pickGame(g){if(queued)return;game=g;drawGames()}
+function drawStakes(){var h='';cfg.stakes.forEach(function(s){h+='<button class="stake'+(s===stake?' on':'')+'" '+(queued?'disabled ':'')+'onclick="pickStake('+s+')">'+fmt(s)+'<small>$'+(s/cfg.chipsPerUsd).toFixed(s<100?2:0)+'</small></button>'});$('stakes').innerHTML=h;pot()}
+function pot(){var p=stake*2,fee=Math.floor(p*cfg.feeRate);$('potInfo').textContent='Winner receives '+fmt(p-fee)+' chips ('+Math.round(cfg.feeRate*100)+'% house fee on the '+fmt(p)+' pot).'}
+function pickStake(s){if(queued)return;stake=s;drawStakes()}
+async function testTopup(){var r=await authFetch('/api/versus/test-topup',{method:'POST',body:{amount:1000}});var d=await r.json();if(r.ok){me.balance=d.balance;drawMe()}}
+async function connect(){
+  if(typeof io==='undefined'){say('Could not load the live connection.','bad');return}
+  var url=window.CODEPLAY_SOCKET_URL||location.origin;
+  if(!window.CODEPLAY_SOCKET_URL){try{var pc=await (await fetch(API+'/api/config/public')).json();if(pc.socketUrl)url=pc.socketUrl}catch(e){}}
+  socket=io(url,{transports:['websocket','polling']});
+  socket.on('connect',function(){socket.emit('versus-hello',{token:TOKEN})});
+  socket.on('versus-queued',function(x){queued=true;me.balance=x.balance;drawMe();setQueued(true)});
+  socket.on('versus-cancelled',function(x){queued=false;if(x&&typeof x.balance==='number'){me.balance=x.balance;drawMe()}setQueued(false);say('Cancelled — your stake was returned.','ok')});
+  socket.on('versus-queue-timeout',function(x){queued=false;me.balance=x.balance;drawMe();setQueued(false);say('No opponent found — your stake was returned. Try again or pick a lower stake.')});
+  socket.on('versus-matched',function(m){go(m)});
+  socket.on('wallet-update',function(x){me.balance=x.balance;drawMe()});
+  socket.on('versus-error',function(x){queued=false;setQueued(false);say(ERR[x.error]||'Could not join the queue.','bad')});
+}
+function setQueued(q){queued=q;$('findBtn').classList.toggle('hide',q);$('cancelBtn').classList.toggle('hide',!q);drawStakes();drawGames();if(q)$('msg').innerHTML='<span class="spin"></span>Looking for a '+GAME_LABEL[game]+' opponent at '+fmt(stake)+' chips…',$('msg').className='msg';}
+async function findMatch(){
+  if(!$('ageBox').classList.contains('hide')){
+    if(!$('age').checked){say(ERR['age-confirmation-required'],'bad');return}
+    var r=await authFetch('/api/versus/confirm-age',{method:'POST',body:{confirm:true}});if(!r.ok){say(ERR['server-error'],'bad');return}
+    $('ageBox').classList.add('hide');me.ageConfirmed=true;
+  }
+  say('');socket.emit('versus-queue',{token:TOKEN,game:game,stake:stake});
+}
+function cancelQueue(){socket.emit('versus-cancel')}
+function go(m){say('Opponent found: '+m.opponent+'. Starting…','ok');setTimeout(function(){location.href=m.url},700)}
+async function board(scope){
+  $('tabW').classList.toggle('on',scope==='weekly');$('tabA').classList.toggle('on',scope!=='weekly');
+  try{var d=await (await fetch(API+'/api/versus/leaderboard?scope='+scope)).json();
+   $('lb').innerHTML=d.rows.length?d.rows.map(function(r,i){var td=document.createElement('td');return '<tr><td>'+(i+1)+'</td><td class="n"></td><td class="r">'+fmt(r.points)+'</td></tr>'}).join(''):'<tr><td class="small">No ranked matches yet.</td></tr>';
+   var cells=$('lb').querySelectorAll('td.n');d.rows.forEach(function(r,i){if(cells[i])cells[i].textContent=r.username+'  ('+r.wins+'W '+r.losses+'L)'});
+  }catch(e){}
+}
+load();
+</script>
+<script src="social-ui.js"></script>
+</body>
+</html>

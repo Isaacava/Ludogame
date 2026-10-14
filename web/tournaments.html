@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay — Tournaments</title>
+<meta name="theme-color" content="#06100c">
+<link rel="stylesheet" href="theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;padding:calc(12px + var(--safe-t)) 0 calc(28px + var(--safe-b))}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}button{font-family:inherit}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.back{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:20px;display:flex;align-items:center;justify-content:center;text-decoration:none;flex:none}
+h1{font-size:22px;margin:0;flex:1}.bal{font-size:12px;color:var(--muted);text-align:right;line-height:1.3}.bal b{display:block;color:var(--gold);font-size:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:40px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:700;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--panel2);color:var(--ink);border-color:var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;margin-bottom:12px;cursor:pointer;transition:transform .15s var(--ease-out),border-color .15s}
+.card:active{transform:scale(.99)}.card:hover{border-color:rgba(255,255,255,.22)}
+.row{display:flex;align-items:center;gap:12px}.ic{width:46px;height:46px;border-radius:14px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
+.nm{font-weight:800;font-size:16px;line-height:1.25}.sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:800;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.open{color:var(--green);border-color:rgba(47,210,122,.55)}.pill.live{color:var(--yellow);border-color:rgba(255,197,61,.55)}.pill.done{color:var(--blue);border-color:rgba(74,155,255,.5)}.pill.bad{color:var(--red);border-color:rgba(255,90,106,.5)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 10px}.st{background:var(--panel2);border-radius:12px;padding:8px 6px;text-align:center}.st b{display:block;font-size:15px}.st span{font-size:11px;color:var(--muted)}
+.st.gold b{color:var(--gold)}
+.prog{height:6px;border-radius:6px;background:var(--line);overflow:hidden}.prog i{display:block;height:100%;background:var(--green);border-radius:6px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;color:var(--muted)}
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn.pri{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2a1c00;border:0}.btn.ok{background:var(--green);color:#04210f;border:0}.btn:disabled{opacity:.45;cursor:not-allowed}.btn:active:not(:disabled){transform:scale(.97)}
+.btn.full{width:100%;min-height:52px;font-size:16px;margin-top:12px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}.empty .big{font-size:42px;margin-bottom:8px}.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.skel{height:170px;border-radius:var(--r-md);margin-bottom:12px;background:linear-gradient(90deg,var(--panel),var(--panel2),var(--panel));background-size:200% 100%;animation:sh 1.2s infinite}@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.66);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{width:100%;max-width:480px;max-height:94vh;overflow:auto;background:#10211b;border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;padding:16px 16px calc(20px + var(--safe-b));animation:up .3s var(--ease-out)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}@keyframes fade{from{opacity:0}to{opacity:1}}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}.sheet h2{margin:0;font-size:19px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 2px 8px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}.li{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}.li:last-child{border:0}.li .me{color:var(--gold);font-weight:800}
+.note{font-size:13px;color:var(--muted);line-height:1.5;margin:10px 2px}.note.bad{color:#ff8a8a}.note a{color:var(--gold)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:12px 2px}.chk input{width:20px;height:20px;margin-top:1px}
+.cta{background:linear-gradient(180deg,rgba(47,210,122,.18),rgba(47,210,122,.06));border:1px solid rgba(47,210,122,.5);border-radius:16px;padding:14px;margin-top:14px}.cta b{font-size:16px}
+.bracket{display:flex;gap:16px;overflow:auto;padding:4px 2px 8px}.bcol{min-width:150px;display:flex;flex-direction:column;justify-content:space-around;gap:10px}.bh{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.bm{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2)}.bm div{padding:7px 10px;font-size:13px;display:flex;justify-content:space-between;gap:6px}.bm div+div{border-top:1px solid var(--line)}.bm .w{color:var(--green);font-weight:800}.bm .l{color:var(--muted);text-decoration:line-through}.bm .you{color:var(--gold);font-weight:800}
+.podium{display:flex;gap:8px;margin-top:6px}.pd{flex:1;background:var(--panel2);border-radius:14px;padding:12px 6px;text-align:center}.pd .m{font-size:26px}.pd b{display:block;font-size:14px;margin-top:2px;word-break:break-word}.pd span{font-size:12px;color:var(--gold)}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="back" href="index.html" aria-label="Back">←</a><h1>Tournaments</h1><div class="bal" id="bal"></div></div>
+  <div class="chips" id="filters" role="group" aria-label="Filter by game"></div>
+  <div id="list"></div>
+</div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>window.CODEPLAY_WHERE='tournaments';</script>
+<script src="social-ui.js"></script>
+<script>
+(function(){
+'use strict';
+var S=window.CodePlaySocial,API=window.CODEPLAY_API_BASE||'',TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
+var GAME={ludo:['🎲','Ludo'],whot:['🃏','Whot'],chess:['♟️','Chess']},CPU=100;
+var filter='all',rows=null,me=null,openId=null,sheetEl=null,tick=null;
+function $(i){return document.getElementById(i)}
+function h(tag,props,kids){var n=document.createElement(tag);props=props||{};Object.keys(props).forEach(function(k){var v=props[k];if(k==='class')n.className=v;else if(k==='text')n.textContent=v;else if(k.slice(0,2)==='on')n.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)n.setAttribute(k,v===true?'':v)});(kids||[]).forEach(function(c){if(c!=null&&c!==false)n.appendChild(typeof c==='string'||typeof c==='number'?document.createTextNode(String(c)):c)});return n}
+function fmt(n){return Number(n).toLocaleString('en-US')}
+function money(c){return fmt(c)+' chips'}
+function usd(c){return '≈ $'+(c/CPU).toFixed(c%CPU===0?0:2)}
+function af(path,o){o=o||{};var hd={'Content-Type':'application/json'};if(TOKEN)hd.Authorization='Bearer '+TOKEN;return fetch(API+path,{method:o.method||'GET',headers:hd,body:o.body?JSON.stringify(o.body):undefined}).then(function(r){return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,status:r.status,data:d}})})}
+var ERR={'registration-closed':'Registration for this tournament has closed.','already-joined':'You are already registered.','tournament-full':'This tournament is full.','insufficient-chips':'You do not have enough chips for the entry fee.','age-confirmation-required':'Please confirm you are 18 or older.','username-required':'Choose a username first (home page).','no-session':'Sign in to join tournaments.','not-joined':'You are not registered.','not-found':'Tournament not found.','server-error':'Something went wrong. Try again.'};
+function msg(c){return ERR[c]||'Something went wrong. Try again.'}
+function say(t){$('live').textContent=t}
+function until(ms){var s=Math.floor((ms-Date.now())/1000);if(s<=0)return 'Starting…';var d=Math.floor(s/86400),hh=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),ss=s%60;if(d>0)return 'Starts in '+d+'d '+hh+'h';if(hh>0)return 'Starts in '+hh+'h '+m+'m';return 'Starts in '+m+':'+String(ss).padStart(2,'0')}
+function when(ms){return new Date(ms).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function statusPill(t){return t.status==='registration'?h('span',{class:'pill open',text:'Open'}):t.status==='running'?h('span',{class:'pill live',text:'Live'}):t.status==='completed'?h('span',{class:'pill done',text:'Finished'}):h('span',{class:'pill bad',text:'Cancelled'})}
+
+/* ---------- list ---------- */
+function drawFilters(){var f=$('filters');f.replaceChildren();[['all','All'],['ludo','🎲 Ludo'],['whot','🃏 Whot'],['chess','♟️ Chess']].forEach(function(o){f.appendChild(h('button',{class:'chip','aria-pressed':String(filter===o[0]),onclick:function(){filter=o[0];drawFilters();drawList()},text:o[1]}))})}
+function load(){return af('/api/tournaments').then(function(r){if(r.ok){rows=r.data.rows;drawList();if(openId)openDetail(openId,true)}else if(!rows){$('list').replaceChildren(h('div',{class:'empty'},[h('div',{class:'big',text:'📡'}),h('b',{text:"Can't reach the server"}),h('button',{class:'btn',onclick:load,text:'Try again'})]))}})}
+function drawList(){
+  var l=$('list');l.replaceChildren();
+  if(!rows){l.appendChild(h('div',{class:'skel'}));l.appendChild(h('div',{class:'skel'}));return}
+  var shown=rows.filter(function(t){return filter==='all'||t.game===filter});
+  if(!shown.length){l.appendChild(h('div',{class:'empty'},[h('div',{class:'big',text:'🏆'}),h('b',{text:'No tournaments right now'}),'New weekend tournaments are announced here. Check back soon!']));return}
+  shown.forEach(function(t){l.appendChild(card(t))});
+}
+function card(t){
+  var g=GAME[t.game],joined=t.joined;
+  var c=h('div',{class:'card',role:'button',tabindex:'0','aria-label':t.name+', '+g[1]+', '+t.status,onclick:function(){openDetail(t.id)},onkeydown:function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(t.id)}}});
+  c.appendChild(h('div',{class:'row'},[h('div',{class:'ic','aria-hidden':'true',text:g[0]}),h('div',{style:'flex:1;min-width:0'},[h('div',{class:'nm',text:t.name}),h('div',{class:'sub',text:g[1]+' · knockout'+(t.chess?' · '+Math.round(t.chess.base/60*10)/10+' min':'')})]),statusPill(t)]));
+  c.appendChild(h('div',{class:'stats'},[h('div',{class:'st'},[h('b',{text:t.entryFee?fmt(t.entryFee):'Free'}),h('span',{text:t.entryFee?'entry (chips)':'entry'})]),h('div',{class:'st gold'},[h('b',{text:fmt(t.pool)}),h('span',{text:'prize pool'})]),h('div',{class:'st'},[h('b',{text:t.playerCount+'/'+t.maxPlayers}),h('span',{text:'players'})])]));
+  c.appendChild(h('div',{class:'prog','aria-hidden':'true'},[h('i',{style:'width:'+Math.min(100,Math.round(t.playerCount/t.maxPlayers*100))+'%'})]));
+  var timeEl=h('span',{'data-start':t.status==='registration'?t.startAt:'',text:t.status==='registration'?until(t.startAt):t.status==='running'?'In progress':t.status==='completed'?'Finished':'Cancelled'});
+  var act=null;
+  if(t.status==='registration'){act=joined?h('span',{class:'pill open',text:'✓ You are in'}):h('button',{class:'btn pri',onclick:function(e){e.stopPropagation();joinFlow(t)},text:t.entryFee?'Join · '+fmt(t.entryFee):'Join free'})}
+  else if(t.status==='running'&&joined)act=h('span',{class:'pill live',text:'You are playing'});
+  c.appendChild(h('div',{class:'foot'},[timeEl,act]));
+  return c;
+}
+setInterval(function(){document.querySelectorAll('[data-start]').forEach(function(e){var s=Number(e.getAttribute('data-start'));if(s)e.textContent=until(s)});var cd=document.getElementById('cdown');if(cd&&cd.getAttribute('data-t'))cd.textContent=left(Number(cd.getAttribute('data-t')))},1000);
+function left(ms){var s=Math.max(0,Math.ceil((ms-Date.now())/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+/* ---------- sheets ---------- */
+function sheet(build,keep){
+  if(sheetEl&&!keep)closeSheet();
+  var scrim=h('div',{class:'scrim',onclick:function(e){if(e.target===scrim)closeSheet()}}),sh=h('div',{class:'sheet',role:'dialog','aria-modal':'true'});
+  sh.appendChild(h('div',{class:'grab'}));build(sh);scrim.appendChild(sh);document.body.appendChild(scrim);sheetEl=scrim;
+  scrim.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});var f=sh.querySelector('button');if(f)f.focus();return sh;
+}
+function closeSheet(){if(sheetEl){sheetEl.remove();sheetEl=null}openId=null;if(location.hash)history.replaceState(null,'',location.pathname+location.search)}
+function loadMe(){return TOKEN?fetch(API+'/api/versus/me',{headers:{Authorization:'Bearer '+TOKEN}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}):Promise.resolve(null)}
+
+/* ---------- join / leave ---------- */
+function joinFlow(t){
+  if(!TOKEN){sheet(function(sh){sh.appendChild(h('h2',{text:'Sign in to join'}));sh.appendChild(h('p',{class:'note',text:'Tournaments need a CodePlay account (Google sign-in).'}));sh.appendChild(h('button',{class:'btn pri full',onclick:function(){location.href='index.html'},text:'Go to sign in'}))});return}
+  loadMe().then(function(m){
+    me=m;var bal=m?m.balance:0,age=!!(m&&m.ageConfirmed),short=t.entryFee>bal;
+    sheet(function(sh){
+      var g=GAME[t.game];
+      sh.appendChild(h('div',{class:'row'},[h('div',{class:'ic',text:g[0]}),h('div',{},[h('h2',{text:'Join '+t.name}),h('div',{class:'sub',text:when(t.startAt)})])]));
+      sh.appendChild(h('div',{class:'stats'},[h('div',{class:'st'},[h('b',{text:t.entryFee?fmt(t.entryFee):'Free'}),h('span',{text:'entry fee'})]),h('div',{class:'st gold'},[h('b',{text:fmt(t.pool)}),h('span',{text:'prize pool'})]),h('div',{class:'st'},[h('b',{text:fmt(bal)}),h('span',{text:'your chips'})])]));
+      sh.appendChild(h('p',{class:'note',text:t.entryFee?'Your entry fee is held until the tournament starts. You can leave before it starts for a full refund, and it is refunded automatically if the tournament is cancelled.':'Free entry. You can leave any time before it starts.'}));
+      if(t.entryFee&&short)sh.appendChild(h('p',{class:'note bad'},['You need '+fmt(t.entryFee-bal)+' more chips. ',h('a',{href:'wallet.html',text:'Add chips'})]));
+      var chk=null;if(t.entryFee&&!age){chk=h('input',{type:'checkbox',id:'ag'});sh.appendChild(h('label',{class:'chk'},[chk,h('span',{text:'I am 18 or older and understand the entry fee is not refunded after the tournament starts.'})]))}
+      var err=h('div',{class:'note bad',role:'alert'});sh.appendChild(err);
+      var go=h('button',{class:'btn pri full',disabled:!!(t.entryFee&&short),text:t.entryFee?'Pay '+fmt(t.entryFee)+' chips & join':'Join tournament',onclick:function(){
+        err.textContent='';if(chk&&!chk.checked){err.textContent=msg('age-confirmation-required');return}go.disabled=true;go.textContent='Joining…';
+        var pre=chk?af('/api/versus/confirm-age',{method:'POST',body:{confirm:true}}):Promise.resolve({ok:true});
+        pre.then(function(p){if(!p.ok){throw 'server-error'}return af('/api/tournaments/'+t.id+'/join',{method:'POST'})}).then(function(r){
+          if(!r.ok){go.disabled=false;go.textContent=t.entryFee?'Pay '+fmt(t.entryFee)+' chips & join':'Join tournament';err.textContent=msg(r.data.error);return}
+          closeSheet();S&&S.toast&&S.toast('You are in! We will notify you when it starts.');say('Joined '+t.name);load();refreshBal()}).catch(function(e){go.disabled=false;err.textContent=msg(typeof e==='string'?e:'server-error')})}});
+      sh.appendChild(go);sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Not now'}));
+    });
+  });
+}
+function leaveFlow(t){sheet(function(sh){
+  sh.appendChild(h('h2',{text:'Leave '+t.name+'?'}));sh.appendChild(h('p',{class:'note',text:t.entryFee?'Your entry fee of '+money(t.entryFee)+' will be refunded to your wallet right away.':'You can join again until registration closes.'}));
+  var err=h('div',{class:'note bad',role:'alert'});sh.appendChild(err);
+  var b=h('button',{class:'btn full',style:'background:var(--red);color:#fff;border:0',text:'Leave tournament',onclick:function(){b.disabled=true;af('/api/tournaments/'+t.id+'/leave',{method:'POST'}).then(function(r){if(!r.ok){b.disabled=false;err.textContent=msg(r.data.error);return}closeSheet();S&&S.toast&&S.toast(t.entryFee?'Left. '+money(t.entryFee)+' refunded.':'You left the tournament');load();refreshBal()})}});
+  sh.appendChild(b);sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Stay in'}));})}
+
+/* ---------- detail ---------- */
+function openDetail(id,quiet){
+  openId=id;if(!quiet)history.replaceState(null,'','#'+id);
+  Promise.all([af('/api/tournaments/'+id),TOKEN?af('/api/tournaments/'+id+'/my-match'):Promise.resolve({data:{}}),loadMe()]).then(function(r){
+    if(!r[0].ok){closeSheet();S&&S.toast&&S.toast('Tournament not found');return}
+    var t=r[0].data.tournament,match=r[1].data&&r[1].data.match,m=r[2];me=m;
+    var scroll=sheetEl?sheetEl.querySelector('.sheet').scrollTop:0;
+    if(sheetEl){sheetEl.remove();sheetEl=null}
+    var sh=sheet(function(sh){buildDetail(sh,t,match,m)},true);sh.scrollTop=scroll;
+  });
+}
+function buildDetail(sh,t,match,m){
+  var g=GAME[t.game];
+  sh.appendChild(h('div',{class:'row'},[h('div',{class:'ic',text:g[0]}),h('div',{style:'flex:1;min-width:0'},[h('h2',{text:t.name}),h('div',{class:'sub',text:g[1]+' · knockout · '+when(t.startAt)})]),statusPill(t)]));
+  if(t.description)sh.appendChild(h('p',{class:'note',text:t.description}));
+  sh.appendChild(h('div',{class:'stats'},[h('div',{class:'st'},[h('b',{text:t.entryFee?fmt(t.entryFee):'Free'}),h('span',{text:t.entryFee?usd(t.entryFee):'entry'})]),h('div',{class:'st gold'},[h('b',{text:fmt(t.pool)}),h('span',{text:'prize pool '+usd(t.pool)})]),h('div',{class:'st'},[h('b',{text:t.playerCount+'/'+t.maxPlayers}),h('span',{text:'min '+t.minPlayers})])]));
+
+  // my match call-to-action
+  if(match){
+    sh.appendChild(h('div',{class:'cta'},[h('b',{text:'Your match is ready'}),h('div',{class:'sub',text:'Round '+match.round+' of '+match.rounds+' · vs '+match.opponent}),
+      h('div',{class:'sub'},['Join within ',h('b',{id:'cdown','data-t':match.timeoutAt,text:left(match.timeoutAt)}),' or your opponent advances.']),
+      h('button',{class:'btn ok full',onclick:function(){location.href=match.url},text:'Play now'})]));
+  } else if(t.status==='registration'){
+    var cdn=h('div',{class:'sub','data-start':t.startAt,text:until(t.startAt)});
+    sh.appendChild(cdn);
+    if(t.joined)sh.appendChild(h('button',{class:'btn full',onclick:function(){leaveFlow(t)},text:'Leave tournament'}));
+    else if(t.playerCount>=t.maxPlayers)sh.appendChild(h('button',{class:'btn full',disabled:true,text:'Tournament full'}));
+    else sh.appendChild(h('button',{class:'btn pri full',onclick:function(){closeSheet();joinFlow(t)},text:t.entryFee?'Join · '+fmt(t.entryFee)+' chips':'Join free'}));
+  }
+  var myState=myStatus(t);if(myState&&!match)sh.appendChild(h('p',{class:'note',style:'color:var(--ink)',text:myState}));
+
+  // results
+  if(t.status==='completed'&&t.results.length){
+    var by=function(p){return t.results.filter(function(r){return r.place===p})};
+    sh.appendChild(h('div',{class:'lbl',text:'Final results'}));
+    sh.appendChild(h('div',{class:'podium'},[[2,'🥈'],[1,'🥇'],[3,'🥉']].map(function(pp){var rs=by(pp[0]);return h('div',{class:'pd'},[h('div',{class:'m',text:pp[1]}),h('b',{text:rs.length?rs.map(function(r){return r.username}).join(' & '):'—'}),h('span',{text:rs.length&&rs[0].prize?'+'+fmt(rs[0].prize)+' chips'+(rs.length>1?' each':''):''})])})));
+  }
+  if(t.status==='cancelled')sh.appendChild(h('p',{class:'note bad',text:'This tournament was cancelled'+(t.cancelReason==='not-enough-players'?' because not enough players joined':'')+'. Entry fees were refunded.'}));
+
+  // bracket
+  if(t.rounds&&t.rounds.length){
+    var names={};t.players.forEach(function(p){names[p.accountId]=p.username});var myAcc=t.meId;
+    sh.appendChild(h('div',{class:'lbl',text:'Bracket'}));
+    sh.appendChild(h('div',{class:'bracket'},t.rounds.map(function(rd,i){var final=i===t.rounds.length-1&&rd.length===1;return h('div',{class:'bcol'},[h('div',{class:'bh',text:final?'Final':'Round '+(i+1)})].concat(rd.map(function(mm){function row(pid){var cls=mm.winner?(mm.winner===pid?'w':'l'):'';if(pid&&pid===myAcc&&!cls)cls='you';return h('div',{class:cls},[h('span',{text:(pid?(names[pid]||'?'):'bye')+(pid&&pid===myAcc?' (you)':'')}),mm.status==='active'&&pid?h('span',{text:'●',style:'color:var(--yellow)'}):null])}return h('div',{class:'bm'},[row(mm.a),row(mm.b)])})))})));
+  }
+  // rules + prizes
+  sh.appendChild(h('div',{class:'lbl',text:'Prizes'}));
+  var labels=['🥇 1st','🥈 2nd','🥉 3rd (shared by the semi-final losers)'];
+  sh.appendChild(h('div',{class:'list'},t.prizeSplit.map(function(p,i){return h('div',{class:'li'},[h('span',{text:labels[i]}),h('b',{text:fmt(Math.floor(t.pool*p/100/(i===2?2:1)))+' chips'+(i===2?' each':'')+' ('+p+'%)'})])})));
+  sh.appendChild(h('div',{class:'lbl',text:'How it works'}));
+  sh.appendChild(h('div',{class:'note'},['Single-elimination knockout. Opponents are drawn at random and every match is a private game just for tournament players. When your match is ready you will get a notification and a Play now button, and you have ',Math.round(t.matchTimeoutSec/60*10)/10+' minutes to show up or your opponent advances. A drawn game is replayed once, then the higher seed advances.'+(t.chess?' Chess clock: '+Math.round(t.chess.base/60*10)/10+' min per side'+(t.chess.inc?' + '+t.chess.inc+'s':'')+'.':'')+(t.status==='registration'?' If fewer than '+t.minPlayers+' players join, it is cancelled and everyone is refunded.':'')]));
+  if(t.players.length){sh.appendChild(h('div',{class:'lbl',text:'Players ('+t.players.length+')'}));sh.appendChild(h('div',{class:'list'},t.players.map(function(p){return h('div',{class:'li'},[h('span',{text:p.username}),h('span',{class:'sub',text:p.seed?'seed '+p.seed:''})])})))}
+  sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Close'}));
+}
+function myStatus(t){
+  if(!t.joined||!t.rounds.length)return null;
+  var id=t.meId,last=null,lastRound=0;
+  t.rounds.forEach(function(rd,i){rd.forEach(function(m){if(m.a===id||m.b===id){last=m;lastRound=i+1}})});
+  if(!last)return null;
+  if(last.status==='active')return null;
+  if(last.status==='pending')return 'You are through. Waiting for the other match to finish.';
+  var finalRound=lastRound===t.rounds.length&&t.rounds[t.rounds.length-1].length===1;
+  if(last.winner===id)return finalRound?'🏆 You won this tournament!':'✅ You advanced. Waiting for the next round to be drawn.';
+  return 'You were knocked out in '+(finalRound?'the final':'round '+lastRound)+'. Thanks for playing!';
+}
+function refreshBal(){loadMe().then(function(m){me=m;$('bal').replaceChildren();if(m)$('bal').appendChild(h('span',{},['Your chips',h('b',{text:fmt(m.balance)})]))})}
+
+/* ---------- realtime ---------- */
+if(S){S.on('update',function(){});S.on('tournament',function(){load()})}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
+setInterval(function(){if(!document.hidden)load()},20000);
+
+/* ---------- boot ---------- */
+drawFilters();drawList();refreshBal();
+load().then(function(){var id=(location.hash||'').slice(1);if(id)openDetail(id,true)});
+})();
+</script>
+</body>
+</html>

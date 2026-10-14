@@ -27,6 +27,18 @@ class ChessRoomManager {
     return room;
   }
 
+  // Versus matches: both seats reserved up front; the game starts once both players have connected with their seat tokens.
+  createReservedRoom(profiles, opts = {}) {
+    let code; do { code = generateCode(); } while (this.rooms.has(code));
+    const tc = normalizeTimeControl(opts);
+    const room = {
+      code, game: 'chess', playerCount: 2, mode: 'friends', tc, colorPref: 'random',
+      players: profiles.map((p, i) => ({ socketId: null, playerToken: crypto.randomBytes(16).toString('hex'), connected: false, disconnectedAt: null, name: p.name || `Player ${i + 1}`, bot: false })),
+      colors: null, engine: null, rematchVotes: new Set(), createdAt: Date.now(), lastActivityAt: Date.now(), lastMoveAt: null, gamesPlayed: 0
+    };
+    ensureAudience(room); this.rooms.set(code, room); return room;
+  }
+
   joinRoom(code, socketId, profile = {}) {
     const room = this.rooms.get(normCode(code)); if (!room) return { error: 'room-not-found' };
     if (room.engine || room.players.length >= 2) return { error: 'room-full' };

@@ -2,287 +2,321 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>CodePlay Admin</title>
 <style>
-:root{--bg:#f5f6f8;--panel:#fff;--ink:#18202a;--muted:#68717d;--line:#dfe3e8;--accent:#111827;--good:#18864b;--warn:#a86b00;--bad:#b42318;--shadow:0 12px 32px rgba(16,24,40,.08)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
-button,input,select{font:inherit}button{border:0;border-radius:10px;padding:11px 15px;background:var(--accent);color:white;font-weight:700;cursor:pointer}button.secondary{background:#eef1f5;color:var(--ink)}button.danger{background:#b42318}.hidden{display:none!important}
-.shell{min-height:100vh}.topbar{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:900;letter-spacing:-.02em}.brand span{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}.top-actions{display:flex;gap:8px;align-items:center}
-.layout{max-width:1180px;margin:0 auto;padding:22px;display:grid;grid-template-columns:210px 1fr;gap:22px}.nav{position:sticky;top:78px;height:max-content;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:var(--shadow)}.nav button{width:100%;text-align:left;background:transparent;color:var(--muted);margin:2px 0}.nav button.active{background:#eef1f5;color:var(--ink)}
-main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}.hero h1{margin:0 0 5px;font-size:25px}.hero p{margin:0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.card h3{margin:0 0 5px}.card p.desc{color:var(--muted);font-size:13px;margin:0 0 15px}.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid #edf0f2}.row:first-of-type{border-top:0}.row label{font-weight:650}.row small{display:block;color:var(--muted);font-weight:500;margin-top:3px}.switch{position:relative;width:48px;height:28px;flex:0 0 auto}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#cbd1d8;border-radius:99px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}.switch input:checked + .slider{background:#111827}.switch input:checked + .slider:before{transform:translateX(20px)}.field{display:flex;gap:9px;align-items:center}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink)}.field input[type=number]{max-width:120px}.stack{display:grid;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.notice{padding:11px 13px;border-radius:10px;background:#f0f4f8;color:var(--muted);font-size:13px}.notice.good{background:#edf9f1;color:var(--good)}.notice.bad{background:#fff0ee;color:var(--bad)}.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{border:1px solid var(--line);border-radius:12px;padding:13px}.stat b{display:block;font-size:19px}.stat span{font-size:11px;color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.pill.good{background:#e8f7ee;color:var(--good)}.pill.warn{background:#fff4db;color:var(--warn)}.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}.login{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow)}.login h1{margin:0 0 7px}.login p{color:var(--muted)}.login .field{margin-top:16px}.login button{width:100%;margin-top:12px}.error{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border-radius:10px;background:#111827;color:#fff;box-shadow:var(--shadow);z-index:30}.section{display:none}.section.active{display:block}
-@media(max-width:820px){.layout{grid-template-columns:1fr;padding:14px}.nav{position:static;display:flex;overflow:auto;gap:6px}.nav button{width:auto;white-space:nowrap}.grid{grid-template-columns:1fr}.status-grid{grid-template-columns:1fr}.topbar{padding:12px 14px}}
+:root{--bg:#0b1411;--side:#0f1c17;--panel:#13241d;--panel2:#193028;--line:rgba(255,255,255,.09);--ink:#eaf2ee;--muted:#8fa69b;--gold:#ffd75a;--green:#2fd27a;--red:#ff6b78;--amber:#ffb84a;--blue:#58a6ff;--r:14px}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+a{color:var(--gold)}.hide{display:none!important}.mut{color:var(--muted)}.sm{font-size:12px}.r{text-align:right}.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
+.box h1{margin:0 0 4px;font-size:22px}input.f,select.f,textarea.f{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);margin-top:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:rgba(255,255,255,.25)}.btn.pri{background:var(--gold);color:#2a1c00;border:0}.btn.bad{background:var(--red);color:#2b0509;border:0}.btn.good{background:var(--green);color:#04210f;border:0}.btn.sm{min-height:30px;padding:0 10px;font-size:12px}.btn:disabled{opacity:.45;cursor:not-allowed}
+.err{color:var(--red);min-height:18px;margin-top:8px}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.side{background:var(--side);border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{font-weight:800;font-size:16px;padding:4px 10px 14px}.brand small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+.nav button{display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;margin-bottom:2px;border:0;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-weight:600}
+.nav button:hover{background:rgba(255,255,255,.04)}.nav button.on{background:var(--panel2);color:var(--ink)}.nav .cnt{margin-left:auto;background:var(--red);color:#fff;border-radius:99px;font-size:11px;padding:0 7px}
+main{padding:20px;min-width:0;max-width:1300px}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}.bar h2{margin:0;font-size:20px;flex:1}
+.grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0}.card h3{margin:0 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:26px;font-weight:800;line-height:1.1}.kpi .l{color:var(--muted);font-size:12px;margin-top:4px}.kpi .s{font-size:12px;margin-top:6px;color:var(--muted)}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;margin-bottom:8px;border:1px solid var(--line);background:var(--panel2);cursor:pointer}
+.alert.bad{border-color:rgba(255,107,120,.5)}.alert.warn{border-color:rgba(255,184,74,.5)}
+.tbl{width:100%;border-collapse:collapse}.tbl th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}.tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl th.r{text-align:right}.scroll{overflow:auto;border-radius:10px}.pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.good{color:var(--green);border-color:rgba(47,210,122,.5)}.pill.bad{color:var(--red);border-color:rgba(255,107,120,.5)}.pill.warn{color:var(--amber);border-color:rgba(255,184,74,.5)}.pill.blue{color:var(--blue);border-color:rgba(88,166,255,.5)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#52665d;margin-right:6px}.dot.online{background:var(--green)}.dot.playing{background:var(--amber)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding-top:8px}.chart .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:2px;min-width:0}.chart .bargrp{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100px}.chart i{display:block;width:30%;border-radius:3px 3px 0 0;min-height:1px}.chart .d{font-size:10px;color:var(--muted);text-align:center;overflow:hidden}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;justify-content:flex-end}.drawer{width:min(560px,100%);height:100%;overflow:auto;background:var(--side);border-left:1px solid var(--line);padding:18px}
+.modal{margin:auto;width:min(520px,94%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;max-height:92vh;overflow:auto}
+.scrim.center{justify-content:center;align-items:center}
+.form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.form label{display:block;font-size:12px;color:var(--muted)}.form .full{grid-column:1/-1}.form input,.form select,.form textarea{width:100%;margin-top:4px;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2)}.form input[type=checkbox]{width:auto;margin:0 8px 0 0}
+.toast{position:fixed;right:16px;bottom:16px;z-index:50;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 16px;box-shadow:0 12px 30px rgba(0,0,0,.4);max-width:380px;margin-top:8px}.toast.bad{border-color:var(--red)}.toast.good{border-color:var(--green)}
+.bracket{display:flex;gap:18px;overflow:auto;padding:6px 2px}.bcol{min-width:160px;display:flex;flex-direction:column;justify-content:space-around;gap:10px}.bm{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2)}.bm div{padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;gap:8px}.bm div+div{border-top:1px solid var(--line)}.bm .w{color:var(--green);font-weight:700}.bm .l{color:var(--muted);text-decoration:line-through}
+.menu{display:none;margin:12px 12px 0;padding:10px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);width:calc(100% - 24px)}
+@media(max-width:860px){.app{grid-template-columns:1fr}.side{display:none}.menu{display:block}main{padding:12px}.form{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div id="loginView" class="login-wrap">
-  <div class="login">
-    <div class="brand">🎲 CodePlay Admin<span>Secure control panel</span></div>
-    <h1 style="margin-top:22px">Admin sign in</h1>
-    <p>Use the admin password configured on the Railway backend.</p>
-    <div class="field"><input id="password" type="password" autocomplete="current-password" placeholder="Admin password"></div>
-    <button id="loginBtn">Sign in</button>
-    <div id="loginError" class="error"></div>
+<div class="login" id="loginView">
+  <div class="box">
+    <h1>🎲 CodePlay Admin</h1><div class="mut">Sign in to the control panel</div>
+    <label class="sm mut" style="display:block;margin-top:16px" for="pw">Admin password</label>
+    <input class="f" id="pw" type="password" autocomplete="current-password" autofocus>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn pri" style="width:100%;margin-top:6px" id="loginBtn">Sign in</button>
   </div>
 </div>
 
-<div id="appView" class="shell hidden">
-  <header class="topbar">
-    <div class="brand">🎲 CodePlay Admin<span>Game, platform &amp; WhatsApp controls</span></div>
-    <div class="top-actions"><span id="saveState" class="pill warn">Not loaded</span><button id="logoutBtn" class="secondary">Log out</button></div>
-  </header>
-  <div class="layout">
-    <nav class="nav">
-      <button data-section="overview" class="active">Overview</button>
-      <button data-section="rules">Ludo rules</button>
-      <button data-section="whot">Whot rules</button>
-      <button data-section="monetization">Monetization</button>
-      <button data-section="season">Season</button>
-      <button data-section="bot">WhatsApp / Bot</button>
-      <button data-section="maintenance">Maintenance</button>
-    </nav>
-    <main>
-      <section id="overview" class="section active">
-        <div class="hero"><h1>Control center</h1><p>Manage the game rules and platform behavior without editing code.</p></div>
-        <div class="card">
-          <h3>System status</h3><p class="desc">Basic live checks from this Railway service.</p>
-          <div class="status-grid">
-            <div class="stat"><b id="healthValue">Checking…</b><span>Backend health</span></div>
-            <div class="stat"><b id="maintenanceValue">—</b><span>Site status</span></div>
-            <div class="stat"><b id="playerCountsValue">—</b><span>Player modes</span></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <h3>Naija Ludo profile</h3><p class="desc">Choose the capture behavior used by the server. The capture-removal behavior is configurable and is applied by the server to new Ludo games.</p>
-          <div id="naijaHint" class="notice">Loading current rule…</div>
-          <div class="actions"><button id="enableNaijaCapture">Enable Naija capture-removal</button><button id="disableNaijaCapture" class="secondary">Use normal capture</button></div>
-        </div>
-      </section>
-
-      <section id="rules" class="section">
-        <div class="hero"><h1>Ludo rules</h1><p>These values are used by new games and are exposed to the public client.</p></div>
-        <div class="card">
-          <div class="row"><label>2-player games<small>Allow two players</small></label><label class="switch"><input id="r2" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>3-player games<small>Allow three players</small></label><label class="switch"><input id="r3" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>4-player games<small>Allow four players</small></label><label class="switch"><input id="r4" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Safe zones<small>Tokens cannot be captured on designated safe cells</small></label><label class="switch"><input id="safeZonesEnabled" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Blockades<small>Two opposing tokens can block passage</small></label><label class="switch"><input id="blockadesEnabled" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Capture-removal rule<small>Capturing token is also removed/finished after a capture</small></label><label class="switch"><input id="captureSendsCapturerHome" type="checkbox"><span class="slider"></span></label></div><div class="row"><label>Capture grants another turn<small>Successful captures keep the turn with the capturing player</small></label><label class="switch"><input id="captureGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Exact roll to finish<small>Final home position requires the exact number</small></label><label class="switch"><input id="exactRollToFinish" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Double value gives another turn<small>Currently applies to double six</small></label><label class="switch"><input id="doubleValueGrantsExtraTurn" type="checkbox"><span class="slider"></span></label></div><div class="row"><label>Double-roll values<small>Comma-separated values that grant another turn when rolled as doubles</small></label><div class="field"><input id="extraTurnValues" type="text" placeholder="6"></div></div>
-          <div class="actions"><button id="saveRules">Save rules</button><button class="secondary" data-reset="rules">Reset rules</button></div>
-        </div>
-      </section>
-
-      <section id="whot" class="section">
-        <div class="hero"><h1>Whot rules</h1><p>Configure Nigerian Whot variants used by new rooms. Changes are persisted to MongoDB when persistence is enabled.</p></div>
-        <div class="card">
-          <div class="row"><label>Whot enabled<small>Allow Whot rooms and the public game entry</small></label><label class="switch"><input id="whotEnabled" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>2-player games<small>Allow two-player Whot</small></label><label class="switch"><input id="whot2" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>3-player games<small>Allow three-player Whot</small></label><label class="switch"><input id="whot3" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>4-player games<small>Allow four-player Whot</small></label><label class="switch"><input id="whot4" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Starting hand size<small>Cards dealt to each player</small></label><div class="field"><input id="whotHandSize" type="number" min="1" max="12"></div></div>
-          <div class="notice good"><strong>Free Market choice</strong><small>Players may always draw from the Market. A card can only be played when it legally matches the active shape/number or is WHOT.</small></div>
-          <div class="row"><label>Stack Pick 2<small>Another 2 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack2" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Stack Pick 3<small>Another 5 can defend and increase the pending pick</small></label><label class="switch"><input id="whotStack3" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Hold On extra turn<small>Playing 1 keeps the turn</small></label><label class="switch"><input id="whotHoldOn" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>8 skips next player<small>Playing 8 suspends the next turn</small></label><label class="switch"><input id="whotSuspension" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>General Market draws others<small>14 makes the other players take one card</small></label><label class="switch"><input id="whotMarketDraw" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>General Market extra turn<small>14 lets the player continue</small></label><label class="switch"><input id="whotMarketExtra" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>WHOT call mode<small>Choose shape or number after playing 20</small></label><div class="field"><select id="whotCallMode"><option value="shape">Shape</option><option value="number">Number</option></select></div></div>
-          <div class="row"><label>WHOT can defend Pick<small>Allow a WHOT card to answer a pending Pick 2/Pick 3</small></label><label class="switch"><input id="whotCanDefendPick" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Require last-card call<small>When reducing to one card, the player must explicitly announce it</small></label><label class="switch"><input id="whotLastCall" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Star score multiplier<small>Star cards are worth their number multiplied by this value</small></label><div class="field"><input id="whotStarMultiplier" type="number" min="1" max="5"></div></div>
-          <div class="row"><label>WHOT card score<small>Penalty value of a WHOT 20 card</small></label><div class="field"><input id="whotScore" type="number" min="0" max="100"></div></div>
-          <div class="actions"><button id="saveWhot">Save Whot settings</button><button class="secondary" data-reset="whot">Reset Whot</button></div>
-        </div>
-      </section>
-
-      <section id="monetization" class="section">
-        <div class="hero"><h1>Monetization</h1><p>Control whether ads are enabled and where they appear.</p></div>
-        <div class="card">
-          <div class="row"><label>Ads enabled<small>Master switch</small></label><label class="switch"><input id="adsEnabled" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Homepage top<small>Top placement</small></label><label class="switch"><input id="ad_homepageTop" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Homepage sticky<small>Sticky homepage placement</small></label><label class="switch"><input id="ad_homepageSticky" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Waiting room<small>Room lobby placement</small></label><label class="switch"><input id="ad_waitingRoom" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>In-game sticky<small>During gameplay</small></label><label class="switch"><input id="ad_inGameSticky" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Win screen<small>After a match</small></label><label class="switch"><input id="ad_winScreen" type="checkbox"><span class="slider"></span></label></div>
-          <div class="row"><label>Maximum ads per page<small>Upper limit</small></label><div class="field"><input id="maxAdsPerPage" type="number" min="0" max="20"></div></div>
-          <div class="actions"><button id="saveMonetization">Save monetization</button><button class="secondary" data-reset="monetization">Reset</button></div>
-        </div>
-      </section>
-
-      <section id="season" class="section">
-        <div class="hero"><h1>Season settings</h1><p>Configure season reset timing and reward policy.</p></div>
-        <div class="card">
-          <div class="stack">
-            <div><label>Reset day of month</label><div class="field"><input id="resetDayOfMonth" type="number" min="1" max="28"></div></div>
-            <div><label>Reward top N</label><div class="field"><input id="rewardTopN" type="number" min="0" max="1000"></div></div>
-            <div><label>Reward type</label><div class="field"><select id="rewardType"><option value="cash">Cash</option><option value="points">Points</option><option value="none">None</option></select></div></div>
-          </div>
-          <div class="actions"><button id="saveSeason">Save season</button><button class="secondary" data-reset="season">Reset</button></div>
-        </div>
-      </section>
-
-      <section id="bot" class="section">
-        <div class="hero"><h1>WhatsApp / Bot</h1><p>Manage the user-facing bot copy and public contact number. Secret Meta credentials stay on Railway and are never shown here.</p></div>
-        <div class="card">
-          <div class="stack">
-            <div><label>Welcome message</label><div class="field"><textarea id="welcomeMessage" rows="4"></textarea></div></div>
-            <div><label>Game menu header</label><div class="field"><input id="gameMenuHeader"></div></div>
-            <div><label>Public WhatsApp number</label><div class="field"><input id="whatsappNumber" placeholder="+234…"></div></div>
-          </div>
-          <div class="actions"><button id="saveBot">Save bot settings</button><button class="secondary" data-reset="bot">Reset</button></div>
-          <div class="notice" style="margin-top:14px">Meta Cloud API credentials such as the access token and app secret remain environment secrets on Railway. This panel does not expose them.</div>
-        </div>
-      </section>
-
-      <section id="maintenance" class="section">
-        <div class="hero"><h1>Maintenance</h1><p>Temporarily disable public gameplay and show a custom message.</p></div>
-        <div class="card">
-          <div class="row"><label>Site enabled<small>When disabled, use the maintenance message on the public experience</small></label><label class="switch"><input id="siteEnabled" type="checkbox"><span class="slider"></span></label></div>
-          <div><label>Maintenance message</label><div class="field" style="margin-top:8px"><textarea id="maintenanceMessage" rows="4"></textarea></div></div>
-          <div class="actions"><button id="saveMaintenance">Save maintenance</button><button class="secondary" data-reset="maintenance">Reset</button></div>
-        </div>
-      </section>
-    </main>
+<div class="app hide" id="appView">
+  <aside class="side">
+    <div class="brand">🎲 CodePlay Admin<small id="envTag"></small></div>
+    <nav class="nav" id="nav"></nav>
+    <div style="margin-top:14px;padding:0 10px"><a class="sm" href="admin-classic.html">Classic rules editor</a><br><button class="btn sm" style="margin-top:10px;width:100%" id="logoutBtn">Sign out</button></div>
+  </aside>
+  <div style="min-width:0">
+    <select class="menu" id="menu" aria-label="Section"></select>
+    <main id="main"></main>
   </div>
 </div>
-<div id="toast" class="toast hidden"></div>
+<div id="toastBox"></div>
+
 <script>
 (function(){
-  'use strict';
-  const KEY='codeplay_admin_token';
-  let token=sessionStorage.getItem(KEY);
-  let config=null;
+'use strict';
+var KEY='cp_admin_token',token=sessionStorage.getItem(KEY),section='dashboard',timer=null;
+var SECTIONS=[['dashboard','📊','Dashboard'],['live','🟢','Live'],['players','👥','Players'],['matches','⚔️','Matches'],['money','💰','Money'],['tournaments','🏆','Tournaments'],['settings','⚙️','Settings'],['system','🖥️','System & logs']];
+function $(i){return document.getElementById(i)}
+function h(tag,props,kids){var n=document.createElement(tag);props=props||{};Object.keys(props).forEach(function(k){var v=props[k];if(k==='class')n.className=v;else if(k==='text')n.textContent=v;else if(k.slice(0,2)==='on')n.addEventListener(k.slice(2),v);else if(k==='value')n.value=v;else if(v!==false&&v!=null)n.setAttribute(k,v===true?'':v)});(kids||[]).forEach(function(c){if(c!=null&&c!==false)n.appendChild(typeof c==='string'||typeof c==='number'?document.createTextNode(String(c)):c)});return n}
+function fmt(n){return n==null?'—':Number(n).toLocaleString('en-US')}
+function usd(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function when(t){if(!t)return '—';return new Date(t).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function ago(t){if(!t)return '—';var s=Math.floor((Date.now()-new Date(t))/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
+function dur(s){var d=Math.floor(s/86400),hh=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+(hh?hh+'h ':'')+m+'m'}
+function toast(t,cls){var n=h('div',{class:'toast '+(cls||''),role:'status',text:t});$('toastBox').appendChild(n);setTimeout(function(){n.remove()},4200)}
+function api(path,opts){opts=opts||{};return fetch('/api/admin'+path,{method:opts.method||'GET',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:opts.body?JSON.stringify(opts.body):undefined}).then(function(r){if(r.status===401){signOut(true);throw new Error('auth')}return r.json().catch(function(){return {}}).then(function(d){if(!r.ok){var e=new Error((d.errors&&d.errors.join('; '))||d.error||'error');e.data=d;throw e}return d})})}
+function fail(e){if(e.message!=='auth')toast(String(e.message).replace(/-/g,' '),'bad')}
+function pill(t,cls){return h('span',{class:'pill '+(cls||''),text:t})}
+function statusPill(s){var m={completed:'good','completed-manual':'good',settled:'good',registration:'blue',running:'warn',active:'warn',pending:'warn',cancelled:'bad',rejected:'bad',failed:'bad',expired:'bad','partially_paid':'bad','amount-mismatch':'bad'};return pill(String(s).replace(/_/g,' '),m[s])}
+function table(cols,rows,empty){
+  if(!rows.length)return h('div',{class:'mut',style:'padding:18px;text-align:center',text:empty||'Nothing to show yet.'});
+  return h('div',{class:'scroll'},[h('table',{class:'tbl'},[h('thead',{},[h('tr',{},cols.map(function(c){return h('th',{class:c.r?'r':'',text:c.h})}))]),h('tbody',{},rows.map(function(r){return h('tr',{},cols.map(function(c){var v=c.v(r);return h('td',{class:c.r?'r':''},[v==null?'—':v])}))}))])]);
+}
+function kpi(v,l,s,go){var c=h('div',{class:'card kpi',style:go?'cursor:pointer':''},[h('div',{class:'v',text:v}),h('div',{class:'l',text:l}),s?h('div',{class:'s',text:s}):null]);if(go)c.addEventListener('click',function(){nav(go)});return c}
 
-  const $=id=>document.getElementById(id);
-  const loginView=$('loginView'),appView=$('appView'),toast=$('toast');
-  function showToast(message,bad){
-    toast.textContent=message; toast.classList.remove('hidden');
-    setTimeout(()=>toast.classList.add('hidden'),2200);
-  }
-  function setLoaded(ok){
-    $('saveState').textContent=ok?'Loaded':'Not loaded';
-    $('saveState').className='pill '+(ok?'good':'warn');
-  }
-  async function api(path,options={}){
-    const headers={'Content-Type':'application/json',...(options.headers||{})};
-    if(token) headers.Authorization='Bearer '+token;
-    const res=await fetch(path,{...options,headers});
-    if(res.status===401){
-      sessionStorage.removeItem(KEY); token=null; loginView.classList.remove('hidden'); appView.classList.add('hidden');
-      throw new Error('Session expired. Please sign in again.');
-    }
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error||'Request failed');
-    return data;
-  }
-  async function login(){
-    $('loginError').textContent='';
-    const password=$('password').value;
-    if(!password){$('loginError').textContent='Enter the admin password.';return}
-    try{
-      const data=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})}).then(async r=>{
-        const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||'Wrong password'); return d;
-      });
-      token=data.token; sessionStorage.setItem(KEY,token);
-      $('password').value=''; loginView.classList.add('hidden'); appView.classList.remove('hidden');
-      await loadConfig(); await checkHealth();
-    }catch(e){$('loginError').textContent=e.message||'Unable to sign in.'}
-  }
-  async function loadConfig(){
-    config=await api('/api/admin/config'); renderAll(); setLoaded(true);
-  }
-  function checked(id,val){$(id).checked=!!val}
-  function renderAll(){
-    const r=config.rules||{}, w=config.whot||{}, m=config.monetization||{}, s=config.season||{}, b=config.bot||{}, mt=config.maintenance||{};
-    checked('r2',(r.playerCounts||[]).includes(2)); checked('r3',(r.playerCounts||[]).includes(3)); checked('r4',(r.playerCounts||[]).includes(4));
-    checked('safeZonesEnabled',r.safeZonesEnabled); checked('blockadesEnabled',r.blockadesEnabled); checked('captureSendsCapturerHome',r.captureSendsCapturerHome);
-    checked('exactRollToFinish',r.exactRollToFinish); checked('doubleValueGrantsExtraTurn',r.doubleValueGrantsExtraTurn); checked('captureGrantsExtraTurn',r.captureGrantsExtraTurn); $('extraTurnValues').value=(Array.isArray(r.extraTurnValues)?r.extraTurnValues:[6]).join(', ');
-    checked('whotEnabled',w.enabled!==false); checked('whot2',(w.playerCounts||[]).includes(2)); checked('whot3',(w.playerCounts||[]).includes(3)); checked('whot4',(w.playerCounts||[]).includes(4)); $('whotHandSize').value=w.handSize??6; checked('whotStack2',w.stackPickTwo!==false); checked('whotStack3',w.stackPickThree!==false); checked('whotHoldOn',w.holdOnExtraTurn!==false); checked('whotSuspension',w.suspensionSkipsNext!==false); checked('whotMarketDraw',w.generalMarketDrawsOthers!==false); checked('whotMarketExtra',w.generalMarketExtraTurn!==false); $('whotCallMode').value=w.whotCallMode||'shape'; checked('whotCanDefendPick',w.whotCanDefendPick); checked('whotLastCall',w.enforceLastCardCall); $('whotStarMultiplier').value=w.starScoreMultiplier??2; $('whotScore').value=w.whotScore??20;
+/* ---------- auth ---------- */
+function signOut(expired){if(token){fetch('/api/admin/logout',{method:'POST',headers:{Authorization:'Bearer '+token}}).catch(function(){})}token=null;sessionStorage.removeItem(KEY);clearInterval(timer);$('appView').classList.add('hide');$('loginView').classList.remove('hide');$('pw').value='';if(expired===true)$('loginErr').textContent='Session ended — sign in again.'}
+function doLogin(){
+  $('loginErr').textContent='';$('loginBtn').disabled=true;
+  fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pw').value})}).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})}).then(function(r){
+    if(!r.ok){$('loginErr').textContent=r.d.error==='too-many-attempts'?'Too many attempts. Wait 10 minutes.':'Wrong password.';return}
+    token=r.d.token;sessionStorage.setItem(KEY,token);boot();
+  }).catch(function(){$('loginErr').textContent='Could not reach the server.'}).finally(function(){$('loginBtn').disabled=false});
+}
+$('loginBtn').addEventListener('click',doLogin);$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});$('logoutBtn').addEventListener('click',function(){signOut()});
 
-    checked('adsEnabled',m.adsEnabled); checked('ad_homepageTop',m.adPlacements&&m.adPlacements.homepageTop); checked('ad_homepageSticky',m.adPlacements&&m.adPlacements.homepageSticky);
-    checked('ad_waitingRoom',m.adPlacements&&m.adPlacements.waitingRoom); checked('ad_inGameSticky',m.adPlacements&&m.adPlacements.inGameSticky); checked('ad_winScreen',m.adPlacements&&m.adPlacements.winScreen);
-    $('maxAdsPerPage').value=m.maxAdsPerPage??3;
-    $('resetDayOfMonth').value=s.resetDayOfMonth??1; $('rewardTopN').value=s.rewardTopN??10; $('rewardType').value=s.rewardType||'cash';
-    $('welcomeMessage').value=b.welcomeMessage||''; $('gameMenuHeader').value=b.gameMenuHeader||''; $('whatsappNumber').value=b.whatsappNumber||'';
-    checked('siteEnabled',mt.siteEnabled); $('maintenanceMessage').value=mt.maintenanceMessage||'';
-    updateNaijaHint();
-    $('maintenanceValue').textContent=mt.siteEnabled?'Online':'Maintenance';
-    $('playerCountsValue').textContent=(r.playerCounts||[]).join(' / ')||'None';
-  }
-  function updateNaijaHint(){
-    $('naijaHint').textContent=config&&config.rules&&config.rules.captureSendsCapturerHome
-      ? 'Naija capture-removal is ON: a capturing token is removed/finished after capturing.'
-      : 'Normal capture is ON: the captured token goes home, while the capturing token remains on the track.';
-    $('naijaHint').className='notice '+(config&&config.rules&&config.rules.captureSendsCapturerHome?'warn':'good');
-  }
-  async function save(section,patch){
-    try{
-      config[section]=await api('/api/admin/config/'+section,{method:'PATCH',body:JSON.stringify(patch)});
-      renderAll(); showToast('Saved '+section+' settings.');
-    }catch(e){showToast(e.message||'Save failed',true)}
-  }
-  async function reset(section){
-    try{
-      config[section]=await api('/api/admin/config/'+section+'/reset',{method:'POST',body:'{}'});
-      renderAll(); showToast('Reset '+section+' settings.');
-    }catch(e){showToast(e.message||'Reset failed',true)}
-  }
-  function collectRules(){
-    const playerCounts=[2,3,4].filter(n=>$('r'+n).checked);
-    if(!playerCounts.length) throw new Error('Enable at least one player mode.');
-    const extraTurnValues=$('extraTurnValues').value.split(',').map(function(v){return Number(v.trim())}).filter(function(v){return Number.isInteger(v)&&v>=1&&v<=6}); return {playerCounts,safeZonesEnabled:$('safeZonesEnabled').checked,blockadesEnabled:$('blockadesEnabled').checked,captureSendsCapturerHome:$('captureSendsCapturerHome').checked,captureGrantsExtraTurn:$('captureGrantsExtraTurn').checked,exactRollToFinish:$('exactRollToFinish').checked,doubleValueGrantsExtraTurn:$('doubleValueGrantsExtraTurn').checked,extraTurnValues:extraTurnValues.length?extraTurnValues:[6]};
-  }
-  function collectWhot(){
-    const playerCounts=[2,3,4].filter(n=>$('whot'+n).checked);
-    if(!playerCounts.length) throw new Error('Enable at least one Whot player mode.');
-    return {
-      enabled:$('whotEnabled').checked,
-      playerCounts,
-      handSize:Math.max(1,Math.min(12,Number($('whotHandSize').value||6))),
-      stackPickTwo:$('whotStack2').checked,
-      stackPickThree:$('whotStack3').checked,
-      holdOnExtraTurn:$('whotHoldOn').checked,
-      suspensionSkipsNext:$('whotSuspension').checked,
-      generalMarketDrawsOthers:$('whotMarketDraw').checked,
-      generalMarketExtraTurn:$('whotMarketExtra').checked,
-      whotCallMode:$('whotCallMode').value==='number'?'number':'shape',
-      whotCanDefendPick:$('whotCanDefendPick').checked,
-      enforceLastCardCall:$('whotLastCall').checked,
-      starScoreMultiplier:Math.max(1,Math.min(5,Number($('whotStarMultiplier').value||2))),
-      whotScore:Math.max(0,Math.min(100,Number($('whotScore').value||20)))
-    };
-  }
-  $('loginBtn').onclick=login; $('password').onkeydown=e=>{if(e.key==='Enter')login()};
-  $('logoutBtn').onclick=()=>{sessionStorage.removeItem(KEY);location.reload()};
-  document.querySelectorAll('.nav button').forEach(btn=>btn.onclick=()=>{
-    document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-    document.querySelectorAll('.section').forEach(x=>x.classList.remove('active')); $(btn.dataset.section).classList.add('active');
-  });
-  $('saveRules').onclick=()=>{try{save('rules',collectRules())}catch(e){showToast(e.message,true)}};
-  $('saveWhot').onclick=()=>{try{save('whot',collectWhot())}catch(e){showToast(e.message,true)}};
-  $('enableNaijaCapture').onclick=()=>save('rules',{...config.rules,captureSendsCapturerHome:true});
-  $('disableNaijaCapture').onclick=()=>save('rules',{...config.rules,captureSendsCapturerHome:false});
-  $('saveMonetization').onclick=()=>save('monetization',{adsEnabled:$('adsEnabled').checked,adPlacements:{homepageTop:$('ad_homepageTop').checked,homepageSticky:$('ad_homepageSticky').checked,waitingRoom:$('ad_waitingRoom').checked,inGameSticky:$('ad_inGameSticky').checked,winScreen:$('ad_winScreen').checked},maxAdsPerPage:Number($('maxAdsPerPage').value||0)});
-  $('saveSeason').onclick=()=>save('season',{resetDayOfMonth:Number($('resetDayOfMonth').value||1),rewardTopN:Number($('rewardTopN').value||0),rewardType:$('rewardType').value});
-  $('saveBot').onclick=()=>save('bot',{welcomeMessage:$('welcomeMessage').value,gameMenuHeader:$('gameMenuHeader').value,whatsappNumber:$('whatsappNumber').value.trim()});
-  $('saveMaintenance').onclick=()=>save('maintenance',{siteEnabled:$('siteEnabled').checked,maintenanceMessage:$('maintenanceMessage').value});
-  document.querySelectorAll('[data-reset]').forEach(btn=>btn.onclick=()=>reset(btn.dataset.reset));
+/* ---------- navigation ---------- */
+function buildNav(){
+  var nv=$('nav');nv.replaceChildren();SECTIONS.forEach(function(s){nv.appendChild(h('button',{'data-s':s[0],onclick:function(){nav(s[0])}},[s[1]+' ',s[2],h('span',{class:'cnt hide','data-c':s[0]})]))});
+  var mn=$('menu');mn.replaceChildren();SECTIONS.forEach(function(s){mn.appendChild(h('option',{value:s[0],text:s[1]+' '+s[2]}))});
+  mn.onchange=function(){nav(mn.value)};
+}
+function nav(s){section=s;location.hash=s;document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-s')===s)});$('menu').value=s;render()}
+function boot(){$('loginView').classList.add('hide');$('appView').classList.remove('hide');buildNav();var s=(location.hash||'').slice(1);nav(SECTIONS.some(function(x){return x[0]===s})?s:'dashboard');clearInterval(timer);timer=setInterval(function(){if(document.hidden)return;if(section==='dashboard'||section==='live')render(true)},10000)}
+function render(silent){
+  var main=$('main'),fn=VIEWS[section];if(!fn)return;
+  if(!silent)main.replaceChildren(h('div',{class:'mut',text:'Loading…'}));
+  Promise.resolve(fn()).then(function(node){if(VIEWS[section]===fn){main.replaceChildren(node)}}).catch(fail);
+}
+function header(title,actions){return h('div',{class:'bar'},[h('h2',{text:title})].concat(actions||[]))}
+function refreshBtn(){return h('button',{class:'btn sm',onclick:function(){render()},text:'↻ Refresh'})}
 
-  async function checkHealth(){
-    try{
-      const res=await fetch('/health',{cache:'no-store'});
-      $('healthValue').textContent=res.ok?'Online':'Error';
-      $('healthValue').style.color=res.ok?'var(--good)':'var(--bad)';
-    }catch(e){$('healthValue').textContent='Offline';$('healthValue').style.color='var(--bad)'}
-  }
+/* ---------- dashboard ---------- */
+var VIEWS={};
+VIEWS.dashboard=function(){return Promise.all([api('/overview'),api('/finance?days=14')]).then(function(r){
+  var o=r[0],f=r[1],p=o.players,m=o.money,v=o.versus;
+  var root=h('div',{},[header('Dashboard',[h('span',{class:'mut sm',text:'Auto-refreshes every 10s'}),refreshBtn()])]);
+  if(o.alerts.length){var box=h('div',{style:'margin-bottom:14px'});o.alerts.forEach(function(a){box.appendChild(h('div',{class:'alert '+a.level,onclick:function(){nav(a.go)}},[h('span',{text:a.level==='bad'?'🔴':'🟠'}),h('span',{text:a.text})]))});root.appendChild(box)}
+  var nf=document.querySelector('[data-c="money"]');if(nf){nf.textContent=m.flagged;nf.classList.toggle('hide',!m.flagged)}
+  root.appendChild(h('div',{class:'grid g4'},[
+    kpi(fmt(p.online),'Players online now',fmt(p.playing)+' in a game · '+fmt(p.sockets)+' connections','live'),
+    kpi(fmt(p.total),'Registered players','+'+fmt(p.today)+' today · +'+fmt(p.week)+' this week','players'),
+    kpi(fmt(m.chipsInCirculation),'Chips in circulation',usd(m.chipsUsd)+' across '+fmt(m.wallets)+' wallets','money'),
+    kpi(fmt(m.houseChips),'House balance (chips)',usd(m.houseUsd)+' collected in fees','money'),
+    kpi(usd(m.depositsToday),'Deposits today',usd(m.deposits7d)+' in 7 days · '+usd(m.depositsTotal)+' all time','money'),
+    kpi(fmt(v.day.settled),'Versus matches (24h)',fmt(v.day.volume)+' chips staked · '+fmt(v.day.fees)+' fees','matches'),
+    kpi(fmt(v.open),'Open matches',v.queues.length?v.queues.map(function(q){return q.key+' ×'+q.waiting}).join(', ')+' waiting':'Nobody in a queue','live'),
+    kpi(fmt((o.tournaments.counts.registration||0)+(o.tournaments.counts.running||0)),'Active tournaments',(o.tournaments.counts.running||0)+' running · '+(o.tournaments.counts.registration||0)+' open','tournaments')
+  ]));
+  var days={};f.byDay.forEach(function(x){var d=days[x.day]=days[x.day]||{dep:0,fee:0,prize:0};if(x.type==='deposit')d.dep+=x.sum;if(x.type==='house_fee'||x.type==='tournament_fee')d.fee+=x.sum;if(x.type==='tournament_prize'||x.type==='win_payout')d.prize+=x.sum});
+  var keys=Object.keys(days).sort(),max=Math.max.apply(null,[1].concat(keys.map(function(k){return Math.max(days[k].dep,days[k].fee,days[k].prize)})));
+  var chart=h('div',{class:'chart'},keys.map(function(k){var d=days[k];function bar(val,c){return h('i',{style:'height:'+Math.max(1,Math.round(val/max*100))+'px;background:'+c,title:fmt(val)+' chips'})}return h('div',{class:'col'},[h('div',{class:'bargrp'},[bar(d.dep,'var(--green)'),bar(d.prize,'var(--blue)'),bar(d.fee,'var(--gold)')]),h('div',{class:'d',text:k.slice(5)})])}));
+  root.appendChild(h('div',{class:'grid g2',style:'margin-top:12px'},[
+    h('div',{class:'card'},[h('h3',{text:'Chips per day (last 14 days)'}),keys.length?chart:h('div',{class:'mut',text:'No chip activity yet.'}),h('div',{class:'legend'},[h('span',{},[h('b',{style:'background:var(--green)'}),'Deposited']),h('span',{},[h('b',{style:'background:var(--blue)'}),'Paid out to winners']),h('span',{},[h('b',{style:'background:var(--gold)'}),'House fees'])])]),
+    h('div',{class:'card'},[h('h3',{text:'Live rooms'}),table([{h:'Game',v:function(x){return x[0]}},{h:'Rooms',v:function(x){return x[1]},r:1},{h:'Playing',v:function(x){return x[2]},r:1},{h:'Waiting',v:function(x){return x[3]},r:1}],['ludo','whot','chess'].map(function(g){var x=o.rooms[g];return [g[0].toUpperCase()+g.slice(1),x.rooms,x.playing,x.waiting]})),
+      h('h3',{style:'margin-top:16px',text:'Upcoming tournaments'}),table([{h:'Name',v:function(t){return t.name}},{h:'Game',v:function(t){return t.game}},{h:'Starts',v:function(t){return when(t.startAt)}},{h:'Players',v:function(t){return t.players+'/'+t.max},r:1}],o.tournaments.upcoming,'No open tournaments. Create one in Tournaments.')])
+  ]));
+  return root;
+})};
 
-  if(token){
-    loginView.classList.add('hidden'); appView.classList.remove('hidden');
-    loadConfig().then(checkHealth).catch(()=>{});
-  }
+/* ---------- live ---------- */
+VIEWS.live=function(){return api('/rooms').then(function(d){
+  var root=h('div',{},[header('Live rooms',[h('span',{class:'mut sm',text:'Auto-refreshes every 10s'}),refreshBtn()])]);
+  root.appendChild(h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:'Versus queues'}),d.queues.length?h('div',{},d.queues.map(function(q){return pill(q.key.replace(':',' · ')+' chips — '+q.waiting+' waiting','warn')})):h('div',{class:'mut',text:'Nobody is waiting for an opponent.'})]));
+  root.appendChild(h('div',{class:'card'},[h('h3',{text:d.rooms.length+' room(s)'}),table([
+    {h:'Game',v:function(r){return r.game}},{h:'Code',v:function(r){return h('span',{class:'mono',text:r.code})}},
+    {h:'Type',v:function(r){return pill(r.kind,r.kind==='versus'?'warn':r.kind==='tournament'?'blue':'')}},{h:'Stake',v:function(r){return r.stake?fmt(r.stake):'—'},r:1},
+    {h:'Players',v:function(r){return h('span',{},r.players.map(function(p,i){return h('span',{},[i?' vs ':'',h('span',{class:'dot '+(p.connected?'online':'')}),p.name+(p.bot?' 🤖':'')])}))}},
+    {h:'State',v:function(r){return r.over?pill('finished'):r.started?pill('playing','warn'):pill('waiting')}},{h:'Age',v:function(r){return dur(r.ageSec)},r:1}],d.rooms,'No rooms right now.')]));
+  return root})};
+
+/* ---------- players ---------- */
+var playerQ='',playerPage=0;
+VIEWS.players=function(){return api('/players?q='+encodeURIComponent(playerQ)+'&page='+playerPage).then(function(d){
+  var search=h('input',{class:'f',style:'width:260px;margin:0',placeholder:'Search username, email or id',value:playerQ});
+  var go=function(){playerQ=search.value.trim();playerPage=0;render()};search.addEventListener('keydown',function(e){if(e.key==='Enter')go()});
+  var root=h('div',{},[header('Players',[search,h('button',{class:'btn',onclick:go,text:'Search'})])]);
+  root.appendChild(h('div',{class:'card'},[h('div',{class:'mut sm',style:'margin-bottom:8px',text:fmt(d.total)+' player(s)'}),table([
+    {h:'Player',v:function(p){return h('span',{},[h('span',{class:'dot '+(p.online==='offline'?'':p.online)}),p.username||'(no username yet)',p.banned?' ':null,p.banned?pill('banned','bad'):null])}},{h:'Email',v:function(p){return p.email}},
+    {h:'Chips',v:function(p){return fmt(p.balance)},r:1},{h:'Points',v:function(p){return fmt(p.points)},r:1},{h:'W/L',v:function(p){return p.wins+'/'+p.losses},r:1},{h:'Joined',v:function(p){return ago(p.createdAt)}},
+    {h:'',v:function(p){return h('button',{class:'btn sm',onclick:function(){playerDrawer(p.id)},text:'Open'})}}],d.rows,'No players match.'),
+    h('div',{class:'tools',style:'margin:12px 0 0'},[h('button',{class:'btn sm',disabled:playerPage===0,onclick:function(){playerPage--;render()},text:'← Prev'}),h('button',{class:'btn sm',disabled:(playerPage+1)*25>=d.total,onclick:function(){playerPage++;render()},text:'Next →'})])]));
+  return root})};
+function drawer(build){var scrim=h('div',{class:'scrim',onclick:function(e){if(e.target===scrim)scrim.remove()}}),d=h('div',{class:'drawer',role:'dialog','aria-modal':'true'});build(d,function(){scrim.remove()});scrim.appendChild(d);document.body.appendChild(scrim);return scrim}
+function modal(build){var scrim=h('div',{class:'scrim center',onclick:function(e){if(e.target===scrim)scrim.remove()}}),m=h('div',{class:'modal',role:'dialog','aria-modal':'true'});build(m,function(){scrim.remove()});scrim.appendChild(m);document.body.appendChild(scrim);return scrim}
+function playerDrawer(id){api('/players/'+id).then(function(d){drawer(function(el,close){
+  var a=d.account;
+  el.appendChild(h('div',{class:'bar'},[h('h2',{text:a.username||'(no username)'}),h('button',{class:'btn sm',onclick:close,text:'Close'})]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('div',{class:'mut sm',text:a.email||'no email'}),h('div',{class:'sm mut',text:'ID '+a.id}),
+    h('div',{style:'margin-top:8px'},[pill(a.ageConfirmed?'18+ confirmed':'age not confirmed',a.ageConfirmed?'good':'warn'),' ',a.banned?pill('banned: '+(a.banReason||''),'bad'):pill('active','good'),' ',pill(a.hasGoogle?'Google':'no Google')]),
+    h('div',{class:'grid g4',style:'margin-top:12px'},[kpi(fmt(d.balance),'Chips'),kpi(fmt(a.points),'Points'),kpi(a.wins+'/'+a.losses,'Wins / losses'),kpi(fmt(d.friends),'Friends')])]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Actions'}),h('div',{class:'tools'},[
+    h('button',{class:'btn',onclick:function(){adjustModal(a,function(){close();playerDrawer(id)})},text:'Adjust chips'}),
+    a.banned?h('button',{class:'btn good',onclick:function(){api('/players/'+id+'/unban',{method:'POST'}).then(function(){toast('Unbanned','good');close();playerDrawer(id)}).catch(fail)},text:'Unban'}):h('button',{class:'btn bad',onclick:function(){banModal(a,function(){close();playerDrawer(id)})},text:'Ban player'})])]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Recent chip history'}),table([{h:'When',v:function(r){return ago(r.createdAt)}},{h:'Type',v:function(r){return r.type.replace(/_/g,' ')}},{h:'Chips',v:function(r){return h('span',{style:'color:var(--'+(r.amount>0?'green':'red')+')',text:(r.amount>0?'+':'')+fmt(r.amount)})},r:1}],d.ledger,'No chip activity.')]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Deposits'}),table([{h:'When',v:function(r){return ago(r.createdAt)}},{h:'USD',v:function(r){return usd(r.usd)},r:1},{h:'Status',v:function(r){return statusPill(r.status)}}],d.deposits,'No deposits.')]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Recent matches'}),table([{h:'Game',v:function(r){return r.game}},{h:'Stake',v:function(r){return fmt(r.stake)},r:1},{h:'Result',v:function(r){return r.status==='settled'?pill(r.win?'won':'lost',r.win?'good':'bad'):statusPill(r.status)}},{h:'When',v:function(r){return ago(r.createdAt)}}],d.matches,'No versus matches.')]));
+  el.appendChild(h('div',{class:'card'},[h('h3',{text:'Tournaments'}),d.tournaments.length?h('div',{},d.tournaments.map(function(t){return h('div',{text:t.name+' — '+t.game+' ('+t.status+')'})})):h('div',{class:'mut',text:'None.'})]));
+})}).catch(fail)}
+function adjustModal(a,done){modal(function(m,close){
+  var amt=h('input',{type:'number',step:'1',placeholder:'e.g. 500 or -200'}),why=h('input',{placeholder:'Reason (kept in the audit log)'});
+  m.appendChild(h('h3',{style:'margin:0 0 12px;font-size:17px',text:'Adjust chips for '+a.username}));
+  m.appendChild(h('div',{class:'form'},[h('label',{class:'full'},['Amount (negative removes chips)',amt]),h('label',{class:'full'},['Reason',why])]));
+  m.appendChild(h('div',{class:'tools',style:'margin-top:14px'},[h('button',{class:'btn pri',onclick:function(){api('/players/'+a.id+'/adjust',{method:'POST',body:{amount:amt.value,reason:why.value}}).then(function(r){toast('Done. New balance '+fmt(r.balance),'good');close();done()}).catch(fail)},text:'Apply'}),h('button',{class:'btn',onclick:close,text:'Cancel'})]));
+})}
+function banModal(a,done){modal(function(m,close){var why=h('input',{placeholder:'Reason'});
+  m.appendChild(h('h3',{style:'margin:0 0 6px;font-size:17px',text:'Ban '+a.username+'?'}));m.appendChild(h('p',{class:'mut',text:'They are signed out everywhere and cannot sign in. Their chips stay in their wallet. You can unban at any time.'}));
+  m.appendChild(h('div',{class:'form'},[h('label',{class:'full'},['Reason',why])]));
+  m.appendChild(h('div',{class:'tools',style:'margin-top:14px'},[h('button',{class:'btn bad',onclick:function(){api('/players/'+a.id+'/ban',{method:'POST',body:{reason:why.value}}).then(function(){toast('Banned','good');close();done()}).catch(fail)},text:'Ban'}),h('button',{class:'btn',onclick:close,text:'Cancel'})]))})}
+
+/* ---------- matches ---------- */
+var matchFilter='';
+VIEWS.matches=function(){return api('/matches'+(matchFilter?'?status='+matchFilter:'')).then(function(d){
+  var sel=h('select',{class:'f',style:'width:auto;margin:0',onchange:function(){matchFilter=sel.value;render()}},[['','All'],['active','Active'],['pending','Starting'],['settled','Settled'],['cancelled','Cancelled']].map(function(o){return h('option',{value:o[0],text:o[1],selected:o[0]===matchFilter})}));
+  return h('div',{},[header('Versus matches',[sel,refreshBtn()]),h('div',{class:'card'},[table([
+    {h:'When',v:function(r){return when(r.createdAt)}},{h:'Game',v:function(r){return r.game}},{h:'Type',v:function(r){return r.kind==='friend'?pill('friends','blue'):pill('queue')}},{h:'Players',v:function(r){return r.players.join(' vs ')}},
+    {h:'Stake',v:function(r){return fmt(r.stake)},r:1},{h:'Winner',v:function(r){return r.winner||(r.result==='draw'?'draw':null)}},{h:'Payout',v:function(r){return fmt(r.payout)},r:1},{h:'Fee',v:function(r){return fmt(r.fee)},r:1},{h:'Status',v:function(r){return h('span',{},[statusPill(r.status),r.reason&&r.reason!=='completed'?' '+r.reason:''])}}],d.rows,'No matches yet.')])])})};
+
+/* ---------- money ---------- */
+VIEWS.money=function(){return Promise.all([api('/deposits'),api('/ledger?limit=60'),api('/finance?days=14')]).then(function(r){
+  var deps=r[0].rows,led=r[1].rows,fin=r[2],root=h('div',{},[header('Money',[refreshBtn()])]);
+  var audit=h('div',{class:'mut sm',text:'Checks that every wallet equals the sum of its ledger.'});
+  var auditBtn=h('button',{class:'btn',onclick:function(){auditBtn.disabled=true;api('/audit',{method:'POST'}).then(function(a){audit.replaceChildren(h('span',{style:'color:var(--'+(a.ok?'green':'red')+')',text:a.ok?'✓ All '+fmt(a.checked)+' wallets balance with their ledger.':'✗ '+a.mismatches.length+' wallet(s) do not match — see below'}));if(!a.ok)audit.appendChild(table([{h:'Account',v:function(x){return h('span',{class:'mono',text:x.accountId})}},{h:'Balance',v:function(x){return fmt(x.balance)},r:1},{h:'Ledger sum',v:function(x){return fmt(x.ledgerSum)},r:1}],a.mismatches))}).catch(fail).finally(function(){auditBtn.disabled=false})},text:'Run ledger audit'});
+  root.appendChild(h('div',{class:'grid g4',style:'margin-bottom:12px'},[kpi(fmt(fin.summary.totalChips),'Chips in circulation',usd(fin.summary.totalChips/fin.chipsPerUsd)),kpi(fmt(fin.summary.house),'House balance',usd(fin.summary.house/fin.chipsPerUsd)),kpi(fmt(fin.summary.wallets),'Wallets'),h('div',{class:'card'},[h('h3',{text:'Integrity'}),auditBtn,h('div',{style:'margin-top:8px'},[audit])])]));
+  var needs=deps.filter(function(d){return ['partially_paid','amount-mismatch'].indexOf(d.status)>-1});
+  if(needs.length)root.appendChild(h('div',{class:'card',style:'margin-bottom:12px;border-color:rgba(255,107,120,.5)'},[h('h3',{text:'Needs your review ('+needs.length+')'}),h('div',{class:'mut sm',style:'margin-bottom:8px',text:'Check the payment in your NOWPayments dashboard, then credit what actually arrived (or reject).'}),table(depCols(),needs)]));
+  root.appendChild(h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:'Deposits'}),table(depCols(),deps,'No deposits yet.')]));
+  root.appendChild(h('div',{class:'card'},[h('h3',{text:'Latest chip movements (all players)'}),table([{h:'When',v:function(x){return when(x.createdAt)}},{h:'Type',v:function(x){return x.type.replace(/_/g,' ')}},{h:'Account',v:function(x){return h('span',{class:'mono',text:x.accountId==='house'?'house':x.accountId.slice(0,8)})}},{h:'Chips',v:function(x){return h('span',{style:'color:var(--'+(x.amount>0?'green':'red')+')',text:(x.amount>0?'+':'')+fmt(x.amount)})},r:1}],led)]));
+  return root})};
+function depCols(){return [{h:'When',v:function(d){return when(d.createdAt)}},{h:'Player',v:function(d){return d.username}},{h:'USD',v:function(d){return usd(d.usd)},r:1},{h:'Chips',v:function(d){return fmt(d.chips)},r:1},{h:'Status',v:function(d){return statusPill(d.status)}},{h:'Detail',v:function(d){return d.note||(d.last?(d.last.status+(d.last.paid?' · paid '+d.last.paid+' '+(d.last.currency||''):'')):d.error)}},
+  {h:'',v:function(d){return ['completed','completed-manual','rejected'].indexOf(d.status)>-1?null:h('button',{class:'btn sm',onclick:function(){resolveModal(d)},text:'Resolve'})}}]}
+function resolveModal(d){modal(function(m,close){var chips=h('input',{type:'number',min:'0',step:'1',value:d.status==='amount-mismatch'||d.status==='partially_paid'?'':String(d.chips)}),note=h('input',{placeholder:'Note (e.g. what you checked)'});
+  m.appendChild(h('h3',{style:'margin:0 0 6px;font-size:17px',text:'Resolve deposit — '+usd(d.usd)}));m.appendChild(h('p',{class:'mut',text:d.username+' expected '+fmt(d.chips)+' chips. Enter the chips to credit (0 rejects it). This can only be done once.'}));
+  m.appendChild(h('div',{class:'form'},[h('label',{class:'full'},['Chips to credit',chips]),h('label',{class:'full'},['Note',note])]));
+  m.appendChild(h('div',{class:'tools',style:'margin-top:14px'},[h('button',{class:'btn pri',onclick:function(){api('/deposits/'+d.id+'/resolve',{method:'POST',body:{chips:chips.value,note:note.value}}).then(function(){toast('Resolved','good');close();render()}).catch(fail)},text:'Confirm'}),h('button',{class:'btn',onclick:close,text:'Cancel'})]))})}
+
+/* ---------- tournaments ---------- */
+VIEWS.tournaments=function(){return api('/tournaments').then(function(d){
+  var root=h('div',{},[header('Tournaments',[h('button',{class:'btn pri',onclick:function(){tournamentForm(null)},text:'+ New tournament'}),refreshBtn()])]);
+  root.appendChild(h('div',{class:'card'},[table([
+    {h:'Name',v:function(t){return h('b',{text:t.name})}},{h:'Game',v:function(t){return t.game}},{h:'Status',v:function(t){return statusPill(t.status)}},{h:'Starts',v:function(t){return when(t.startAt)}},
+    {h:'Entry',v:function(t){return t.entryFee?fmt(t.entryFee):'Free'},r:1},{h:'Prize pool',v:function(t){return fmt(t.pool)},r:1},{h:'Players',v:function(t){return t.playerCount+'/'+t.maxPlayers},r:1},
+    {h:'',v:function(t){return h('button',{class:'btn sm',onclick:function(){tournamentDrawer(t.id)},text:'Manage'})}}],d.rows,'No tournaments yet. Create the first one.')]));
+  return root})};
+function localDT(ms){var d=new Date(ms),p=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())}
+function nextSaturday(){var d=new Date();d.setHours(18,0,0,0);var add=(6-d.getDay()+7)%7||7;d.setDate(d.getDate()+add);return d.getTime()}
+function tournamentForm(t){modal(function(m,close){
+  var v=t||{game:'ludo',name:'',description:'',entryFee:0,fixedPrize:0,rakePercent:10,minPlayers:4,maxPlayers:32,matchTimeoutSec:180,chessBase:300,chessInc:0,feeToPool:true,repeatWeekly:false,prizeSplit:[50,30,20],startAt:nextSaturday()};
+  var f={};
+  function num(label,key,min,max){var i=h('input',{type:'number',min:String(min),value:String(v[key]!=null?v[key]:'')});if(max!=null)i.setAttribute('max',String(max));f[key]=i;return h('label',{},[label,i])}
+  var game=h('select',{},['ludo','whot','chess'].map(function(g){return h('option',{value:g,text:g[0].toUpperCase()+g.slice(1),selected:v.game===g})}));f.game=game;if(t&&t.playerCount>0)game.disabled=true;
+  f.name=h('input',{maxlength:'60',value:v.name});f.description=h('input',{maxlength:'400',value:v.description||''});
+  f.startAt=h('input',{type:'datetime-local',value:localDT(v.startAt)});f.prizeSplit=h('input',{value:(v.prizeSplit||[]).join(',')});
+  f.feeToPool=h('input',{type:'checkbox'});f.feeToPool.checked=v.feeToPool!==false;f.repeatWeekly=h('input',{type:'checkbox'});f.repeatWeekly.checked=!!v.repeatWeekly;
+  m.appendChild(h('h3',{style:'margin:0 0 12px;font-size:17px',text:t?'Edit tournament':'New tournament'}));
+  m.appendChild(h('div',{class:'form'},[
+    h('label',{},['Game',game]),h('label',{},['Starts at (your local time)',f.startAt]),h('label',{class:'full'},['Name',f.name]),h('label',{class:'full'},['Description (optional)',f.description]),
+    num('Entry fee (chips, 0 = free)','entryFee',0),num('Guaranteed prize (chips, paid by the house)','fixedPrize',0),
+    num('House cut of entry fees (%)','rakePercent',0,100),h('label',{},['Prize split % (1st,2nd,3rd)',f.prizeSplit]),
+    num('Minimum players','minPlayers',2,128),num('Maximum players','maxPlayers',2,128),num('Wait for a no-show (seconds)','matchTimeoutSec',30,1800),
+    num('Chess clock (seconds per side)','chessBase',60,3600),num('Chess increment (seconds)','chessInc',0,60),
+    h('label',{class:'full'},[h('span',{},[f.feeToPool,'Entry fees go into the prize pool (after the house cut)'])]),
+    h('label',{class:'full'},[h('span',{},[f.repeatWeekly,'Repeat every week (re-opens registration automatically)'])])]));
+  var pool=h('div',{class:'mut sm',style:'margin-top:10px'});function calc(){var e=Number(f.entryFee.value)||0,g=Number(f.fixedPrize.value)||0,r=Number(f.rakePercent.value)||0,n=Number(f.maxPlayers.value)||0;pool.textContent='If full ('+n+' players): entry fees '+fmt(e*n)+' chips'+(f.feeToPool.checked?' → prize pool '+fmt(g+Math.floor(e*n*(100-r)/100))+' chips':' kept by the house; prize pool = guaranteed '+fmt(g)+' chips')+'. Knockout bracket, byes added automatically.'}
+  ['entryFee','fixedPrize','rakePercent','maxPlayers','feeToPool'].forEach(function(k){f[k].addEventListener('input',calc);f[k].addEventListener('change',calc)});calc();m.appendChild(pool);
+  var err=h('div',{class:'err',role:'alert'});m.appendChild(err);
+  function body(){return {game:f.game.value,name:f.name.value,description:f.description.value,startAt:new Date(f.startAt.value).getTime(),entryFee:f.entryFee.value,fixedPrize:f.fixedPrize.value,rakePercent:f.rakePercent.value,prizeSplit:f.prizeSplit.value,minPlayers:f.minPlayers.value,maxPlayers:f.maxPlayers.value,matchTimeoutSec:f.matchTimeoutSec.value,chessBase:f.chessBase.value,chessInc:f.chessInc.value,feeToPool:f.feeToPool.checked,repeatWeekly:f.repeatWeekly.checked}}
+  function save(draft){var b=body();if(!Number.isFinite(b.startAt)){err.textContent='Pick a start time.';return}if(t){api('/tournaments/'+t.id,{method:'PATCH',body:b}).then(function(){toast('Saved','good');close();render()}).catch(function(e){err.textContent=e.message})}else{b.draft=!!draft;api('/tournaments',{method:'POST',body:b}).then(function(){toast(draft?'Saved as draft':'Tournament published','good');close();render()}).catch(function(e){err.textContent=e.message})}}
+  m.appendChild(h('div',{class:'tools',style:'margin-top:12px'},t?[h('button',{class:'btn pri',onclick:function(){save()},text:'Save changes'}),h('button',{class:'btn',onclick:close,text:'Cancel'})]:[h('button',{class:'btn pri',onclick:function(){save(false)},text:'Publish now'}),h('button',{class:'btn',onclick:function(){save(true)},text:'Save as draft'}),h('button',{class:'btn',onclick:close,text:'Cancel'})]));
+})}
+function tournamentDrawer(id){api('/tournaments/'+id).then(function(r){var t=r.tournament;drawer(function(el,close){
+  el.appendChild(h('div',{class:'bar'},[h('h2',{text:t.name}),h('button',{class:'btn sm',onclick:close,text:'Close'})]));
+  el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('div',{},[statusPill(t.status),' ',pill(t.game),' ',t.repeatWeekly?pill('weekly','blue'):null]),
+    h('div',{class:'grid g4',style:'margin-top:12px'},[kpi(fmt(t.playerCount)+'/'+t.maxPlayers,'Players'),kpi(t.entryFee?fmt(t.entryFee):'Free','Entry fee'),kpi(fmt(t.pool),'Prize pool'),kpi(when(t.startAt),'Starts')]),
+    h('div',{class:'mut sm',style:'margin-top:10px',text:'Prize split '+t.prizeSplit.join(' / ')+' % · guaranteed '+fmt(t.fixedPrize)+' · house cut '+t.rake+'% · fees collected '+fmt(t.fees.collected)+(t.cancelReason?' · cancelled: '+t.cancelReason.replace(/-/g,' '):'')})]));
+  var acts=[];
+  function act(name,msg){api('/tournaments/'+t.id+'/'+name,{method:'POST'}).then(function(){toast(msg,'good');close();render()}).catch(fail)}
+  if(t.status==='draft')acts.push(h('button',{class:'btn good',onclick:function(){act('publish','Published')},text:'Publish'}));
+  if(t.status==='registration')acts.push(h('button',{class:'btn pri',onclick:function(){if(confirm('Start now? Registration closes and the bracket is drawn.'))act('start-now','Started')},text:'Start now'}));
+  if(['draft','registration'].indexOf(t.status)>-1)acts.push(h('button',{class:'btn',onclick:function(){close();tournamentForm(t)},text:'Edit'}));
+  if(['registration','running'].indexOf(t.status)>-1)acts.push(h('button',{class:'btn bad',onclick:function(){if(confirm('Cancel and refund every entry fee?'))act('cancel','Cancelled and refunded')},text:'Cancel & refund'}));
+  if(['draft','cancelled','completed'].indexOf(t.status)>-1)acts.push(h('button',{class:'btn',onclick:function(){if(confirm('Delete this tournament record?'))api('/tournaments/'+t.id,{method:'DELETE'}).then(function(){toast('Deleted','good');close();render()}).catch(fail)},text:'Delete'}));
+  el.appendChild(h('div',{class:'tools'},acts));
+  if(t.results&&t.results.length)el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Results'}),table([{h:'Place',v:function(x){return x.place}},{h:'Player',v:function(x){return x.username}},{h:'Prize',v:function(x){return fmt(x.prize)},r:1}],t.results)]));
+  if(t.rounds&&t.rounds.length){var name={};t.players.forEach(function(p){name[p.accountId]=p.username});
+    el.appendChild(h('div',{class:'card',style:'margin-bottom:10px'},[h('h3',{text:'Bracket'}),h('div',{class:'bracket'},t.rounds.map(function(rd,i){return h('div',{class:'bcol'},[h('div',{class:'mut sm',text:i===t.rounds.length-1&&rd.length===1?'Final':'Round '+(i+1)})].concat(rd.map(function(mm){function row(pid){return h('div',{class:mm.winner&&mm.winner!==pid?'l':mm.winner===pid?'w':''},[h('span',{text:pid?(name[pid]||'?'):'bye'})])}return h('div',{class:'bm'},[row(mm.a),row(mm.b)])})))}))]))}
+  el.appendChild(h('div',{class:'card'},[h('h3',{text:'Registered players ('+t.players.length+')'}),t.players.length?table([{h:'#',v:function(p){return p.seed||''}},{h:'Player',v:function(p){return p.username}}],t.players):h('div',{class:'mut',text:'Nobody has joined yet.'})]));
+})}).catch(fail)}
+
+/* ---------- settings ---------- */
+VIEWS.settings=function(){return Promise.all([api('/settings/runtime'),api('/config')]).then(function(r){
+  var v=r[0].values,cfg=r[1],root=h('div',{},[header('Settings')]);
+  var games=['ludo','whot','chess'].map(function(g){var c=h('input',{type:'checkbox','data-g':g});c.checked=v.versusGames.indexOf(g)>-1;return h('label',{style:'margin-right:16px'},[c,' ',g[0].toUpperCase()+g.slice(1)])});
+  var fee=h('input',{type:'number',step:'0.5',min:'0',max:'50',value:String(Math.round(v.versusFeeRate*1000)/10)}),stakes=h('input',{value:v.versusStakes.join(', ')}),cap=h('input',{type:'number',min:'0',value:String(v.newAccountMaxStake)}),base=h('input',{type:'number',min:'60',value:String(v.versusChessBase)}),inc=h('input',{type:'number',min:'0',value:String(v.versusChessInc)});
+  root.appendChild(h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:'Versus & chips (applies immediately)'}),h('div',{class:'form'},[
+    h('div',{class:'full'},[h('div',{class:'sm mut',text:'Games open for versus'}),h('div',{style:'margin-top:6px'},games)]),
+    h('label',{},['House fee on versus pots (%)',fee]),h('label',{},['Stake options (chips, comma separated)',stakes]),h('label',{},['Stake cap for accounts under 24h (chips)',cap]),h('label',{},['Versus chess clock (seconds per side)',base]),h('label',{},['Versus chess increment (seconds)',inc])]),
+    h('div',{class:'tools',style:'margin-top:12px'},[h('button',{class:'btn pri',onclick:function(){api('/settings/runtime',{method:'PATCH',body:{versusGames:Array.prototype.map.call(document.querySelectorAll('[data-g]'),function(c){return c.checked?c.getAttribute('data-g'):null}).filter(Boolean),versusFeeRate:Number(fee.value)/100,versusStakes:stakes.value.split(/[ ,]+/).filter(Boolean).map(Number),newAccountMaxStake:cap.value,versusChessBase:base.value,versusChessInc:inc.value}}).then(function(){toast('Saved and applied','good')}).catch(fail)},text:'Save'})])]));
+  Object.keys(cfg).forEach(function(sec){root.appendChild(configCard(sec,cfg[sec]))});
+  root.appendChild(h('div',{class:'mut sm',style:'margin-top:10px',text:'The classic page has the same game-rule settings with the original layout.'}));
+  return root})};
+function labelOf(k){return k.replace(/([A-Z])/g,' $1').replace(/^./,function(c){return c.toUpperCase()})}
+function configCard(sec,obj){
+  var inputs={};
+  function build(prefix,o,box){Object.keys(o).forEach(function(k){var val=o[k],path=prefix?prefix+'.'+k:k;
+    if(val&&typeof val==='object'&&!Array.isArray(val)){box.appendChild(h('div',{class:'full sm mut',style:'margin-top:6px',text:labelOf(k)}));build(path,val,box);return}
+    var inp;if(typeof val==='boolean'){inp=h('input',{type:'checkbox'});inp.checked=val;box.appendChild(h('label',{},[inp,labelOf(k)]))}
+    else if(Array.isArray(val)){inp=h('input',{value:val.join(', ')});box.appendChild(h('label',{},[labelOf(k)+' (comma separated)',inp]))}
+    else if(typeof val==='number'){inp=h('input',{type:'number',value:String(val)});box.appendChild(h('label',{},[labelOf(k),inp]))}
+    else{var long=String(val).length>40||/Message|Header/.test(k);inp=h(long?'textarea':'input',{value:val,rows:long?'3':null});box.appendChild(h('label',{class:long?'full':''},[labelOf(k),inp]))}
+    inputs[path]={el:inp,orig:val}})}
+  var box=h('div',{class:'form'});build('',obj,box);
+  function collect(){var out={};Object.keys(inputs).forEach(function(path){var i=inputs[path],val;if(typeof i.orig==='boolean')val=i.el.checked;else if(Array.isArray(i.orig)){var parts=i.el.value.split(/[ ,]+/).filter(Boolean);val=typeof i.orig[0]==='number'||!i.orig.length?parts.map(Number):parts}else if(typeof i.orig==='number')val=Number(i.el.value);else val=i.el.value;
+    var keys=path.split('.'),o=out;keys.forEach(function(k,ix){if(ix===keys.length-1)o[k]=val;else o=o[k]=o[k]||{}})});return out}
+  return h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:labelOf(sec)+' settings'}),box,h('div',{class:'tools',style:'margin-top:12px'},[h('button',{class:'btn pri',onclick:function(){api('/config/'+sec,{method:'PATCH',body:collect()}).then(function(){toast('Saved '+labelOf(sec),'good')}).catch(fail)},text:'Save'}),h('button',{class:'btn',onclick:function(){if(confirm('Reset '+labelOf(sec)+' to defaults?'))api('/config/'+sec+'/reset',{method:'POST',body:{}}).then(function(){toast('Reset','good');render()}).catch(fail)},text:'Reset to defaults'})])]);
+}
+
+/* ---------- system ---------- */
+VIEWS.system=function(){return Promise.all([api('/system'),api('/logs')]).then(function(r){
+  var s=r[0],logs=r[1].rows,F=s.flags;$('envTag').textContent=s.env+' · up '+dur(s.uptimeSec);
+  var rows=[['MongoDB database',s.mongo,s.mongo?'Connected':'NOT connected — data is lost on restart'],['Crypto deposits (NOWPayments)',F.nowpayments,F.nowpayments?(F.nowpaymentsSandbox?'Configured — SANDBOX mode':'Configured — live'):'API key / IPN secret missing'],['Google sign-in',F.google,F.google?'Configured':'GOOGLE_CLIENT_ID missing'],
+    ['Admin password',F.adminPasswordSet,F.adminPasswordSet?'Set':'Using the default password!'],['Test chips off',!F.testChips,F.testChips?'ON — anyone signed in can add free chips. Turn off before going live.':'Off'],['WhatsApp (Meta Cloud API)',F.whatsappMeta,F.whatsappMeta?'Verify token set':'Not configured'],['Public URL',!!F.publicBaseUrl,F.publicBaseUrl||'PUBLIC_BASE_URL / SITE_URL not set (needed for deposit callbacks)']];
+  return h('div',{},[header('System & logs',[refreshBtn()]),
+    h('div',{class:'grid g4',style:'margin-bottom:12px'},[kpi(dur(s.uptimeSec),'Uptime'),kpi(s.memoryMb+' MB','Memory (RSS)',s.heapMb+' MB heap'),kpi(s.node,'Node'),kpi(s.env,'Environment')]),
+    h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:'Configuration health'}),table([{h:'',v:function(x){return pill(x[1]?'OK':'Check',x[1]?'good':'bad')}},{h:'Item',v:function(x){return x[0]}},{h:'Status',v:function(x){return x[2]}}],rows)]),
+    h('div',{class:'card'},[h('h3',{text:'Admin activity log'}),table([{h:'When',v:function(l){return when(l.at)}},{h:'Action',v:function(l){return l.action}},{h:'Target',v:function(l){return l.target?h('span',{class:'mono',text:String(l.target).slice(0,12)}):null}},{h:'Details',v:function(l){return JSON.stringify(l.details||{}).slice(0,140)}}],logs,'No admin actions yet.')])])})};
+
+window.addEventListener('hashchange',function(){var s=(location.hash||'').slice(1);if(token&&s&&s!==section&&VIEWS[s])nav(s)});
+if(token){api('/system').then(boot).catch(function(){})}
 })();
 </script>
 </body>

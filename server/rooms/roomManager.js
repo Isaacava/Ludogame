@@ -14,6 +14,14 @@ class RoomManager {
         ensureAudience(room);
 this.rooms.set(code, room); return room;
   }
+  // Versus matches: both seats are reserved up front (no socket yet). Each player's page connects with its seat token
+  // via the existing reconnect flow, and the engine starts once both seats are connected.
+  createReservedRoom(profiles) {
+    let code; do { code = generateCode(); } while (this.rooms.has(code));
+    const room = { code, playerCount: profiles.length, players: profiles.map((p, i) => ({ socketId: null, playerToken: crypto.randomBytes(16).toString('hex'), connected: false, disconnectedAt: null, name: p.name || `Player ${i + 1}`, color: p.color || null, whatsappPhone: null })), engine: null, rematchVotes: new Set(), createdAt: Date.now() };
+    ensureAudience(room);
+    this.rooms.set(code, room); return room;
+  }
   joinRoom(code, socketId, profile = {}) {
     const room = this.rooms.get(normCode(code)); if(!room) return {error:'room-not-found'}; if(room.engine) return {error:'room-full'};
 

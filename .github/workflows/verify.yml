@@ -27,3 +27,14 @@ jobs:
           node --check server/rooms/whotRoomManager.js
           node --check server/whatsappBot.js
           node --check server/bot/metaWhatsAppAdapter.js
+          node --check server/auth/accounts.js
+          node --check server/wallet/chipWallet.js
+          node --check server/versus/versusService.js
+          node --check server/versus/versusRoutes.js
+          node --check server/wallet/walletRoutes.js
+          node --check server/social/friends.js
+          node --check server/social/social.js
+          node --check server/tournaments/tournamentService.js
+          node --check server/tournaments/tournamentRoutes.js
+          node --check server/admin/adminApi.js
+          node --check server/admin/runtimeSettings.js

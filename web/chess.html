@@ -20,6 +20,7 @@
 <script src="/chess-game.js?v=1"></script>
 <script src="/chess-board.js?v=1"></script>
 <script src="/audio.js"></script>
+<script src="versus-ui.js"></script>
 </head>
 <body class="chessPage">
 <header class="appbar">
@@ -487,6 +488,7 @@
       showWaiting('Waiting for your opponent…', { code: roomCode, chip: tcLabel(x.timeControl) + ' · you play ' + (x.colorPref === 'w' ? 'White' : x.colorPref === 'b' ? 'Black' : 'a random colour'), invite: true });
       renderTop();
     });
+    s.on('versus-result', function (r) { if (window.showVersusResult) window.showVersusResult(r, myIndex); });
     s.on('chess:joined', function (x) {
       roomCode = x.code; playerToken = x.playerToken || playerToken; myIndex = x.index; tcInfo = x.timeControl; roomReady = true; roomPlayers = x.players || roomPlayers; saveRoom();
       try { history.replaceState({}, '', location.pathname + '?mode=friends&action=reconnect&code=' + encodeURIComponent(roomCode)); } catch (e) { /* ignore */ }
@@ -644,6 +646,8 @@
   if (!isComputer) {
     try { var saved = JSON.parse(sessionStorage.getItem(STORE) || 'null'); if (saved && saved.token && !spectatorMode && (ACTION === 'create' || ACTION === 'reconnect' || saved.code === requestedCode)) { roomCode = saved.code; playerToken = saved.token; if (!requestedCode) requestedCode = saved.code; } } catch (e) { /* ignore */ }
   }
+  var urlTok = (params.get('playerToken') || '').trim();
+  if (urlTok && requestedCode && !spectatorMode && !isComputer) { roomCode = requestedCode; playerToken = urlTok; }
   var needsName = !(roomCode && playerToken);
   (needsName ? ensureName() : Promise.resolve()).then(function () {
     if (isComputer) newComputerGame(false);
@@ -652,5 +656,7 @@
   window.__chess = { get state() { return state; }, get game() { return game; }, board: board };
 })();
 </script>
+<script>window.CODEPLAY_WHERE='chess';</script>
+<script src="social-ui.js"></script>
 </body>
 </html>

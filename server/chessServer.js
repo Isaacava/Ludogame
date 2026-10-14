@@ -101,7 +101,9 @@ io.on('connection', socket => {
     const room = rooms.getRoom(code); if (!room) return socket.emit('chess:error', { message: 'room-not-found' });
     const res = rooms.reconnect(room, socket.id, playerToken);
     if (res.error) return socket.emit('chess:error', { message: res.error });
-    finishJoin(room, res.index, res.replacedSocketId);
+    let fresh = false;
+    if ((room.versus || room.reserved) && !room.engine && room.players.length === 2 && room.players.every(p => p.socketId)) { rooms.startGame(room); fresh = true; }
+    finishJoin(room, res.index, res.replacedSocketId, fresh);
   });
   function finishJoin(room, index, replacedSocketId, fresh) {
     retireSocket(replacedSocketId);
@@ -145,6 +147,7 @@ io.on('connection', socket => {
     if (accept) afterGameEnds(room);
   });
   socket.on('chess:rematch', ({ code }) => {
+    const rmRoom = rooms.getRoom(code); if (rmRoom && (rmRoom.versus || rmRoom.tournament)) return socket.emit('chess:error', { message: 'rematch-not-available-in-versus' });
     const out = rooms.requestRematch(code, socket.id);
     if (out.error) return socket.emit('chess:error', { message: out.error });
     emitState(out.room, out.started ? { event: 'rematch-started' } : { event: 'rematch-requested' });

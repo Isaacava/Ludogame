@@ -10,6 +10,18 @@ const {createBotApp,UserStore,SessionStore}=require('./whatsappBot');
 const {createWahaApp}=require('./bot/wahaAdapter');
 const {createMetaWhatsAppApp}=require('./bot/metaWhatsAppAdapter');
 const {MongoPersistence}=require('./db/mongoPersistence');
+const {AccountStore,createAccountRoutes}=require('./auth/accounts');
+const {ChipWallet}=require('./wallet/chipWallet');
+const {VersusService}=require('./versus/versusService');
+const {createVersusRoutes,attachVersusSockets}=require('./versus/versusRoutes');
+const {createWalletRoutes,DepositStore}=require('./wallet/walletRoutes');
+const {FriendStore,FriendsService}=require('./social/friends');
+const {createSocial}=require('./social/social');
+const {TournamentService}=require('./tournaments/tournamentService');
+const {createTournamentRoutes}=require('./tournaments/tournamentRoutes');
+const {gameUrl}=require('./versus/versusRoutes');
+const {createAdminApi}=require('./admin/adminApi');
+const {RuntimeSettings,AdminLog}=require('./admin/runtimeSettings');
 const {resolveWhatsAppGameToken,notifyGameResults}=require('./bot/whatsappBridge');
 const {registerGameManager}=require('./bot/gameControl');
 
@@ -20,6 +32,44 @@ registerGameManager('ludo',rooms);
 const persistence=new MongoPersistence();
 const users=new UserStore(persistence);
 const sessions=new SessionStore(persistence);
+const accounts=new AccountStore(persistence);
+const wallet=new ChipWallet(persistence);
+const runtime=new RuntimeSettings(persistence);
+const adminLog=new AdminLog(persistence);
+const deposits=new DepositStore(persistence);
+const VERSUS_GAMES=String(process.env.VERSUS_GAMES||'ludo,whot,chess').split(',').map(x=>x.trim()).filter(Boolean);
+const lazy={whot:()=>require('./whotServer').rooms,chess:()=>require('./chessServer').rooms};
+function reserveRoom(game,profiles,opts={}){
+  if(game==='ludo')return rooms.createReservedRoom(profiles);
+  if(game==='whot')return lazy.whot().createReservedRoom(profiles);
+  if(game==='chess')return lazy.chess().createReservedRoom(profiles,{base:opts.base||runtime.values.versusChessBase,inc:opts.inc!==undefined?opts.inc:runtime.values.versusChessInc});
+  throw new Error('unsupported-game');
+}
+const versus=new VersusService({wallet,accounts,persistence,games:VERSUS_GAMES,createRoom:async(game,players,{matchId,stake})=>{
+  const room=reserveRoom(game,players.map(p=>({name:p.username,color:p.color})));
+  room.versus={matchId,stake,accountIds:players.map(p=>p.accountId),createdAt:Date.now(),settled:false};
+  return {code:room.code,tokens:room.players.map(p=>p.playerToken)};
+}});
+// Admin-editable settings apply to the running service immediately.
+runtime.apply=(v)=>{versus.games=v.versusGames;versus.feeRate=v.versusFeeRate;versus.stakes=v.versusStakes;versus.newAccountMaxStake=v.newAccountMaxStake};
+runtime.apply(runtime.get());
+// Tournaments: every match is a private reserved room, so tournament players only ever meet each other.
+const tournaments=new TournamentService({persistence,wallet,accounts,
+  roomExists:(game,code)=>{try{return game==='ludo'?!!rooms.getRoom(code):game==='whot'?!!lazy.whot().getRoom(code):!!lazy.chess().getRoom(code)}catch(e){return false}},
+  createRoom:async(game,profiles,x)=>{
+    const room=reserveRoom(game,profiles,{base:x.chess&&x.chess.base,inc:x.chess&&x.chess.inc});
+    room.reserved=true;room.tournament={id:x.tournamentId,matchId:x.matchId,accountIds:x.accountIds,timeoutMs:x.timeoutMs,createdAt:Date.now(),settled:false};
+    return {code:room.code,tokens:room.players.map(p=>p.playerToken)};
+  },
+  notify:(accountId,event,payload)=>{if(event==='tournament-match')payload={...payload,url:gameUrl(payload.game,payload.code,payload.playerToken,2)};social.push(accountId,event,payload)}});
+versus.extraBusy=(accountId)=>tournaments.activeMatchFor(accountId);
+// Friends + invites. `io` is created further down, so the social module reaches it through this small proxy.
+const ioProxy={to:(...a)=>io.to(...a),on:(...a)=>io.on(...a)};
+const friendsService=new FriendsService({store:new FriendStore(persistence),accounts});
+const social=createSocial({io:ioProxy,accounts,friends:friendsService,versus,wallet,ttlMs:Number(process.env.INVITE_TTL_MS)||undefined,createFriendlyRoom:async(game,players)=>{
+  const room=reserveRoom(game,players.map(p=>({name:p.username,color:p.color})));room.reserved=true;
+  return {code:room.code,tokens:room.players.map(p=>p.playerToken)};
+}});
 const roomPlayers=(room)=>room.players.map((p,index)=>({index,name:p.name||`Player ${index+1}`,color:p.color||null,connected:!!p.socketId}));
 const SAFE_REACTIONS=new Set(['😂','🔥','👏','😭','😎','😳','Omo!','Sharp!']);
 
@@ -48,11 +98,24 @@ function emitLudoResultAudio(room,playerIndex,result){
 
 
 const app=express();
-const {router:adminRouter}=createAdminRoutes(configStore);
+const {router:adminRouter,auth:adminAuth}=createAdminRoutes(configStore);
+function liveRooms(){
+  const out=[];
+  const add=(game,map)=>{for(const r of map.values()){out.push({game,code:r.code,kind:r.versus?'versus':r.tournament?'tournament':r.reserved?'friend':(r.mode||'friends'),stake:r.versus?r.versus.stake:0,started:!!r.engine,over:!!(r.engine&&r.engine.gameOver),ageSec:Math.round((Date.now()-(r.createdAt||Date.now()))/1000),players:r.players.map(p=>({name:p.name,connected:!!p.socketId,bot:!!p.bot}))})}};
+  try{add('ludo',rooms.rooms);add('whot',lazy.whot().rooms);add('chess',lazy.chess().rooms)}catch(e){}
+  return out;
+}
+social.friendCount=async(id)=>(await friendsService.friendIds(id)).length;
 app.use('/api/admin',adminRouter);
+app.use('/api/admin',createAdminApi({auth:adminAuth,accounts,wallet,deposits,versus,tournaments,social,clients:()=>(io&&io.engine?io.engine.clientsCount:0),persistence,runtime,log:adminLog,liveRooms,configStore}));
 app.use(createMetaWhatsAppApp({users,configStore}));
 app.use(createWahaApp({users}));
 app.use(createBotApp({users,sessions,configStore}));
+app.use('/api/account',createAccountRoutes({accounts}));
+app.use('/api/versus',createVersusRoutes({accounts,wallet,versus}));
+app.use('/api/wallet',createWalletRoutes({accounts,wallet,deposits}));
+app.use('/api/social',social.router);
+app.use('/api/tournaments',createTournamentRoutes({accounts,tournaments}));
 app.use(express.static(path.join(__dirname,'..','web'),{extensions:['html']}));
 app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/live-rooms',(req,res)=>{res.set('Cache-Control','no-store');res.json({rooms:require('./bot/gameControl').listLiveRooms()})});
@@ -230,7 +293,8 @@ io.on('connection',socket=>{
   });
   socket.on('reconnect-player',({code,playerToken})=>{
     const room=rooms.getRoom(code);if(!room||!playerToken)return socket.emit('error-msg','room-not-found');
-    const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
+    const hadEngine=!!room.engine;const result=rooms.reconnect(room,socket.id,playerToken);if(result.error)return socket.emit('error-msg',result.error);
+    if(!hadEngine&&room.engine&&(room.versus||room.reserved))socket.to(room.code).emit('game-ready',{code:room.code,state:room.engine.toJSON()});
     retireSocket(result.replacedSocketId,'session-replaced');socket.data.role='player';socket.data.game='ludo';socket.data.roomCode=room.code;socket.join(room.code);socket.emit('you-are-player',{index:result.index,playerToken:result.playerToken,reconnected:true});io.to(room.code).emit('player-connection',{index:result.index,name:room.players[result.index].name||`Player ${result.index+1}`,connected:true,players:roomPlayers(room)});
     socket.emit('room-status',{code:room.code,joined:room.players.filter(p=>p.socketId).length,needed:room.playerCount,started:!!room.engine,players:roomPlayers(room),audience:rooms.audienceInfo(room,true,true),whatsappBotNumber:String(process.env.WHATSAPP_PUBLIC_NUMBER||'').replace(/\D/g,'')});
     if(room.engine)socket.emit('game-ready',{code:room.code,state:room.engine.toJSON()});
@@ -295,6 +359,7 @@ io.on('connection',socket=>{
     io.to(room.code).emit('reaction',{playerIndex:pIdx,name:room.players[pIdx].name||`Player ${pIdx+1}`,reaction});
   });
   socket.on('rematch',({code})=>{
+    const rmRoom=rooms.getRoom(code);if(rmRoom&&(rmRoom.versus||rmRoom.tournament))return socket.emit('error-msg','rematch-not-available-in-versus');
     const result=rooms.requestRematch(code,socket.id);
     if(result.error)return socket.emit('error-msg',result.error);
     io.to(result.room.code).emit('rematch-status',{requested:result.requested,needed:result.room.playerCount});
@@ -381,6 +446,78 @@ io.on('connection',socket=>{
 });
 setInterval(()=>rooms.sweepExpired(),60*1000);
 
+// ---- Versus: lobby sockets + referee loop (result, no-show refund, forfeit) ----
+attachVersusSockets({io,accounts,wallet,versus});
+social.attach();
+const VERSUS_NOSHOW_MS=Number(process.env.VERSUS_NOSHOW_MS)||120000,VERSUS_FORFEIT_MS=Number(process.env.VERSUS_FORFEIT_MS)||90000;
+const VERSUS_ADAPTERS={
+  ludo:{rooms:()=>rooms.rooms.values(),emit:(room,ev,p)=>io.to(room.code).emit(ev,p),
+    outcome:room=>({winnerIndex:Array.isArray(room.engine.finishOrder)&&room.engine.finishOrder.length?room.engine.finishOrder[0]:-1}),
+    forceEnd:room=>{room.engine.gameOver=true}},
+  whot:{rooms:()=>lazy.whot().rooms.values(),emit:(room,ev,p)=>io.to(`WHOT_${room.code}`).emit(ev,p),
+    outcome:room=>({winnerIndex:typeof room.engine.winner==='number'?room.engine.winner:-1}),
+    forceEnd:room=>{room.engine.gameOver=true}},
+  chess:{rooms:()=>lazy.chess().rooms.values(),emit:(room,ev,p)=>io.to(`CHESS_${room.code}`).emit(ev,p),
+    outcome:room=>{const r=room.engine.result;return {winnerIndex:r&&r.winner&&room.colors?room.colors.indexOf(r.winner):-1}},
+    forceEnd:(room,goneIdx)=>{if(room.engine.abandon&&room.colors)room.engine.abandon(room.colors[goneIdx])}}
+};
+async function versusRefereeRoom(game,ad,room){
+  const v=room.versus;if(!v||v.settled||v.busy)return;
+  v.busy=true;
+  try{
+    const now=Date.now(),eng=room.engine;
+    if(!eng){
+      if(now-v.createdAt>VERSUS_NOSHOW_MS){v.settled=true;await versus.cancelMatch(v.matchId,'no-show');ad.emit(room,'versus-result',{result:'cancelled',reason:'no-show',refunded:true});}
+      return;
+    }
+    if(!v.started){v.started=true;await versus.markActive(v.matchId);}
+    if(eng.gameOver){
+      const {winnerIndex}=ad.outcome(room);
+      v.settled=true;
+      const r=winnerIndex>=0?await versus.settle(v.matchId,v.accountIds[winnerIndex],'completed'):await versus.settle(v.matchId,null,'no-winner');
+      ad.emit(room,'versus-result',{result:r.result||'error',winnerIndex,payout:r.payout||0,fee:r.fee||0,points:r.points||null});
+      return;
+    }
+    const gone=room.players.findIndex(p=>!p.bot&&!p.socketId&&p.disconnectedAt&&now-p.disconnectedAt>VERSUS_FORFEIT_MS);
+    if(gone>=0){
+      v.settled=true;ad.forceEnd(room,gone);
+      const winnerIndex=gone===0?1:0;
+      const r=await versus.settle(v.matchId,v.accountIds[winnerIndex],'forfeit');
+      ad.emit(room,'versus-result',{result:r.result||'error',winnerIndex,reason:'forfeit',payout:r.payout||0,fee:r.fee||0,points:r.points||null});
+    }
+  }catch(err){console.error('[versus] referee',game,err&&err.message);v.settled=false}
+  finally{v.busy=false}
+}
+const TOURNAMENT_FORFEIT_MS=Number(process.env.TOURNAMENT_FORFEIT_MS)||120000;
+async function tournamentRefereeRoom(game,ad,room){
+  const tr=room.tournament;if(!tr||tr.settled||tr.busy)return;
+  tr.busy=true;
+  try{
+    const now=Date.now(),eng=room.engine,done=(winnerIndex,reason,extra={})=>{tr.settled=true;return tournaments.reportResult(tr.id,tr.matchId,winnerIndex>=0?tr.accountIds[winnerIndex]:null,reason).then(rep=>{ad.emit(room,'versus-result',{result:rep.replay?'draw':'win',winnerIndex:rep.replay?-1:tr.accountIds.indexOf(rep.winner),reason,tournament:true,tournamentId:tr.id,final:rep.status==='completed',replay:!!rep.replay,...extra});return rep})};
+    if(!eng){
+      if(now-tr.createdAt>tr.timeoutMs){
+        const here=room.players.map(p=>!!p.socketId);
+        if(here[0]!==here[1])await done(here[0]?0:1,'walkover');
+        else await done(0+(await tournamentSeatByHigherSeed(tr)),'walkover-no-shows');
+      }
+      return;
+    }
+    if(eng.gameOver){const {winnerIndex}=ad.outcome(room);await done(winnerIndex,'completed');return}
+    const gone=room.players.findIndex(p=>!p.bot&&!p.socketId&&p.disconnectedAt&&now-p.disconnectedAt>TOURNAMENT_FORFEIT_MS);
+    if(gone>=0){ad.forceEnd(room,gone);await done(gone===0?1:0,'forfeit')}
+  }catch(err){console.error('[tournament] referee',game,err&&err.message);tr.settled=false}
+  finally{tr.busy=false}
+}
+async function tournamentSeatByHigherSeed(tr){const t=await tournaments.get(tr.id);if(!t)return 0;const s0=tournaments.seedOf(t,tr.accountIds[0]),s1=tournaments.seedOf(t,tr.accountIds[1]);return s0<=s1?0:1}
+async function versusReferee(){
+  for(const [game,ad] of Object.entries(VERSUS_ADAPTERS)){
+    let list;try{list=[...ad.rooms()]}catch(e){continue}
+    for(const room of list){await versusRefereeRoom(game,ad,room);await tournamentRefereeRoom(game,ad,room)}
+  }
+}
+setInterval(()=>{versusReferee().catch(()=>{});versus.sweepQueue().catch(()=>{})},2000);
+setInterval(()=>{tournaments.tick().catch(err=>console.error('[tournament] tick',err&&err.message))},5000);
+
 startTurnTimers({
   rooms:()=>rooms.rooms.values(),
   active:room=>!!room.engine&&!room.engine.gameOver,
@@ -396,15 +533,17 @@ async function startServer(){
     if(persistence.enabled){
       await persistence.connect();
       await configStore.hydrateFromPersistence(persistence);
+      await runtime.load();
       console.log(`MongoDB connected: ${persistence.dbName}`);
     }
   }catch(err){
     console.error('MongoDB connection failed:',err.message);
     if(process.env.REQUIRE_MONGODB==='true')process.exit(1);
   }
+  try{const n=await versus.recoverOrphans();if(n)console.log(`Versus: refunded ${n} match(es) interrupted by a restart`)}catch(err){console.error('Versus recovery failed:',err.message)}
   httpServer.listen(PORT,()=>console.log(`CodePlay Ludo server listening on :${PORT}`));
 }
-module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,startServer};
+module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,accounts,wallet,versus,deposits,social,friendsService,tournaments,startServer};
 
 // Register Whot Socket.IO handlers only after index exports are initialized.
 require('./whotServer');

@@ -18,6 +18,12 @@ class WhotRoomManager{
     ensureAudience(room);
     this.rooms.set(code,room);return room;
   }
+  // Versus matches: seats are reserved up front; players connect with their seat token and the engine starts when both are in.
+  createReservedRoom(profiles){
+    let code;do{code=generateCode()}while(this.rooms.has(code));
+    const room={code,playerCount:profiles.length,mode:'friends',players:profiles.map((p,i)=>({socketId:null,playerToken:crypto.randomBytes(16).toString('hex'),connected:false,disconnectedAt:null,name:p.name||`Player ${i+1}`,whatsappPhone:null,bot:false})),engine:null,rematchVotes:new Set(),createdAt:Date.now(),botTimer:null};
+    ensureAudience(room);this.rooms.set(code,room);return room;
+  }
   joinRoom(code,socketId,profile={}){
     const room=this.rooms.get(normCode(code));if(!room)return {error:'room-not-found'};
     const now=Date.now();

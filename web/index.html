@@ -42,6 +42,8 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 .countBtn{flex:1;margin:0;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink)}
 .countBtn.selected{background:linear-gradient(180deg,#ffe27a,#f2a81d);color:#2b1c00;border-color:transparent}
 .hint{font-size:13px;color:var(--muted);margin:0 0 16px;min-height:16px}
+.friendsBadge{display:inline-block;min-width:18px;padding:1px 6px;margin-left:6px;border-radius:99px;background:#ff5a6a;color:#fff;font-size:11px;font-weight:800}.friendsBadge:empty{display:none}
+.googleWrap{display:flex;justify-content:center;min-height:44px;margin:0 0 10px}.unStatus{font-size:13px;min-height:16px;margin:-8px 0 12px;color:var(--muted)}.unStatus.ok{color:#6fe3a0}.unStatus.bad{color:#ff8a8a}
 .err{color:#ff8a8a;font-size:13px;margin:-8px 0 12px;min-height:16px}
 .linkRow{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}.linkRow a{color:var(--gold);font-weight:800;text-decoration:none;cursor:pointer}
 .banner{width:calc(100% - 36px);max-width:404px;margin:12px 18px 0;padding:11px 14px;border-radius:14px;background:rgba(255,197,61,.14);border:1px solid rgba(255,197,61,.4);color:#ffd98a;font-size:13px;font-weight:700;line-height:1.4}
@@ -101,11 +103,12 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <h1>CodePlay</h1>
   <p class="sub">Ludo, Whot &amp; Chess — join with a code, play right from WhatsApp.</p>
   <div class="spacer"></div>
-  <button class="btn-primary" id="continueBtn" style="display:none" onclick="continueAs()"><svg class="ic " aria-hidden="true"><use href="#i-play"/></svg><span>Continue as <span class="continueName" id="continueName"></span></span></button>
+  <button class="btn-primary" id="continueBtn" style="display:none" onclick="continueAs()"><svg class="ic " aria-hidden="true"><use href="#i-play"/></svg><span id="continueLabel">Continue as <span class="continueName" id="continueName"></span></span></button>
+  <div id="googleWrap" class="googleWrap" style="display:none"></div>
   <button class="btn-whatsapp" id="waBtnLanding" onclick="go('signin')"><svg class="ic " aria-hidden="true"><use href="#i-whatsapp"/></svg> Continue with WhatsApp</button>
   <button class="btn-outline" id="guestBtnLanding" onclick="startGuest()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Play as guest <small style="color:var(--muted);font-weight:600">· no sign-up</small></button>
   <div class="linkRow" id="loginRow">Already have a login code? <a onclick="go('signin')">Enter it</a></div>
-  <div class="linkRow switchLink" id="switchRow">Not you? <a onclick="switchPlayer()">Use a different name</a></div>
+  <div class="linkRow switchLink" id="switchRow"></div>
   <div class="linkRow">Just want to watch? <a onclick="openLive()">See live games</a></div>
 </div>
 
@@ -118,6 +121,18 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <div class="err" id="signinErr"></div>
   <button class="btn-primary" onclick="submitLoginCode()">Continue</button>
   <div class="linkRow"><a onclick="go('landing')">Back</a></div>
+</div>
+
+<div class="screen" id="usernameSetup">
+  <h2>Choose your username</h2>
+  <p class="sub">This is how other players will see you. It must be unique and can't be changed later.</p>
+  <input id="unInput" placeholder="Username" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false">
+  <div class="unStatus" id="unStatus">3-16 characters: letters, numbers and _</div>
+  <p class="sub" style="margin-bottom:8px;">Pick a color</p>
+  <div class="avatarRow" id="unAvatarRow"></div>
+  <div class="err" id="unErr"></div>
+  <div class="spacer"></div>
+  <button class="btn-primary" id="unSubmit" onclick="submitUsername()">Start Playing</button>
 </div>
 
 <div class="screen" id="onboarding">
@@ -138,6 +153,10 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <button class="btn-game" onclick="chooseGame('ludo')"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Ludo</b><small>Race your tokens home</small></span><span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('whot')"><span class="gi gi-whot"><svg class="ic " aria-hidden="true"><use href="#i-cards"/></svg></span><span class="gt"><b>Whot</b><small>Pick two, hold on, general market</small></span><span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('chess')"><span class="gi gi-chess"><svg class="ic " aria-hidden="true"><use href="#i-pawn"/></svg></span><span class="gt"><b>Chess</b><small>Real clocks, rematches, vs computer</small></span><span class="tag">2 players</span></button>
+  <button class="btn-game" id="versusBtn" style="display:none" onclick="location.href='versus.html'"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Versus — play for chips</b><small>Stake chips, random opponent, winner takes the pot</small></span><span class="tag">18+</span></button>
+  <button class="btn-outline" onclick="location.href='tournaments.html'">🏆 Tournaments</button>
+  <button class="btn-outline" id="friendsBtn" style="display:none" onclick="location.href='friends.html'">Friends <span class="friendsBadge" id="friendsBadge"></span></button>
+  <button class="btn-outline" id="walletBtn" style="display:none" onclick="location.href='wallet.html'">Wallet — add chips</button>
   <button class="btn-outline" onclick="openLive()"><svg class="ic " aria-hidden="true"><use href="#i-eye"/></svg> Watch live games</button>
   <div class="spacer"></div>
   <div class="linkRow">Playing from WhatsApp? Just message the bot instead.</div>
@@ -292,7 +311,80 @@ async function submitLoginCode(){
   else{go('onboarding');renderAvatars()}
  }catch(e){errEl.textContent='Could not reach the game server.'}
 }
+var acct={token:null,user:null};
+try{acct.token=localStorage.getItem('codeplay_acct_token')}catch(e){}
+var ACCT_ERR={'too-many-attempts':'Too many attempts. Wait a few minutes and try again.','invalid-google-token':'Google sign-in failed. Try again.','google-not-configured':'Google sign-in is not set up yet.','invalid-username':'Use 3-16 letters, numbers or _.','username-reserved':'That username is reserved.','username-taken':'That username is already taken.','username-already-set':'Your username is already set.','no-session':'Your session expired — please sign in again.'};
+function acctMsg(code){return ACCT_ERR[code]||'Something went wrong. Try again.'}
+function acctFetch(path,opts){opts=opts||{};var h={'Content-Type':'application/json'};if(acct.token)h.Authorization='Bearer '+acct.token;return fetch(API_BASE+'/api/account'+path,{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined})}
+function setAccountSession(a){acct.user=a;var vb=document.getElementById('versusBtn');if(vb)vb.style.display=a&&a.username?'flex':'none';var wb=document.getElementById('walletBtn');if(wb)wb.style.display=a&&a.username?'block':'none';var fb=document.getElementById('friendsBtn');if(fb)fb.style.display=a&&a.username?'block':'none';if(a&&a.username&&window.CodePlaySocial)window.CodePlaySocial.start(acct.token);session.account=true;session.guest=false;if(a.username)session.name=a.username;if(a.color)session.color=a.color}
+function afterAuth(data){
+ acct.token=data.token;try{localStorage.setItem('codeplay_acct_token',data.token)}catch(e){}
+ setAccountSession(data.account);
+ if(data.account.hasUsername){document.getElementById('welcomeMsg').textContent='Hey '+data.account.username+' — choose a game';go('select')}
+ else openUsernameSetup();
+}
+async function onGoogleCredential(resp){
+ try{var res=await acctFetch('/google',{method:'POST',body:{credential:resp.credential}});var data=await res.json();
+  if(!res.ok){alert(acctMsg(data.error));return}
+  afterAuth(data)
+ }catch(e){alert('Could not reach the game server.')}
+}
+async function initGoogle(){
+ try{var r=await fetch(API_BASE+'/api/account/config',{cache:'no-store'});if(!r.ok)return;var cfg=await r.json();if(!cfg.googleClientId)return;
+  var sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;sc.defer=true;
+  sc.onload=function(){try{google.accounts.id.initialize({client_id:cfg.googleClientId,callback:onGoogleCredential,auto_select:false});googleReady=true;renderGoogleButton()}catch(e){}};
+  document.head.appendChild(sc);
+ }catch(e){}
+}
+var googleReady=false;
+function renderGoogleButton(){
+ var wrap=document.getElementById('googleWrap');if(!googleReady||!wrap)return;
+ if(knownName()||pendingUsername()){wrap.style.display='none';return}
+ wrap.style.display='flex';var w=Math.max(200,Math.min(400,wrap.parentElement.clientWidth||320));
+ wrap.innerHTML='';google.accounts.id.renderButton(wrap,{theme:'filled_black',size:'large',text:'continue_with',shape:'pill',width:w});
+}
+function pendingUsername(){return !!(acct.user&&!acct.user.hasUsername)}
+function openUsernameSetup(){
+ document.getElementById('unInput').value='';document.getElementById('unErr').textContent='';setUnStatus('3-16 characters: letters, numbers and _','');
+ var row=document.getElementById('unAvatarRow');row.innerHTML='';
+ AVATAR_COLORS.forEach(function(c){var d=document.createElement('div');d.className='avatar';d.style.background=c;if(session.color===c)d.classList.add('selected');d.onclick=function(){row.querySelectorAll('.avatar').forEach(function(a){a.classList.remove('selected')});d.classList.add('selected');session.color=c};row.appendChild(d)});
+ go('usernameSetup');
+}
+function setUnStatus(t,cls){var el=document.getElementById('unStatus');el.textContent=t;el.className='unStatus'+(cls?' '+cls:'')}
+var unTimer=null,unSeq=0;
+document.addEventListener('input',function(e){
+ if(!e.target||e.target.id!=='unInput')return;
+ var v=e.target.value.trim();clearTimeout(unTimer);
+ if(!v){setUnStatus('3-16 characters: letters, numbers and _','');return}
+ if(!/^[A-Za-z0-9_]{3,16}$/.test(v)){setUnStatus('Use 3-16 letters, numbers or _ (no spaces).','bad');return}
+ setUnStatus('Checking…','');var seq=++unSeq;
+ unTimer=setTimeout(async function(){try{var r=await acctFetch('/username-available?u='+encodeURIComponent(v));var d=await r.json();if(seq!==unSeq)return;
+  if(d.available)setUnStatus('✓ '+v+' is available','ok');else setUnStatus(d.reason==='username-reserved'?'That username is reserved.':d.reason==='invalid-username'?'Use 3-16 letters, numbers or _.':'That username is taken.','bad')}catch(err){if(seq===unSeq)setUnStatus('','')}},350);
+});
+async function submitUsername(){
+ var v=document.getElementById('unInput').value.trim(),errEl=document.getElementById('unErr'),btn=document.getElementById('unSubmit');
+ if(!/^[A-Za-z0-9_]{3,16}$/.test(v)){errEl.textContent=acctMsg('invalid-username');return}
+ if(!session.color){errEl.textContent='Pick a color.';return}
+ errEl.textContent='';btn.disabled=true;
+ try{var res=await acctFetch('/username',{method:'POST',body:{username:v,color:session.color}});var data=await res.json();
+  if(!res.ok){if(res.status===401){acct.token=null;acct.user=null;try{localStorage.removeItem('codeplay_acct_token')}catch(e){}go('landing');paintLanding()}errEl.textContent=acctMsg(data.error);if(data.error==='username-taken')setUnStatus('That username is taken.','bad');return}
+  setAccountSession(data.account);document.getElementById('welcomeMsg').textContent='Hey '+data.account.username+' — choose a game';paintLanding();go('select')
+ }catch(e){errEl.textContent='Could not reach the game server.'}finally{btn.disabled=false}
+}
+async function restoreAccount(){
+ if(!acct.token)return;
+ try{var res=await acctFetch('/me');
+  if(!res.ok){if(res.status===401){acct.token=null;try{localStorage.removeItem('codeplay_acct_token')}catch(e){}}return}
+  var data=await res.json();setAccountSession(data.account)
+ }catch(e){}
+}
+function logoutAccount(){
+ try{if(acct.token)acctFetch('/logout',{method:'POST'}).catch(function(){})}catch(e){}
+ try{localStorage.removeItem('codeplay_acct_token');localStorage.removeItem('codeplay_guest_profile');localStorage.removeItem('codeplay_guest');localStorage.removeItem('codeplay_name')}catch(e){}
+ acct.token=null;acct.user=null;var vb2=document.getElementById('versusBtn');if(vb2)vb2.style.display='none';var wb2=document.getElementById('walletBtn');if(wb2)wb2.style.display='none';var fb2=document.getElementById('friendsBtn');if(fb2)fb2.style.display='none';if(window.CodePlaySocial)window.CodePlaySocial.stop();session.account=false;session.name=null;session.color=null;session.guest=false;paintLanding();go('landing')
+}
 async function restoreSession(){
+ await restoreAccount();if(session.account)return;
  if(!session.token)return;
  try{const res=await fetch(API_BASE+'/api/auth/session',{headers:{Authorization:'Bearer '+session.token}});
   if(!res.ok){localStorage.removeItem('codeplay_token');session.token=null;return}
@@ -421,15 +513,17 @@ function applyScreenParam(){if(new URLSearchParams(location.search).get('screen'
 
 function knownName(){var n=session.name;return n&&String(n).toLowerCase()!=='guest'?n:''}
 function paintLanding(){
-  var n=knownName(),on=!!n;
+  var n=knownName(),pend=pendingUsername(),on=!!n||pend;
   document.getElementById('continueBtn').style.display=on?'flex':'none';
-  document.getElementById('waBtnLanding').style.display=on?'none':'flex';
-  document.getElementById('guestBtnLanding').style.display=on?'none':'flex';
+  ['waBtnLanding','guestBtnLanding'].forEach(function(id){document.getElementById(id).style.display=on?'none':'flex'});
   document.getElementById('loginRow').style.display=on?'none':'block';
   document.getElementById('switchRow').style.display=on?'block':'none';
-  if(on)document.getElementById('continueName').textContent=n;
+  var lbl=document.getElementById('continueLabel');
+  if(pend){lbl.textContent='Choose your username'}else{lbl.innerHTML='Continue as <span class="continueName" id="continueName"></span>';if(n)document.getElementById('continueName').textContent=n}
+  document.getElementById('switchRow').innerHTML=acct.user?'Not you? <a onclick="logoutAccount()">Log out</a>':'Not you? <a onclick="switchPlayer()">Use a different name</a>';
+  renderGoogleButton();
 }
-function continueAs(){var n=knownName();document.getElementById('welcomeMsg').textContent=n?'Hey '+n:'Choose a game';go('select')}
+function continueAs(){if(pendingUsername()){openUsernameSetup();return}var n=knownName();document.getElementById('welcomeMsg').textContent=n?'Hey '+n:'Choose a game';go('select')}
 function switchPlayer(){try{localStorage.removeItem('codeplay_guest_profile');localStorage.removeItem('codeplay_guest');localStorage.removeItem('codeplay_name')}catch(e){}session.name=null;session.token=null;session.color=null;session.guest=false;paintLanding();startGuest()}
 
 /* ---------- chess ---------- */
@@ -458,7 +552,9 @@ function playChessComputer(){navigate(CHESS_URL+'?mode=computer&level='+CHESS_OP
 function createChessRoom(){navigate(CHESS_URL+'?mode=friends&action=create'+chessTcQuery()+'&visibility='+CHESS_OPTS.visibility+'&chat='+(CHESS_OPTS.chat?'1':'0')+profileQuery())}
 function joinChessRoom(){var p=parseCodeInput(document.getElementById('chessJoinCode').value),errEl=document.getElementById('chessJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(CHESS_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
 
-(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null;/* the landing page always shows first; paintLanding() offers a one-tap continue */}}catch(e){}})();paintLanding();loadPublicConfig();applyScreenParam();restoreSession().then(function(){paintLanding();applyScreenParam()});
+(function restoreGuest(){try{var gp=JSON.parse(localStorage.getItem('codeplay_guest_profile')||'null');if(gp){session.guest=true;session.name=gp.name||'Guest';session.color=gp.color||null;/* the landing page always shows first; paintLanding() offers a one-tap continue */}}catch(e){}})();paintLanding();loadPublicConfig();initGoogle();applyScreenParam();restoreSession().then(function(){paintLanding();applyScreenParam()});
 </script>
+<script src="social-ui.js"></script>
+<script>if(window.CodePlaySocial)window.CodePlaySocial.on('badge',function(n){var b=document.getElementById('friendsBadge');if(b)b.textContent=n>0?n:''});</script>
 </body>
 </html>

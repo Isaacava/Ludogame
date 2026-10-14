@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay — Wallet</title>
+<meta name="theme-color" content="#06100c">
+<link rel="stylesheet" href="theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:calc(14px + var(--safe-t)) 16px calc(24px + var(--safe-b))}
+.wrap{max-width:460px;margin:0 auto}h1{font-size:22px;margin:4px 0 2px}.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;margin-bottom:12px}
+.bal{font-size:32px;font-weight:800;color:var(--gold)}.small{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.amt{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 4px;color:var(--ink);font-weight:700;font-size:15px;cursor:pointer;text-align:center}
+.amt small{display:block;color:var(--muted);font-weight:500;font-size:11px;margin-top:2px}.amt.on{border-color:var(--gold);background:rgba(255,215,90,.12)}
+input.num{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px}
+button.primary{width:100%;padding:14px;border:0;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2a1c00;font-weight:800;font-size:16px;cursor:pointer;margin-top:10px}
+button.primary:disabled{opacity:.5}button.ghost{width:100%;padding:12px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;cursor:pointer;margin-top:8px}button.ghost:disabled{opacity:.45}
+.msg{min-height:20px;font-size:14px;margin:8px 0;color:var(--muted)}.msg.bad{color:var(--red)}.msg.ok{color:var(--green)}
+label.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:8px 0}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.row:last-child{border:0}
+.pos{color:var(--green);font-weight:700}.neg{color:var(--red);font-weight:700}.pill{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+a.back{color:var(--muted);font-size:14px;text-decoration:none}a.lnk{color:var(--gold)}.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Back</a>
+  <h1>Wallet</h1>
+  <p class="sub">Add chips with crypto. 100 chips = $1.</p>
+
+  <div class="card hide" id="signedOut"><b>Sign in to use your wallet</b><p class="small">The wallet needs a CodePlay account (Google sign-in).</p><button class="primary" onclick="location.href='index.html'">Go to sign in</button></div>
+
+  <div id="app" class="hide">
+    <div class="card"><div class="small">Your chips</div><div class="bal" id="bal">0</div><div class="small" id="usd"></div>
+      <button class="ghost hide" id="topup" onclick="testTopup()">+ 1,000 test chips</button></div>
+
+    <div class="card">
+      <b>Add chips</b>
+      <div class="grid" id="presets"></div>
+      <input class="num" id="custom" type="number" inputmode="decimal" min="1" step="1" placeholder="Or enter an amount in USD">
+      <div class="small" id="preview" style="margin-top:6px"></div>
+      <label class="chk hide" id="ageBox"><input type="checkbox" id="age"> <span>I am 18 or older and understand chips staked in matches can be lost.</span></label>
+      <div class="msg" id="msg"></div>
+      <button class="primary" id="depBtn" onclick="deposit()">Deposit with crypto</button>
+      <div class="small" style="margin-top:8px">You pay on a secure NOWPayments page with the coin you choose. Chips are added automatically once the payment is confirmed, usually within a few minutes.</div>
+    </div>
+
+    <div class="card"><b>Withdraw</b><div class="small" style="margin:6px 0">Cash-out to a crypto wallet is coming soon.</div><button class="ghost" disabled>Withdraw (coming soon)</button></div>
+
+    <div class="card"><b>Recent deposits</b><div id="deps" class="small" style="margin-top:6px">Loading…</div></div>
+    <div class="card"><b>Chip history</b><div id="ledger" class="small" style="margin-top:6px">Loading…</div></div>
+    <a class="lnk" href="versus.html">Play Versus →</a>
+  </div>
+</div>
+<script>
+var API=window.CODEPLAY_API_BASE||'',TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
+var cfg=null,vcfg=null,me=null,usd=10;
+function $(i){return document.getElementById(i)}
+function fmt(n){return Number(n).toLocaleString('en-US')}
+function say(t,c){var m=$('msg');m.textContent=t||'';m.className='msg'+(c?' '+c:'')}
+function af(path,o){o=o||{};var h={'Content-Type':'application/json'};if(TOKEN)h.Authorization='Bearer '+TOKEN;return fetch(API+path,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined})}
+var ERR={'deposits-not-configured':'Deposits are not switched on yet.','invalid-amount':'Enter an amount in the allowed range.','age-confirmation-required':'Please confirm you are 18 or older.','username-required':'Choose a username first (home page).','too-many-pending-deposits':'You have several unpaid deposits open. Finish or wait for them to expire.','payment-provider-error':'The payment provider is unavailable. Try again shortly.','no-session':'Session expired — sign in again.','server-error':'Something went wrong. Try again.'};
+async function load(){
+  if(!TOKEN){$('signedOut').classList.remove('hide');return}
+  try{
+    var r=await af('/api/versus/me');if(r.status===401){$('signedOut').classList.remove('hide');return}
+    me=await r.json();cfg=await (await fetch(API+'/api/wallet/config')).json();vcfg=await (await fetch(API+'/api/versus/config')).json();
+    $('app').classList.remove('hide');draw();if(vcfg.testTopup)$('topup').classList.remove('hide');
+    if(!me.ageConfirmed)$('ageBox').classList.remove('hide');
+    if(!cfg.depositsEnabled){$('depBtn').disabled=true;say('Deposits are not switched on yet.')}
+    refresh();
+    if(/deposit=return/.test(location.search)){say('Waiting for your payment to confirm…');poll(0)}
+  }catch(e){say('Could not reach the game server.','bad')}
+}
+function draw(){
+  $('bal').textContent=fmt(me.balance)+' chips';$('usd').textContent='≈ $'+(me.balance/cfg.chipsPerUsd).toFixed(2);
+  $('presets').innerHTML=cfg.presets.map(function(p){return '<button class="amt'+(p===usd&&!$('custom').value?' on':'')+'" onclick="pick('+p+')">$'+p+'<small>'+fmt(p*cfg.chipsPerUsd)+' chips</small></button>'}).join('');
+  var v=Number($('custom').value)||usd;$('preview').textContent='You will receive '+fmt(Math.round(v*cfg.chipsPerUsd))+' chips for $'+v+'.';
+}
+function pick(p){usd=p;$('custom').value='';draw()}
+$('custom').addEventListener('input',function(){var v=Number($('custom').value);if(v>0)usd=v;draw()});
+async function deposit(){
+  var amount=Number($('custom').value)||usd;
+  if(!(amount>=cfg.minUsd&&amount<=cfg.maxUsd)){say('Deposits are between $'+cfg.minUsd+' and $'+cfg.maxUsd+'.','bad');return}
+  if(!$('ageBox').classList.contains('hide')){
+    if(!$('age').checked){say(ERR['age-confirmation-required'],'bad');return}
+    var c=await af('/api/versus/confirm-age',{method:'POST',body:{confirm:true}});if(!c.ok){say(ERR['server-error'],'bad');return}$('ageBox').classList.add('hide');me.ageConfirmed=true;
+  }
+  $('depBtn').disabled=true;say('Creating your payment…');
+  try{var r=await af('/api/wallet/deposit',{method:'POST',body:{usd:amount}});var d=await r.json();
+    if(!r.ok){say(ERR[d.error]||'Could not start the deposit.','bad');return}
+    location.href=d.invoiceUrl;
+  }catch(e){say('Could not reach the game server.','bad')}finally{$('depBtn').disabled=false}
+}
+async function testTopup(){var r=await af('/api/versus/test-topup',{method:'POST',body:{amount:1000}});var d=await r.json();if(r.ok){me.balance=d.balance;draw();refresh()}}
+function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
+async function refresh(){
+  try{
+    var m=await (await af('/api/versus/me')).json();me.balance=m.balance;draw();
+    var d=await (await af('/api/wallet/deposits')).json();
+    $('deps').innerHTML=d.rows.length?d.rows.map(function(x){return '<div class="row"><span>$'+x.usd+' · '+fmt(x.chips)+' chips</span><span><span class="pill">'+esc(x.status)+'</span>'+(x.invoiceUrl?' <a class="lnk" href="'+esc(x.invoiceUrl)+'">pay</a>':'')+'</span></div>'}).join(''):'No deposits yet.';
+    var l=await (await af('/api/versus/ledger')).json();
+    var names={deposit:'Deposit',stake_lock:'Match stake',stake_refund:'Stake returned',win_payout:'Match win',test_topup:'Test chips'};
+    $('ledger').innerHTML=l.rows.length?l.rows.slice(0,15).map(function(x){return '<div class="row"><span>'+esc(names[x.type]||x.type)+'</span><span class="'+(x.amount>0?'pos':'neg')+'">'+(x.amount>0?'+':'')+fmt(x.amount)+'</span></div>'}).join(''):'Nothing yet.';
+  }catch(e){}
+}
+function poll(n){if(n>40)return;setTimeout(async function(){var before=me.balance;await refresh();if(me.balance>before){say('Deposit received — chips added!','ok');return}poll(n+1)},4000)}
+load();
+</script>
+<script src="social-ui.js"></script>
+</body>
+</html>

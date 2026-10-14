@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePlay — Friends</title>
+<meta name="theme-color" content="#06100c">
+<link rel="stylesheet" href="theme.css">
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;padding:calc(12px + var(--safe-t)) 0 calc(24px + var(--safe-b))}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button{font-family:inherit}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.back{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+h1{font-size:22px;margin:0;flex:1}
+.me{font-size:12px;color:var(--muted);text-align:right;line-height:1.3}.me b{color:var(--ink);font-size:13px}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;margin:12px 0 14px;position:sticky;top:calc(4px + var(--safe-t));z-index:5}
+.tab{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;position:relative}
+.tab[aria-selected=true]{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.badge{display:inline-block;min-width:18px;padding:1px 6px;border-radius:99px;background:var(--red);color:#fff;font-size:11px;font-weight:800;margin-left:6px;vertical-align:1px}
+.badge:empty,.badge[data-n="0"]{display:none}
+.sec{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 4px 8px;font-weight:700}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);min-height:68px}
+.item:last-child{border-bottom:0}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;flex:none;position:relative;text-transform:uppercase}
+.dot{position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;border:2px solid var(--panel);background:#5b6b64}
+.dot.online{background:var(--green)}.dot.playing{background:var(--yellow)}
+.who{flex:1;min-width:0}.nm{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.st{font-size:12.5px;color:var(--muted);margin-top:2px}.st.online{color:var(--green)}.st.playing{color:var(--yellow)}
+.act{display:flex;gap:8px;align-items:center;flex:none}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn.pri{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#2a1c00;border:0}
+.btn.ok{background:var(--green);color:#04210f;border:0}.btn.icon{width:44px;padding:0;font-size:18px}
+.btn:disabled{opacity:.45;cursor:not-allowed}.btn:active:not(:disabled){transform:scale(.97)}
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}.empty .big{font-size:40px;margin-bottom:8px}.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.skel{height:68px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+.search{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 16px;font-size:16px}
+.hint{font-size:13px;color:var(--muted);margin:8px 4px}.copy{margin-top:14px;display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.copy span{flex:1;font-size:13px;color:var(--muted);min-width:0}.copy b{color:var(--ink)}
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.66);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{width:100%;max-width:480px;max-height:92vh;overflow:auto;background:#10211b;border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + var(--safe-b));animation:up .3s var(--ease-out)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}@keyframes fade{from{opacity:0}to{opacity:1}}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0;font-size:18px}.row{display:flex;align-items:center;gap:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 2px 8px}
+.seg{display:grid;gap:8px}.seg.c3{grid-template-columns:repeat(3,1fr)}.seg.c2{grid-template-columns:repeat(2,1fr)}.seg.c4{grid-template-columns:repeat(4,1fr)}
+.opt{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;padding:6px 4px;line-height:1.2}
+.opt small{display:block;color:var(--muted);font-weight:500;font-size:11px}.opt[aria-pressed=true]{border-color:var(--gold);background:rgba(255,215,90,.12)}.opt:disabled{opacity:.35;cursor:not-allowed}
+.note{font-size:13px;color:var(--muted);margin:10px 2px;line-height:1.45}.note.bad{color:#ff8a8a}.note a{color:var(--gold)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:12px 2px}.chk input{width:20px;height:20px;margin-top:1px}
+.full{width:100%;margin-top:14px;min-height:52px;font-size:16px}
+.wait{text-align:center;padding:18px 0 6px}.wait .big{font-size:42px}.wait h3{margin:10px 0 4px;font-size:18px}.bar{height:5px;border-radius:5px;background:var(--line);overflow:hidden;margin:16px 0}.bar i{display:block;height:100%;background:var(--gold);transform-origin:left}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="index.html" aria-label="Back">←</a>
+    <h1>Friends</h1>
+    <div class="me" id="me"></div>
+  </div>
+
+  <div id="signedOut" style="display:none">
+    <div class="list"><div class="empty"><div class="big">👋</div><b>Sign in to add friends</b>Friends need a CodePlay account (Google sign-in).<br><br><a class="btn pri" style="display:inline-flex;align-items:center;text-decoration:none" href="index.html">Go to sign in</a></div></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-friends" aria-selected="true" aria-controls="p-friends" data-tab="friends">Friends <span class="badge" id="bFriends" data-n="0"></span></button>
+      <button class="tab" role="tab" id="tab-requests" aria-selected="false" aria-controls="p-requests" data-tab="requests">Requests <span class="badge" id="bReq" data-n="0"></span></button>
+      <button class="tab" role="tab" id="tab-add" aria-selected="false" aria-controls="p-add" data-tab="add">Add</button>
+    </div>
+    <div id="p-friends" role="tabpanel" aria-labelledby="tab-friends"></div>
+    <div id="p-requests" role="tabpanel" aria-labelledby="tab-requests" hidden></div>
+    <div id="p-add" role="tabpanel" aria-labelledby="tab-add" hidden></div>
+  </div>
+</div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>window.CODEPLAY_WHERE='friends';</script>
+<script src="social-ui.js"></script>
+<script>
+(function(){
+'use strict';
+var S=window.CodePlaySocial,API=window.CODEPLAY_API_BASE||'',TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
+var GAME_NAME={ludo:'Ludo',whot:'Whot',chess:'Chess'},GAME_ICON={ludo:'🎲',whot:'🃏',chess:'♟️'};
+var data={friends:[],incoming:[],outgoing:[],config:{games:[],stakes:[],chipsPerUsd:100}},meInfo=null,tab='friends',loaded=false;
+function $(i){return document.getElementById(i)}
+function h(tag,props,kids){var n=document.createElement(tag);props=props||{};Object.keys(props).forEach(function(k){if(k==='class')n.className=props[k];else if(k==='text')n.textContent=props[k];else if(k.slice(0,2)==='on')n.addEventListener(k.slice(2),props[k]);else if(props[k]!==false&&props[k]!=null)n.setAttribute(k,props[k]===true?'':props[k])});(kids||[]).forEach(function(c){if(c!=null)n.appendChild(typeof c==='string'?document.createTextNode(c):c)});return n}
+function fmt(n){return Number(n).toLocaleString('en-US')}
+function say(t){$('live').textContent=t}
+function avatar(u,color,status){var a=h('div',{class:'av','aria-hidden':'true',text:(u||'?').charAt(0)});a.style.background=color||'#3182ce';if(status)a.appendChild(h('span',{class:'dot '+status}));return a}
+var ERR={'user-not-found':'No player with that username.','cannot-add-yourself':"That's your own username.",'already-friends':'You are already friends.','already-requested':'Request already sent.','too-many-requests':'You have too many pending requests.','friends-limit':'Friends list is full.','too-many-attempts':'Slow down a little and try again.','friend-offline':'Your friend just went offline.','friend-busy':'Your friend is busy right now.','you-are-busy':'Finish your current match or queue first.','invite-pending':'You already have an invite waiting.','not-friends':'You are not friends with this player.','insufficient-chips':'You do not have enough chips for that stake.','age-confirmation-required':'Please confirm you are 18 or older.','stake-too-high-for-new-account':'New accounts have a lower stake limit for the first 24 hours.','game-unavailable':'That game is not open yet.','invalid-stake':'Pick a stake option.','no-session':'Session expired — sign in again.','username-required':'Choose a username first (home page).','server-error':'Something went wrong. Try again.'};
+function msg(code){return ERR[code]||'Something went wrong. Try again.'}
+
+/* ---------- data ---------- */
+function load(){
+  return S.api('/friends').then(function(r){
+    if(r.status===401||r.status===400&&r.data.error==='username-required'){showSignedOut();return}
+    if(!r.ok)throw 0;data=r.data;loaded=true;render();
+  }).catch(function(){ if(!loaded){$('p-friends').replaceChildren(h('div',{class:'list'},[h('div',{class:'empty'},[h('div',{class:'big',text:'📡'}),h('b',{text:"Can't reach the server"}),h('button',{class:'btn',onclick:function(){load()},text:'Try again'})])]))}});
+}
+function showSignedOut(){$('signedOut').style.display='block';$('app').style.display='none'}
+function setTab(t){
+  tab=t;['friends','requests','add'].forEach(function(k){var on=k===t;$('tab-'+k).setAttribute('aria-selected',on);$('p-'+k).hidden=!on});
+  render(); if(t==='add')setTimeout(function(){var s=$('q');if(s)s.focus()},50);
+}
+document.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){setTab(b.getAttribute('data-tab'))})});
+document.querySelector('.tabs').addEventListener('keydown',function(e){var order=['friends','requests','add'],i=order.indexOf(tab);if(e.key==='ArrowRight')setTab(order[(i+1)%3]);if(e.key==='ArrowLeft')setTab(order[(i+2)%3])});
+
+/* ---------- render ---------- */
+function setBadge(n){var b=$('bReq');b.textContent=n>0?n:'';b.setAttribute('data-n',n)}
+function render(){
+  setBadge(data.incoming.length);var on=data.friends.filter(function(f){return f.status!=='offline'}).length;
+  var bf=$('bFriends');bf.textContent=on>0?on:'';bf.setAttribute('data-n',on);bf.style.background=on>0?'var(--green)':'';
+  if(tab==='friends')renderFriends();if(tab==='requests')renderRequests();if(tab==='add')renderAdd();
+}
+function statusText(s){return s==='online'?'Online':s==='playing'?'In a game':'Offline'}
+function renderFriends(){
+  var p=$('p-friends');p.replaceChildren();
+  if(!loaded){var l=h('div',{class:'list'},[h('div',{class:'skel'}),h('div',{class:'skel'}),h('div',{class:'skel'})]);p.appendChild(l);return}
+  if(!data.friends.length){p.appendChild(h('div',{class:'list'},[h('div',{class:'empty'},[h('div',{class:'big',text:'🤝'}),h('b',{text:'No friends yet'}),'Add friends by username to play together, anytime.',h('br'),h('br'),h('button',{class:'btn pri',onclick:function(){setTab('add')},text:'Add a friend'})])]));return}
+  var order={online:0,playing:1,offline:2},fr=data.friends.slice().sort(function(a,b){return order[a.status]-order[b.status]||a.username.localeCompare(b.username)});
+  var onl=fr.filter(function(f){return f.status!=='offline'}),off=fr.filter(function(f){return f.status==='offline'});
+  if(onl.length){p.appendChild(h('div',{class:'sec',text:'Online — '+onl.length}));p.appendChild(h('div',{class:'list'},onl.map(friendRow)))}
+  if(off.length){p.appendChild(h('div',{class:'sec',text:'Offline — '+off.length}));p.appendChild(h('div',{class:'list'},off.map(friendRow)))}
+}
+function friendRow(f){
+  var can=f.status==='online';
+  var inv=h('button',{class:'btn '+(can?'pri':''),disabled:!can,'aria-label':can?'Invite '+f.username+' to play':f.username+' cannot be invited right now',onclick:function(){openInvite(f)},text:can?'Invite':(f.status==='playing'?'Busy':'Offline')});
+  var more=h('button',{class:'btn icon','aria-label':'More options for '+f.username,onclick:function(){openMore(f)},text:'⋯'});
+  return h('div',{class:'item',id:'f-'+f.accountId},[avatar(f.username,f.color,f.status),h('div',{class:'who'},[h('div',{class:'nm',text:f.username}),h('div',{class:'st '+f.status,text:statusText(f.status)})]),h('div',{class:'act'},[inv,more])]);
+}
+function renderRequests(){
+  var p=$('p-requests');p.replaceChildren();
+  if(!data.incoming.length&&!data.outgoing.length){p.appendChild(h('div',{class:'list'},[h('div',{class:'empty'},[h('div',{class:'big',text:'📬'}),h('b',{text:'No requests'}),'Friend requests you send or receive show up here.'])]));return}
+  if(data.incoming.length){p.appendChild(h('div',{class:'sec',text:'Wants to be your friend'}));p.appendChild(h('div',{class:'list'},data.incoming.map(function(r){
+    var acc=h('button',{class:'btn ok',onclick:function(e){e.target.disabled=true;respond(r,true)},text:'Accept'}),dec=h('button',{class:'btn','aria-label':'Decline request from '+r.username,onclick:function(){respond(r,false)},text:'Decline'});
+    return h('div',{class:'item'},[avatar(r.username,r.color),h('div',{class:'who'},[h('div',{class:'nm',text:r.username}),h('div',{class:'st',text:'Sent you a request'})]),h('div',{class:'act'},[dec,acc])])})))}
+  if(data.outgoing.length){p.appendChild(h('div',{class:'sec',text:'Sent by you'}));p.appendChild(h('div',{class:'list'},data.outgoing.map(function(r){
+    return h('div',{class:'item'},[avatar(r.username,r.color),h('div',{class:'who'},[h('div',{class:'nm',text:r.username}),h('div',{class:'st',text:'Waiting for a reply'})]),h('div',{class:'act'},[h('button',{class:'btn',onclick:function(){cancelReq(r)},text:'Cancel'})])])})))}
+}
+function respond(r,accept){
+  var req=accept?S.api('/friends/'+r.friendshipId+'/accept',{method:'POST'}):S.api('/friends/'+r.friendshipId,{method:'DELETE'});
+  data.incoming=data.incoming.filter(function(x){return x!==r});render();
+  req.then(function(res){if(!res.ok){S.toast(msg(res.data.error));return load()}say(accept?r.username+' is now your friend':'Request declined');if(accept)S.toast(r.username+' is now your friend');return load()});
+}
+function cancelReq(r){data.outgoing=data.outgoing.filter(function(x){return x!==r});render();S.api('/friends/'+r.friendshipId,{method:'DELETE'}).then(load)}
+
+/* ---------- add friends ---------- */
+var searchTimer=null,lastQ='';
+function renderAdd(){
+  var p=$('p-add'),keep=$('q')?$('q').value:'';p.replaceChildren();
+  var input=h('input',{class:'search',id:'q',type:'search',placeholder:'Search by username',autocomplete:'off',autocapitalize:'none',spellcheck:'false','aria-label':'Search players by username',maxlength:'16'});input.value=keep;
+  input.addEventListener('input',function(){clearTimeout(searchTimer);var v=input.value.trim();searchTimer=setTimeout(function(){doSearch(v)},300)});
+  p.appendChild(input);p.appendChild(h('div',{class:'hint',id:'sh',text:'Type at least 2 letters of their username.'}));p.appendChild(h('div',{id:'sr'}));
+  var mine=meInfo&&meInfo.username;
+  if(mine){var link=location.origin+location.pathname.replace(/[^/]*$/,'')+'friends.html?add='+encodeURIComponent(mine);
+    var cp=h('button',{class:'btn',onclick:function(e){copyText(link,e.target)},text:'Copy link'});
+    p.appendChild(h('div',{class:'copy'},[h('span',{},['Your username is ',h('b',{text:mine}),'. Share your link so friends can add you.']),cp]))}
+  if(keep)doSearch(keep.trim());
+}
+function copyText(t,btn){var done=function(){var o=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=o},1500)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,function(){prompt('Copy this link',t)});else prompt('Copy this link',t)}
+function doSearch(q){
+  var out=$('sr'),hint=$('sh');if(!out)return;lastQ=q;
+  if(q.length<2){out.replaceChildren();hint.textContent='Type at least 2 letters of their username.';return}
+  hint.textContent='Searching…';
+  S.api('/search?q='+encodeURIComponent(q)).then(function(r){
+    if(q!==lastQ||!$('sr'))return;
+    if(!r.ok){hint.textContent=msg(r.data.error);return}
+    hint.textContent=r.data.rows.length?'':'No players found for “'+q+'”.';
+    out.replaceChildren(r.data.rows.length?h('div',{class:'list'},r.data.rows.map(searchRow)):'');
+  });
+}
+function searchRow(u){
+  var b;
+  if(u.relation==='friend')b=h('button',{class:'btn',disabled:true,text:'Friends'});
+  else if(u.relation==='sent')b=h('button',{class:'btn',disabled:true,text:'Requested'});
+  else if(u.relation==='received')b=h('button',{class:'btn ok',onclick:function(){setTab('requests')},text:'Respond'});
+  else b=h('button',{class:'btn pri','aria-label':'Send friend request to '+u.username,onclick:function(e){sendRequest(u,e.target)},text:'Add'});
+  return h('div',{class:'item'},[avatar(u.username,u.color),h('div',{class:'who'},[h('div',{class:'nm',text:u.username})]),h('div',{class:'act'},[b])]);
+}
+function sendRequest(u,btn){
+  btn.disabled=true;btn.textContent='Sending…';
+  S.api('/friends/request',{method:'POST',body:{username:u.username}}).then(function(r){
+    if(!r.ok){btn.disabled=false;btn.textContent='Add';S.toast(msg(r.data.error));return}
+    btn.className='btn';btn.textContent=r.data.autoAccepted?'Friends':'Requested';
+    S.toast(r.data.autoAccepted?'You are now friends with '+u.username:'Request sent to '+u.username);load();
+  });
+}
+
+/* ---------- sheets ---------- */
+var openSheet=null;
+function sheet(build){
+  closeSheet();
+  var scrim=h('div',{class:'scrim',onclick:function(e){if(e.target===scrim)closeSheet()}}),sh=h('div',{class:'sheet',role:'dialog','aria-modal':'true'});
+  sh.appendChild(h('div',{class:'grab'}));build(sh);scrim.appendChild(sh);document.body.appendChild(scrim);openSheet=scrim;
+  scrim.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
+  var f=sh.querySelector('button,input');if(f)f.focus();return sh;
+}
+function closeSheet(){if(openSheet){openSheet.remove();openSheet=null}currentInvite=null;clearInterval(countTimer)}
+
+function openMore(f){
+  sheet(function(sh){
+    sh.appendChild(h('div',{class:'row'},[avatar(f.username,f.color),h('div',{},[h('h2',{text:f.username}),h('div',{class:'st',text:statusText(f.status)})])]));
+    sh.appendChild(h('button',{class:'btn full',style:'color:#ff8a8a',onclick:function(){confirmRemove(f)},text:'Remove friend'}));
+    sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Close'}));
+  });
+}
+function confirmRemove(f){
+  sheet(function(sh){
+    sh.appendChild(h('h2',{text:'Remove '+f.username+'?'}));sh.appendChild(h('p',{class:'note',text:'You will no longer see when they are online or be able to invite them. You can add them again later.'}));
+    sh.appendChild(h('button',{class:'btn full',style:'background:var(--red);color:#fff;border:0',onclick:function(e){e.target.disabled=true;S.api('/friends/'+f.friendshipId,{method:'DELETE'}).then(function(){closeSheet();S.toast(f.username+' removed');load()})},text:'Remove'}));
+    sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Keep friend'}));
+  });
+}
+
+/* ---------- invite flow ---------- */
+var currentInvite=null,countTimer=null;
+function loadMe(){return fetch(API+'/api/versus/me',{headers:{Authorization:'Bearer '+TOKEN}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+function openInvite(f){
+  loadMe().then(function(me){
+    var bal0=me?me.balance:0,cfg=data.config,games=cfg.games.length?cfg.games:['ludo'],st={game:games[0],mode:'friendly',stake:(cfg.stakes.indexOf(100)>-1&&bal0>=100)?100:Math.min.apply(null,cfg.stakes.length?cfg.stakes:[100]),age:!!(me&&me.ageConfirmed)},bal=me?me.balance:0;
+    sheet(function(sh){
+      function draw(){
+        sh.replaceChildren(h('div',{class:'grab'}));
+        sh.appendChild(h('div',{class:'row'},[avatar(f.username,f.color,f.status),h('div',{},[h('h2',{text:'Invite '+f.username}),h('div',{class:'st online',text:'Online now'})])]));
+        sh.appendChild(h('div',{class:'lbl',text:'Game'}));
+        sh.appendChild(h('div',{class:'seg c'+Math.min(3,games.length)},games.map(function(g){return h('button',{class:'opt','aria-pressed':st.game===g,onclick:function(){st.game=g;draw()}},[GAME_ICON[g]+' '+GAME_NAME[g]])})));
+        sh.appendChild(h('div',{class:'lbl',text:'Match type'}));
+        sh.appendChild(h('div',{class:'seg c2'},[
+          h('button',{class:'opt','aria-pressed':st.mode==='friendly',onclick:function(){st.mode='friendly';draw()}},['Friendly',h('small',{text:'No chips, just for fun'})]),
+          h('button',{class:'opt','aria-pressed':st.mode==='staked',onclick:function(){st.mode='staked';draw()}},['Staked',h('small',{text:'Both put in chips'})])]));
+        var bad=false,noteTxt='';
+        if(st.mode==='staked'){
+          sh.appendChild(h('div',{class:'lbl',text:'Stake each'}));
+          sh.appendChild(h('div',{class:'seg c4'},cfg.stakes.map(function(s){var ok=s<=bal;return h('button',{class:'opt','aria-pressed':st.stake===s,disabled:!ok,onclick:function(){st.stake=s;draw()}},[fmt(s),h('small',{text:'$'+(s/cfg.chipsPerUsd).toFixed(s<100?2:0)})])})));
+          var pot=st.stake*2,fee=Math.floor(pot*0.1);
+          noteTxt='You have '+fmt(bal)+' chips. Winner gets '+fmt(pot-fee)+' chips (10% fee). Friend matches do not change ranking points.';
+          if(bal<Math.min.apply(null,cfg.stakes)){bad=true;sh.appendChild(h('p',{class:'note bad'},['You need chips to play a staked match. ',h('a',{href:'wallet.html',text:'Add chips'})]))}
+          else sh.appendChild(h('p',{class:'note',text:noteTxt}));
+          if(!st.age){sh.appendChild(h('label',{class:'chk'},[h('input',{type:'checkbox',id:'ag',onchange:function(e){st.agChecked=e.target.checked}}),h('span',{text:'I am 18 or older and understand staked chips can be lost.'})]))}
+        } else sh.appendChild(h('p',{class:'note',text:"A private "+GAME_NAME[st.game]+" room for you two. Nothing is staked and rankings don't change."}));
+        sh.appendChild(h('div',{class:'note bad',id:'ie',role:'alert'}));
+        sh.appendChild(h('button',{class:'btn pri full',id:'sendInv',disabled:bad,onclick:send,text:'Send invite'}));
+        sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Cancel'}));
+      }
+      function send(){
+        var err=$('ie');err.textContent='';
+        if(st.mode==='staked'&&!st.age){if(!($('ag')&&$('ag').checked)){err.textContent=msg('age-confirmation-required');return}
+          $('sendInv').disabled=true;
+          return fetch(API+'/api/versus/confirm-age',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify({confirm:true})}).then(function(r){if(!r.ok){err.textContent=msg('server-error');$('sendInv').disabled=false;return}st.age=true;send()})}
+        $('sendInv').disabled=true;$('sendInv').textContent='Sending…';
+        S.api('/invite',{method:'POST',body:{username:f.username,game:st.game,stake:st.mode==='staked'?st.stake:0}}).then(function(r){
+          if(!r.ok){$('sendInv').disabled=false;$('sendInv').textContent='Send invite';err.textContent=msg(r.data.error);if(r.data.error==='friend-offline'||r.data.error==='friend-busy')load();return}
+          waiting(sh,f,r.data.invite,st);
+        });
+      }
+      draw();
+    });
+  });
+}
+function waiting(sh,f,inv,st){
+  currentInvite=inv.inviteId;sh.replaceChildren(h('div',{class:'grab'}));
+  var title=h('h3',{text:'Waiting for '+f.username+'…'}),sub=h('div',{class:'st',text:GAME_NAME[inv.game]+' · '+(inv.stake?fmt(inv.stake)+' chips each':'friendly')}),fill=h('i'),secs=h('div',{class:'st',text:''});
+  var total=Math.max(1000,inv.expiresAt-Date.now());fill.style.animation='cpbar '+total+'ms linear forwards';
+  var cancel=h('button',{class:'btn full',onclick:function(){S.api('/invite/'+inv.inviteId+'/cancel',{method:'POST'});closeSheet()},text:'Cancel invite'});
+  sh.appendChild(h('div',{class:'wait'},[h('div',{class:'big',text:GAME_ICON[inv.game]}),title,sub,h('div',{class:'bar'},[fill]),secs]));sh.appendChild(cancel);
+  var st0=document.createElement('style');st0.textContent='@keyframes cpbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}';sh.appendChild(st0);
+  clearInterval(countTimer);countTimer=setInterval(function(){var s=Math.max(0,Math.ceil((inv.expiresAt-Date.now())/1000));secs.textContent=s+'s left'},500);
+  function done(text,emoji,retry){clearInterval(countTimer);currentInvite=null;sh.replaceChildren(h('div',{class:'grab'}),h('div',{class:'wait'},[h('div',{class:'big',text:emoji}),h('h3',{text:text})]));
+    if(retry)sh.appendChild(h('button',{class:'btn pri full',onclick:function(){closeSheet();openInvite(f)},text:'Try again'}));sh.appendChild(h('button',{class:'btn full',onclick:closeSheet,text:'Close'}))}
+  S.on('invite',function handler(d){
+    if(d.inviteId!==inv.inviteId)return;
+    if(d.status==='accepted'){title.textContent='Starting match…';secs.textContent='';clearInterval(countTimer);cancel.disabled=true}
+    else if(d.status==='declined')done(f.username+' declined','🙅',true);
+    else if(d.status==='expired')done('No answer from '+f.username,'⌛',true);
+    else if(d.status==='failed')done(d.error==='insufficient-chips'?(d.who===f.accountId?f.username+' does not have enough chips':'You do not have enough chips'):'Could not start the match','⚠️',false);
+  });
+}
+
+/* ---------- realtime ---------- */
+S.on('update',function(d){ if(d.kind==='request-received'){setBadge(S.requests)} load().then(function(){if(d.kind==='request-received')say('New friend request')}) });
+S.on('badge',function(n){setBadge(n)});
+S.on('presence',function(d){
+  var f=data.friends.filter(function(x){return x.accountId===d.accountId})[0];if(!f)return;
+  f.status=d.status;if(tab==='friends'&&!openSheet)renderFriends();
+  if(d.status==='offline'&&currentInvite===null)return;
+});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&loaded)load()});
+
+/* ---------- boot ---------- */
+if(!TOKEN){showSignedOut()}else{
+  $('app').style.display='block';
+  var qs=new URLSearchParams(location.search);
+  fetch(API+'/api/account/me',{headers:{Authorization:'Bearer '+TOKEN}}).then(function(r){return r.ok?r.json():null}).then(function(d){
+    if(d&&d.account&&d.account.username){meInfo=d.account;$('me').replaceChildren(h('div',{text:'You are'}),h('b',{text:meInfo.username}))}
+    if(qs.get('tab')==='requests')setTab('requests');
+    var add=(qs.get('add')||'').trim();if(add){setTab('add');var q=$('q');if(q){q.value=add;doSearch(add)}}
+  });
+  render();load();
+}
+})();
+</script>
+</body>
+</html>

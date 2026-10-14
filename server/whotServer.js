@@ -241,6 +241,7 @@ io.on('connection',socket=>{
     io.to(`WHOT_${room.code}`).emit('whot:reaction',{name,reaction,role:index>=0?'player':'spectator'});
   });
   socket.on('whot:rematch',({code})=>{
+    const rmRoom=rooms.getRoom(code);if(rmRoom&&(rmRoom.versus||rmRoom.tournament))return socket.emit('whot:error',{message:'rematch-not-available-in-versus'});
     const result=rooms.requestRematch(code,socket.id);if(result.error)return socket.emit('whot:error',{message:result.error});
     io.to(`WHOT_${result.room.code}`).emit('whot:rematch-status',{requested:result.requested,needed:result.room.players.filter(p=>!p.bot).length});
     if(result.started){emitState(result.room);scheduleBot(result.room)}

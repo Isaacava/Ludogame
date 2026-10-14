@@ -54,6 +54,46 @@ In Meta's WhatsApp/Developer configuration, set that callback URL, choose a veri
 
 For sending messages, configure a WhatsApp Business Account phone number, its Phone Number ID, and a system-user access token with WhatsApp Business Messaging permission. The adapter uses Graph API v26.0 by default.
 
+## Accounts (email + Google) and usernames
+
+Players sign up or log in with Google (one button does both), in addition to WhatsApp and guest mode (guest mode is unchanged). There is no email/password option.
+
+- Server: `server/auth/accounts.js`, mounted at `/api/account/*` (`google`, `me`, `username-available`, `username`, `logout`, `config`). Accounts live in the `accounts` / `account_sessions` MongoDB collections, separate from WhatsApp `users`.
+- After the first Google sign-in the player must choose a username: 3-16 letters/numbers/underscore, unique case-insensitively (enforced by a unique index), set once.
+- Sessions are random bearer tokens (30 days, only a hash is stored). Auth endpoints are rate limited.
+- Google: set `GOOGLE_CLIENT_ID` (OAuth client of type Web) and add your site domain under Authorized JavaScript origins. Without it the Google button is hidden, so set it before deploying.
+- Without `MONGODB_URI` accounts fall back to memory (lost on restart) - fine for local development only.
+
+## Chips and Versus mode
+
+- Chips are whole numbers (100 chips = $1) in an append-only ledger (`server/wallet/chipWallet.js`). Every change has a unique key, so retries can never apply twice, and balances can never go negative. Only signed-in accounts have chips; guests do not.
+- Versus (`server/versus/`): a player locks a stake (10, 20, 50, 100, 500, 1000, 5000 or 10000 chips), is paired at random with someone at the same game and stake, and the winner receives the pot minus a 10% house fee (`VERSUS_FEE_RATE`). Draws, no-shows and server restarts refund both stakes. A player who is disconnected for 90s forfeits. Each match settles exactly once.
+- Points are Elo-style (win up, loss down, never below 0) with weekly and all-time leaderboards.
+- Safeguards: 18+ confirmation, a lower stake cap for accounts under 24h old, and one active match per player.
+- Versus works for Ludo, Whot and Chess (`VERSUS_GAMES`). Chess versus uses a 5 minute clock per side (`VERSUS_CHESS_BASE`). Lobby page: `web/versus.html`.
+- Wallet page `web/wallet.html`: crypto deposits through NOWPayments hosted invoices (`server/wallet/walletRoutes.js`). Set `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET` and `PUBLIC_BASE_URL`, and register `PUBLIC_BASE_URL/api/wallet/ipn` as the IPN URL. Chips are credited only on the signed `finished` status, exactly once, and only if the paid amount matches the invoice. `partially_paid` and mismatched payments are held for manual review. Try it first with `NOWPAYMENTS_SANDBOX=1`.
+- `CHIPS_TEST_TOPUP=1` lets players add free chips for testing. Never leave it on once real deposits or withdrawals exist.
+- Not built yet: withdrawals (cash-out).
+- Real-money play can be regulated as gambling. Get legal advice before enabling deposits or withdrawals.
+
+## Friends and invites
+
+- Friends (`web/friends.html`, `server/social/`): search by username, send/accept/decline/cancel requests, remove friends. The list shows who is online, in a game, or offline in real time.
+- Invites: an online friend can be invited to a friendly match (private room, no chips) or a staked match. The invite lasts 60s (`INVITE_TTL_MS`). A staked match locks both stakes only when the friend accepts, and fails cleanly if either player cannot afford it. Friend matches never change ranking points.
+- Invites pop up on any CodePlay page (not during a game). Presence comes from `web/social-ui.js`, which every page loads.
+
+## Tournaments
+
+- One tournament is for one game (Ludo, Whot or Chess) and is a single-elimination knockout (`server/tournaments/`). Players browse and join at `web/tournaments.html`.
+- Tournament matches are private reserved rooms, so tournament players only ever meet each other and never the general versus queue. While a player has a tournament match they cannot join versus or accept staked invites.
+- The admin sets, per tournament: game, start time, entry fee (0 = free), guaranteed prize, house cut of entry fees, prize split (1st/2nd/3rd, 3rd is shared by the semi-final losers), min/max players, how long to wait for a no-show, chess clock, and weekly repeat.
+- Entry fees are held until the start. Leaving before the start, cancelling, or too few players all refund automatically. Prizes are paid exactly once at the end.
+- No-show: the player who shows up advances (walkover). Draw: replayed once, then the higher seed advances. Disconnecting for 2 minutes mid-game forfeits (`TOURNAMENT_FORFEIT_MS`).
+
+## Admin panel
+
+`web/admin.html` (sign in with `ADMIN_PASSWORD`, sessions last 12 hours, login attempts are limited). Sections: Dashboard (players online, chips in circulation, deposits, house fees, alerts, charts), Live rooms and queues, Players (search, ban/unban, adjust chips with an audit reason), Versus matches, Money (deposits needing review, ledger audit, chip movements), Tournaments (create, edit, publish, start now, cancel and refund, bracket and results), Settings (versus games, house fee, stakes, new-account cap, chess clock, plus all game-rule settings) and System & logs (config health checks and an admin activity log). The previous rules editor is still available at `web/admin-classic.html`.
+
 ## Guest mode
 
 The landing page now offers "Continue as Guest — no registration". Guests can choose a display name/colour, play against the computer, create friend rooms, or join an existing room. The guest profile stays only in the browser unless the player later chooses WhatsApp login.

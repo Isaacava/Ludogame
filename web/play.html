@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="/theme.css?v=4"><link rel="stylesheet" href="/appbar.css?v=4"><link rel="stylesheet" href="/ludo.css?v=4"><script src="/icons.js?v=4"></script>
 <script src="/ludo-board.js?v=4"></script>
 
+<script src="versus-ui.js"></script>
 </head>
 <body class="ludoPage">
 <header class="appbar">
@@ -410,6 +411,7 @@ function initFriendsMode(action,existingCode,playerCount){
  socket.on('reconnect_attempt',function(){if(seatEstablished&&ROOM_CODE)wrText('Reconnecting to your Ludo room…');else wrText('Reconnecting to the game server…')});
  socket.on('reconnect_failed',function(){showWaitingRoom(seatEstablished?'<p>Could not reconnect to your Ludo room.</p><p class="legend">Your game seat was kept briefly. Tap Retry to reconnect.</p><button onclick="location.reload()">Retry</button>':'<p>Could not reach the game server.</p><button onclick="location.reload()">Retry</button>')});
  socket.on('error-msg',function(msg){log('Server: '+msg);if(/already rolled/i.test(String(msg))){socket.emit('request-sync',{code:ROOM_CODE});return}if(SOFT[msg]){toast(SOFT[msg]);return}if(SPECTATOR_MODE&&FRIENDLY[msg]){showBlocked.apply(null,FRIENDLY[msg]);return}if(msg==='player-count-disabled'){showWaitingRoom('<p>This player-count mode is disabled by the admin.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-not-found'||msg==='invalid-reconnect-token'){seatEstablished=false;playerToken=null;clearActiveRoom();showWaitingRoom('<p>Your room session is no longer active — create or join again.</p><button onclick="history.back()">Back</button>');return}if(msg==='room-full'&&!seatEstablished){showWaitingRoom('<p>That room is already full.</p><button onclick="history.back()">Back</button>')}});
+ socket.on('versus-result',function(r){if(window.showVersusResult)window.showVersusResult(r,HUMAN_INDEX)});
  socket.on('you-are-player',function(x){
    HUMAN_INDEX=x.index;seatEstablished=true;
    if(x.playerToken){playerToken=x.playerToken;saveActiveRoom();}
@@ -489,5 +491,7 @@ async function loadPublicRules(){
   else startGame(playerCount);
 })();
 </script>
+<script>window.CODEPLAY_WHERE='ludo';</script>
+<script src="social-ui.js"></script>
 </body>
 </html>
