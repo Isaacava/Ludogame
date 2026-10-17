@@ -133,6 +133,10 @@ function start(){
   if(typeof io==='undefined'){fail('Could not load the live connection library.',true);return}
   loading(vsComputer?'Setting up the table…':'Connecting…');
   var url=window.CODEPLAY_SOCKET_URL;
+  // The frontend is hosted separately from the persistent Socket.IO backend. If its public
+  // config endpoint is unavailable (for example on the static Vercel site), never fall back
+  // to location.origin because that points at the frontend, not the game server.
+  var defaultSocketUrl='https://codeplay-ludo-production.up.railway.app';
   var go=function(u){
     try{
       if(socket){socket.removeAllListeners();socket.disconnect()}
@@ -143,11 +147,11 @@ function start(){
   };
   if(url){go(url);return}
   var controller=window.AbortController?new AbortController():null,resolved=false;
-  var configTimer=setTimeout(function(){if(resolved)return;resolved=true;if(controller)controller.abort();go(location.origin)},4500);
+  var configTimer=setTimeout(function(){if(resolved)return;resolved=true;if(controller)controller.abort();go(defaultSocketUrl)},4500);
   fetch('/api/config/public',controller?{signal:controller.signal}:undefined)
     .then(function(r){if(!r.ok)throw new Error('config unavailable');return r.json()})
-    .then(function(config){if(resolved)return;resolved=true;clearTimeout(configTimer);go(config.socketUrl||location.origin)})
-    .catch(function(){if(resolved)return;resolved=true;clearTimeout(configTimer);go(location.origin)});
+    .then(function(config){if(resolved)return;resolved=true;clearTimeout(configTimer);go(config.socketUrl||defaultSocketUrl)})
+    .catch(function(){if(resolved)return;resolved=true;clearTimeout(configTimer);go(defaultSocketUrl)});
 }
 function wire(){
   var s=socket;
