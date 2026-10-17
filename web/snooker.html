@@ -125,7 +125,7 @@ function overlay(html){var o=$('waitOv'),p=$('waitPanel');p.replaceChildren();if
 function node(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
 function loading(msg){var d=node('div');d.appendChild(node('div','spin'));d.appendChild(node('h2','',msg));overlay(d)}
 function clearStartTimers(){clearTimeout(connectWatchdog);clearTimeout(joinWatchdog);connectWatchdog=null;joinWatchdog=null}
-function fail(msg,canRetry){clearStartTimers();var d=node('div');d.appendChild(node('h2','',msg));if(canRetry){var retry=node('button','btn pri','Retry connection');retry.onclick=function(){clearStartTimers();if(socket){socket.removeAllListeners();socket.disconnect();socket=null}connected=false;start()};d.appendChild(retry)}var b=node('button','btn','Back to menu');b.onclick=function(){location.href='index.html'};d.appendChild(b);overlay(d)}
+function fail(msg,canRetry){clearStartTimers();var d=node('div');d.appendChild(node('h2','',msg));if(canRetry){var retry=node('button','btn pri','Retry connection');retry.onclick=function(){if(typeof io==='undefined'){location.reload();return}clearStartTimers();if(socket){socket.removeAllListeners();socket.disconnect();socket=null}connected=false;start()};d.appendChild(retry)}var b=node('button','btn','Back to menu');b.onclick=function(){location.href='index.html'};d.appendChild(b);overlay(d)}
 var ERR={'room-not-found':'That room is no longer available.','room-full':'This room already has two players.','invalid-reconnect-token':'Your seat in this game could not be restored.','not-your-turn':'It is not your turn.','shot-in-progress':'Wait for the balls to stop.','invalid-position':'Place the cue ball inside the D, not touching another ball.','place-the-cue-ball':'Place the cue ball in the D first.','game-over':'This frame is over.','rematch-not-available-in-versus':'Rematches are not available in this match.'};
 
 function start(){
@@ -238,7 +238,8 @@ function updateControls(){
   $('shoot').textContent=mine&&inHand?'Place cue ball here':'Shoot';
   var hint=$('hint');
   if(!S||S.over){show(hint,false);return}
-  var t=!mine?(anim?'':'Waiting for '+S.names[S.turn]+'…'):inHand?'Drag the cue ball inside the D, then confirm':'Drag to aim · set the power · Shoot';
+  var coarse=!!(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches);
+  var t=!mine?(anim?'':'Waiting for '+S.names[S.turn]+'…'):inHand?'Drag the cue ball inside the D, then confirm':(coarse?'Touch the cue to rotate · set power · Shoot':'Drag to aim · set the power · Shoot');
   hint.textContent=t;show(hint,!!t);
 }
 setInterval(function(){
