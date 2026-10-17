@@ -60,6 +60,16 @@ const aim = (g, id, pocket) => ghostAngle(g.balls[0], g.balls[id], POCKETS[pocke
   const r = g.shoot(0, aim(g, 20, 0), 0.5); assert(!r.result.foul, JSON.stringify(r.result)); assert.strictEqual(g.scores[0], 6); assert.strictEqual(g.on, 'red');
   assert(!g.balls[20].potted && Math.abs(g.balls[20].x - SPOT[20].x) < 0.01, 'pink is back on its spot');
 }
+{ // two colours respotted after the same foul must not be placed on top of one another
+  const g = new SnookerGame(), taken = new Set();
+  g.balls[16].potted = true; g.balls[17].potted = true;
+  for (const [id, spotId] of [[1, 16], [2, 17]]) {
+    g.balls[id].x = SPOT[spotId].x; g.balls[id].y = SPOT[spotId].y; g.balls[id].potted = false;
+  }
+  const first = g.respotPosition(16); Object.assign(g.balls[16], first, { potted: false }); taken.add(16);
+  const second = g.respotPosition(17, taken);
+  assert(Math.hypot(first.x - second.x, first.y - second.y) >= 2 * R, 're-spotted colours must remain separated by at least one ball diameter');
+}
 { // potting a colour that was not the first ball hit is a foul
   const g = setup({ 0: [1500, 1300], 1: [2000, 300], 16: [500, 500], 17: [1200, 1300] }, { on: 'colour' });
   g.balls[17].x = 1000; const r = g.shoot(0, 0, 0.3); assert(r.result.foul, 'first hit green while a different colour wasnt potted is allowed, so just checking foul logic runs'); 
