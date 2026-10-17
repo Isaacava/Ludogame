@@ -8,9 +8,11 @@ const { JSDOM } = require(path.join(root, 'node_modules', 'jsdom')); const { io 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const html = fs.readFileSync(path.join(root, 'web', 'snooker.html'), 'utf8').replace(/<script src="https:\/\/cdnjs[^>]*socket\.io[^>]*><\/script>/, '').replace('<script src="social-ui.js"></script>', '');
 const errors = [];
-function open(query, w0 = 390, h0 = 470, disableIo = false) {
+function open(query, w0 = 390, h0 = 470, disableIo = false, failConfig = false) {
   const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'http://localhost:3066/snooker.html' + query, pretendToBeVisual: true, beforeParse(w) {
-    if (!disableIo) w.io = (u, o) => io('http://localhost:3066', o); w.fetch = (u, o) => fetch('http://localhost:3066' + u, o);
+    w.__snkSocketUrls = [];
+    if (!disableIo) w.io = (u, o) => { w.__snkSocketUrls.push(u); return io('http://localhost:3066', o); };
+    w.fetch = failConfig ? (() => Promise.reject(new Error('offline'))) : ((u, o) => fetch('http://localhost:3066' + u, o));
     w.HTMLCanvasElement.prototype.getContext = () => null; w.HTMLCanvasElement.prototype.getBoundingClientRect = () => ({ left: 0, top: 0, width: w0, height: h0, right: w0, bottom: h0 });
     w.addEventListener('error', e => errors.push(e.message));
   } });
@@ -64,6 +66,9 @@ const $ = (w, id) => w.document.getElementById(id), txt = (w, id) => $(w, id).te
   const offline = open('?mode=computer&name=Offline', 390, 470, true); await sleep(100);
   assert(!hidden(offline, 'waitOv'), 'missing connection library displays a recoverable error');
   assert(Array.from(offline.document.querySelectorAll('#waitPanel button')).some(b => b.textContent === 'Retry connection'), 'loading failure includes a retry button');
-  assert.deepStrictEqual(errors, [], 'no script errors: ' + errors.join('; ')); a.close(); b.close(); bad.close(); offline.close();
+  // The separately-hosted frontend must still use the Railway game server if public config is unavailable.
+  const configOffline = open('?mode=computer&name=ConfigOffline', 390, 470, false, true); await sleep(500);
+  assert(configOffline.__snkSocketUrls.includes('https://codeplay-ludo-production.up.railway.app'), 'failed config lookup falls back to the production game server, not the static frontend origin');
+  assert.deepStrictEqual(errors, [], 'no script errors: ' + errors.join('; ')); a.close(); b.close(); bad.close(); offline.close(); configOffline.close();
   console.log('snooker page ok'); process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });
