@@ -77,7 +77,7 @@ a.back{color:var(--muted);font-size:14px;text-decoration:none}.hide{display:none
 <script>
 var API=window.CODEPLAY_API_BASE||'';
 var TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
-var cfg=null,me=null,socket=null,game='ludo',stake=100,queued=false,GAME_LABEL={ludo:'Ludo',whot:'Whot',chess:'Chess'};
+var cfg=null,me=null,socket=null,game='ludo',stake=100,queued=false,GAME_LABEL={ludo:'Ludo',whot:'Whot',chess:'Chess',snooker:'Snooker'};
 function $(id){return document.getElementById(id)}
 function say(t,cls){var m=$('msg');m.textContent=t||'';m.className='msg'+(cls?' '+cls:'')}
 function fmt(n){return Number(n).toLocaleString('en-US')}
@@ -96,7 +96,7 @@ async function load(){
   }catch(e){say('Could not reach the game server.','bad')}
 }
 function drawMe(){$('bal').textContent=fmt(me.balance)+' chips';$('usd').textContent='≈ $'+(me.balance/cfg.chipsPerUsd).toFixed(2);$('pts').textContent=fmt(me.points);$('wins').textContent=me.wins;$('losses').textContent=me.losses;$('wk').textContent=me.weekly?fmt(me.weekly.points):0}
-function drawGames(){var h='';['ludo','whot','chess'].forEach(function(g){var on=cfg.games.indexOf(g)>-1;h+='<button class="game'+(g===game?' on':'')+'" '+(on?'':'disabled ')+'onclick="pickGame(\''+g+'\')">'+GAME_LABEL[g]+(on?'':'<br><small class="small">soon</small>')+'</button>'});$('games').innerHTML=h}
+function drawGames(){var h='';['ludo','whot','chess','snooker'].forEach(function(g){var on=cfg.games.indexOf(g)>-1;h+='<button class="game'+(g===game?' on':'')+'" '+(on?'':'disabled ')+'onclick="pickGame(\''+g+'\')">'+GAME_LABEL[g]+(on?'':'<br><small class="small">soon</small>')+'</button>'});$('games').innerHTML=h}
 function pickGame(g){if(queued)return;game=g;drawGames()}
 function drawStakes(){var h='';cfg.stakes.forEach(function(s){h+='<button class="stake'+(s===stake?' on':'')+'" '+(queued?'disabled ':'')+'onclick="pickStake('+s+')">'+fmt(s)+'<small>$'+(s/cfg.chipsPerUsd).toFixed(s<100?2:0)+'</small></button>'});$('stakes').innerHTML=h;pot()}
 function pot(){var p=stake*2,fee=Math.floor(p*cfg.feeRate);$('potInfo').textContent='Winner receives '+fmt(p-fee)+' chips ('+Math.round(cfg.feeRate*100)+'% house fee on the '+fmt(p)+' pot).'}

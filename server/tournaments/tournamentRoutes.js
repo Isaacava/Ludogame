@@ -13,7 +13,7 @@ function createTournamentRoutes({ accounts, tournaments }) {
   router.use((req, res, next) => { res.header('Cache-Control', 'no-store'); next(); });
 
   router.get('/', optional(async (req, res, me) => {
-    const game = ['ludo', 'whot', 'chess'].includes(req.query.game) ? req.query.game : null;
+    const game = ['ludo', 'whot', 'chess', 'snooker'].includes(req.query.game) ? req.query.game : null;
     const all = await tournaments.list({ statuses: ['registration', 'running', 'completed'], game, limit: 200 });
     const dayAgo = Date.now() - 7 * 86400000;
     const rows = all.filter(t => t.status !== 'completed' || (t.finishedAt || 0) > dayAgo).map(t => tournaments.view(t, me && me.id));

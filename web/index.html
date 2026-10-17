@@ -74,7 +74,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
 .btn-game{gap:14px;min-height:78px}
 .btn-game .gi{flex:0 0 auto;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px rgba(0,0,0,.35)}
 .btn-game .gi .ic{width:27px;height:27px}
-.gi-ludo{background:linear-gradient(145deg,#4be08e,#168a4e)}.gi-whot{background:linear-gradient(145deg,#a98bff,#5b3fc4)}.gi-chess{background:linear-gradient(145deg,#f0b34a,#b76e12)}
+.gi-ludo{background:linear-gradient(145deg,#4be08e,#168a4e)}.gi-whot{background:linear-gradient(145deg,#a98bff,#5b3fc4)}.gi-chess{background:linear-gradient(145deg,#f0b34a,#b76e12)}.gi-snooker{background:linear-gradient(145deg,#2fb86a,#0b5e34);font-size:26px}
 .btn-game .gt{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.btn-game .gt b{font-size:18px;line-height:1.15}.btn-game .gt small{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
 .btn-game[disabled],.btn-game.soon{opacity:.6}
 .seg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
@@ -153,6 +153,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <button class="btn-game" onclick="chooseGame('ludo')"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Ludo</b><small>Race your tokens home</small></span><span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('whot')"><span class="gi gi-whot"><svg class="ic " aria-hidden="true"><use href="#i-cards"/></svg></span><span class="gt"><b>Whot</b><small>Pick two, hold on, general market</small></span><span class="tag">2-4 players</span></button>
   <button class="btn-game" onclick="chooseGame('chess')"><span class="gi gi-chess"><svg class="ic " aria-hidden="true"><use href="#i-pawn"/></svg></span><span class="gt"><b>Chess</b><small>Real clocks, rematches, vs computer</small></span><span class="tag">2 players</span></button>
+  <button class="btn-game" onclick="chooseGame('snooker')"><span class="gi gi-snooker" aria-hidden="true">🎱</span><span class="gt"><b>Snooker</b><small>Full-size table, real physics, vs a friend</small></span><span class="tag">New</span></button>
   <button class="btn-game" id="versusBtn" style="display:none" onclick="location.href='versus.html'"><span class="gi gi-ludo"><svg class="ic " aria-hidden="true"><use href="#i-dice"/></svg></span><span class="gt"><b>Versus — play for chips</b><small>Stake chips, random opponent, winner takes the pot</small></span><span class="tag">18+</span></button>
   <button class="btn-outline" onclick="location.href='tournaments.html'">🏆 Tournaments</button>
   <button class="btn-outline" id="friendsBtn" style="display:none" onclick="location.href='friends.html'">Friends <span class="friendsBadge" id="friendsBadge"></span></button>
@@ -201,7 +202,7 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
     <button class="countBtn selected" onclick="setWhotCount(3)">3</button>
     <button class="countBtn" onclick="setWhotCount(4)">4</button>
   </div>
-  <p class="hint" id="whotCountHint">3 players — classic multiplayer.</p>
+  <p class="hint" id="whotCountHint">You + 2 computer players. In a room, friends take the other seats.</p>
   <button class="btn-primary" onclick="playWhotComputer()"><svg class="ic " aria-hidden="true"><use href="#i-bolt"/></svg> Play vs computer</button>
   <details class="optBox" id="whotOpts">
     <summary><svg class="ic " aria-hidden="true"><use href="#i-sliders"/></svg> Room options</summary>
@@ -254,6 +255,20 @@ input::placeholder{color:#6f867c}input:focus{border-color:var(--gold);outline:0}
   <input id="chessJoinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
   <div class="err" id="chessJoinErr"></div>
   <button class="btn-outline" onclick="joinChessRoom()">Join with code</button>
+  <div class="linkRow"><a onclick="go('select')">Back</a></div>
+</div>
+
+<div class="screen" id="snookerMode">
+  <h2>Snooker</h2>
+  <p class="sub" style="margin-bottom:10px">Full-size table with real ball physics. Pot reds and colours, score the most points. Play on your phone, drag to aim, set the power, shoot.</p>
+  <div class="optLabel">Computer level</div>
+  <div class="seg" id="snookerLevel"><button data-l="1">Beginner</button><button data-l="2" class="on">Club</button><button data-l="3">Pro</button></div>
+  <button class="btn-primary" onclick="playSnookerComputer()"><svg class="ic " aria-hidden="true"><use href="#i-bolt"/></svg> Play vs computer</button>
+  <button class="btn-outline" onclick="createSnookerRoom()"><svg class="ic " aria-hidden="true"><use href="#i-users"/></svg> Create a room (play a friend)</button>
+  <p class="sub" style="margin:14px 0 8px;">Have a room code?</p>
+  <input id="snookerJoinCode" placeholder="Room code or invite link" maxlength="300" autocapitalize="characters" autocomplete="off" spellcheck="false">
+  <div class="err" id="snookerJoinErr"></div>
+  <button class="btn-outline" onclick="joinSnookerRoom()">Join with code</button>
   <div class="linkRow"><a onclick="go('select')">Back</a></div>
 </div>
 
@@ -403,7 +418,7 @@ function finishOnboarding(){
 }
 let ludoCount=4,whotCount=3;
 function setCount(n){ludoCount=n;document.querySelectorAll('#countRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('countHint').textContent=n===2?'2 players — teams: you control 2 colours each.':n+' players — one colour each.'}
-function setWhotCount(n){whotCount=n;document.querySelectorAll('#whotCountRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('whotCountHint').textContent=n+' players — Nigerian Whot multiplayer.'}
+function setWhotCount(n){whotCount=n;document.querySelectorAll('#whotCountRow .countBtn').forEach(function(b,i){b.classList.toggle('selected',i+2===n)});document.getElementById('whotCountHint').textContent='You + '+(n-1)+' computer player'+(n===2?'':'s')+'. In a room, friends take the other seats.'}
 function profileQuery(){return '&name='+encodeURIComponent(session.name||'Guest')+'&color='+encodeURIComponent(session.color||'')}
 function playComputer(){navigate(PLAY_URL+'?players='+ludoCount+profileQuery())}
 function createRoom(){navigate(PLAY_URL+'?mode=friends&action=create&players='+ludoCount+optsQuery('ludo')+profileQuery())}
@@ -411,7 +426,7 @@ function joinRoom(){var p=parseCodeInput(document.getElementById('joinCode').val
 function playWhotComputer(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=computer&players='+whotCount+profileQuery())}
 function createWhotRoom(){if(!whotEnabled)return;navigate(WHOT_URL+'?mode=friends&action=create&players='+whotCount+optsQuery('whot')+profileQuery())}
 function joinWhotRoom(){if(!whotEnabled)return;var p=parseCodeInput(document.getElementById('whotJoinCode').value),errEl=document.getElementById('whotJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(WHOT_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
-function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}if(game==='chess'){go('chessMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
+function chooseGame(game){if(game==='ludo'){go('ludoMode');return}if(game==='whot'){go('whotMode');return}if(game==='chess'){go('chessMode');return}if(game==='snooker'){paintSnooker();go('snookerMode');return}alert(game.charAt(0).toUpperCase()+game.slice(1)+' is coming soon!')}
 (function(){})();
 
 /* ---------- room options (what the host chooses before creating) ---------- */
@@ -548,6 +563,13 @@ document.querySelectorAll('#chessVis button').forEach(function(b){b.onclick=func
 document.getElementById('chessChat').onclick=function(){CHESS_OPTS.chat=!CHESS_OPTS.chat;saveChess();paintChess()};
 paintChess();
 function chessTcQuery(){return '&base='+CHESS_OPTS.base+'&inc='+CHESS_OPTS.inc+'&side='+CHESS_OPTS.side}
+var SNOOKER_URL=window.CODEPLAY_SNOOKER_URL||'/snooker.html',SNOOKER_LEVEL=2;
+try{SNOOKER_LEVEL=Number(localStorage.getItem('codeplay_snooker_level'))||2}catch(e){}
+function paintSnooker(){document.querySelectorAll('#snookerLevel button').forEach(function(b){b.classList.toggle('on',Number(b.dataset.l)===SNOOKER_LEVEL)})}
+document.querySelectorAll('#snookerLevel button').forEach(function(b){b.onclick=function(){SNOOKER_LEVEL=Number(b.dataset.l);try{localStorage.setItem('codeplay_snooker_level',String(SNOOKER_LEVEL))}catch(e){}paintSnooker()}});
+function playSnookerComputer(){navigate(SNOOKER_URL+'?mode=computer&level='+SNOOKER_LEVEL+profileQuery())}
+function createSnookerRoom(){navigate(SNOOKER_URL+'?mode=friends&action=create'+profileQuery())}
+function joinSnookerRoom(){var p=parseCodeInput(document.getElementById('snookerJoinCode').value),errEl=document.getElementById('snookerJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(SNOOKER_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}
 function playChessComputer(){navigate(CHESS_URL+'?mode=computer&level='+CHESS_OPTS.level+chessTcQuery()+profileQuery())}
 function createChessRoom(){navigate(CHESS_URL+'?mode=friends&action=create'+chessTcQuery()+'&visibility='+CHESS_OPTS.visibility+'&chat='+(CHESS_OPTS.chat?'1':'0')+profileQuery())}
 function joinChessRoom(){var p=parseCodeInput(document.getElementById('chessJoinCode').value),errEl=document.getElementById('chessJoinErr');if(!/^[A-Z0-9]{4}$/.test(p.code)){errEl.textContent='Enter the 4-character room code (e.g. K7QP) or paste the invite link.';return}errEl.textContent='';navigate(CHESS_URL+'?mode=friends&action=join&code='+p.code+profileQuery())}

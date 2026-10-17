@@ -8,7 +8,7 @@ const express = require('express');
 const { matchPayloadFor, gameUrl } = require('../versus/versusRoutes');
 
 const INVITE_TTL_MS = 60 * 1000;
-const GAMES = ['ludo', 'whot', 'chess'];
+const GAMES = ['ludo', 'whot', 'chess', 'snooker'];
 const limiter = ({ windowMs, max }) => { const h = new Map(); return (k) => { const n = Date.now(), a = (h.get(k) || []).filter(t => n - t < windowMs); a.push(n); h.set(k, a); return a.length <= max; }; };
 
 class Presence {

@@ -37,11 +37,12 @@ const wallet=new ChipWallet(persistence);
 const runtime=new RuntimeSettings(persistence);
 const adminLog=new AdminLog(persistence);
 const deposits=new DepositStore(persistence);
-const VERSUS_GAMES=String(process.env.VERSUS_GAMES||'ludo,whot,chess').split(',').map(x=>x.trim()).filter(Boolean);
-const lazy={whot:()=>require('./whotServer').rooms,chess:()=>require('./chessServer').rooms};
+const VERSUS_GAMES=String(process.env.VERSUS_GAMES||'ludo,whot,chess,snooker').split(',').map(x=>x.trim()).filter(Boolean);
+const lazy={whot:()=>require('./whotServer').rooms,chess:()=>require('./chessServer').rooms,snooker:()=>require('./snookerServer').rooms};
 function reserveRoom(game,profiles,opts={}){
   if(game==='ludo')return rooms.createReservedRoom(profiles);
   if(game==='whot')return lazy.whot().createReservedRoom(profiles);
+  if(game==='snooker')return lazy.snooker().createReservedRoom(profiles);
   if(game==='chess')return lazy.chess().createReservedRoom(profiles,{base:opts.base||runtime.values.versusChessBase,inc:opts.inc!==undefined?opts.inc:runtime.values.versusChessInc});
   throw new Error('unsupported-game');
 }
@@ -55,7 +56,7 @@ runtime.apply=(v)=>{versus.games=v.versusGames;versus.feeRate=v.versusFeeRate;ve
 runtime.apply(runtime.get());
 // Tournaments: every match is a private reserved room, so tournament players only ever meet each other.
 const tournaments=new TournamentService({persistence,wallet,accounts,
-  roomExists:(game,code)=>{try{return game==='ludo'?!!rooms.getRoom(code):game==='whot'?!!lazy.whot().getRoom(code):!!lazy.chess().getRoom(code)}catch(e){return false}},
+  roomExists:(game,code)=>{try{return game==='ludo'?!!rooms.getRoom(code):game==='whot'?!!lazy.whot().getRoom(code):game==='snooker'?!!lazy.snooker().getRoom(code):!!lazy.chess().getRoom(code)}catch(e){return false}},
   createRoom:async(game,profiles,x)=>{
     const room=reserveRoom(game,profiles,{base:x.chess&&x.chess.base,inc:x.chess&&x.chess.inc});
     room.reserved=true;room.tournament={id:x.tournamentId,matchId:x.matchId,accountIds:x.accountIds,timeoutMs:x.timeoutMs,createdAt:Date.now(),settled:false};
@@ -102,7 +103,7 @@ const {router:adminRouter,auth:adminAuth}=createAdminRoutes(configStore);
 function liveRooms(){
   const out=[];
   const add=(game,map)=>{for(const r of map.values()){out.push({game,code:r.code,kind:r.versus?'versus':r.tournament?'tournament':r.reserved?'friend':(r.mode||'friends'),stake:r.versus?r.versus.stake:0,started:!!r.engine,over:!!(r.engine&&r.engine.gameOver),ageSec:Math.round((Date.now()-(r.createdAt||Date.now()))/1000),players:r.players.map(p=>({name:p.name,connected:!!p.socketId,bot:!!p.bot}))})}};
-  try{add('ludo',rooms.rooms);add('whot',lazy.whot().rooms);add('chess',lazy.chess().rooms)}catch(e){}
+  try{add('ludo',rooms.rooms);add('whot',lazy.whot().rooms);add('chess',lazy.chess().rooms);add('snooker',lazy.snooker().rooms)}catch(e){}
   return out;
 }
 social.friendCount=async(id)=>(await friendsService.friendIds(id)).length;
@@ -459,7 +460,10 @@ const VERSUS_ADAPTERS={
     forceEnd:room=>{room.engine.gameOver=true}},
   chess:{rooms:()=>lazy.chess().rooms.values(),emit:(room,ev,p)=>io.to(`CHESS_${room.code}`).emit(ev,p),
     outcome:room=>{const r=room.engine.result;return {winnerIndex:r&&r.winner&&room.colors?room.colors.indexOf(r.winner):-1}},
-    forceEnd:(room,goneIdx)=>{if(room.engine.abandon&&room.colors)room.engine.abandon(room.colors[goneIdx])}}
+    forceEnd:(room,goneIdx)=>{if(room.engine.abandon&&room.colors)room.engine.abandon(room.colors[goneIdx])}},
+  snooker:{rooms:()=>lazy.snooker().rooms.values(),emit:(room,ev,p)=>io.to(`SNOOKER_${room.code}`).emit(ev,p),
+    outcome:room=>({winnerIndex:typeof room.engine.winner==='number'?room.engine.winner:-1}),
+    forceEnd:(room,goneIdx)=>{room.engine.resign(goneIdx)}}
 };
 async function versusRefereeRoom(game,ad,room){
   const v=room.versus;if(!v||v.settled||v.busy)return;
@@ -548,5 +552,6 @@ module.exports={httpServer,io,rooms,configStore,app,persistence,users,sessions,a
 // Register Whot Socket.IO handlers only after index exports are initialized.
 require('./whotServer');
 require('./chessServer');
+require('./snookerServer');
 
 startServer();

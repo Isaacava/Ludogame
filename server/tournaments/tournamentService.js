@@ -8,7 +8,7 @@
 const crypto = require('crypto');
 const { HOUSE } = require('../wallet/chipWallet');
 
-const GAMES = ['ludo', 'whot', 'chess'];
+const GAMES = ['ludo', 'whot', 'chess', 'snooker'];
 const nextPow2 = (n) => { let p = 1; while (p < n) p *= 2; return p; };
 const shuffle = (a) => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [r[i], r[j]] = [r[j], r[i]]; } return r; };
 
@@ -16,7 +16,7 @@ function validateInput(i, existing = null) {
   const out = {}; const errs = [];
   const num = (k, def, min, max, label) => { const v = i[k] === undefined || i[k] === '' ? (existing ? existing[k] : def) : Number(i[k]); if (!Number.isFinite(v) || v < min || v > max) errs.push(`${label || k} must be between ${min} and ${max}`); else out[k] = Math.floor(v); };
   const g = i.game !== undefined ? i.game : existing && existing.game;
-  if (!GAMES.includes(g)) errs.push('game must be ludo, whot or chess'); else out.game = g;
+  if (!GAMES.includes(g)) errs.push('game must be ludo, whot, chess or snooker'); else out.game = g;
   const name = String(i.name !== undefined ? i.name : (existing && existing.name) || '').trim();
   if (name.length < 3 || name.length > 60) errs.push('name must be 3-60 characters'); else out.name = name;
   out.description = String(i.description !== undefined ? i.description : (existing && existing.description) || '').slice(0, 400);

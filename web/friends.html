@@ -89,7 +89,7 @@ h1{font-size:22px;margin:0;flex:1}
 (function(){
 'use strict';
 var S=window.CodePlaySocial,API=window.CODEPLAY_API_BASE||'',TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
-var GAME_NAME={ludo:'Ludo',whot:'Whot',chess:'Chess'},GAME_ICON={ludo:'🎲',whot:'🃏',chess:'♟️'};
+var GAME_NAME={ludo:'Ludo',whot:'Whot',chess:'Chess',snooker:'Snooker'},GAME_ICON={ludo:'🎲',whot:'🃏',chess:'♟️',snooker:'🎱'};
 var data={friends:[],incoming:[],outgoing:[],config:{games:[],stakes:[],chipsPerUsd:100}},meInfo=null,tab='friends',loaded=false;
 function $(i){return document.getElementById(i)}
 function h(tag,props,kids){var n=document.createElement(tag);props=props||{};Object.keys(props).forEach(function(k){if(k==='class')n.className=props[k];else if(k==='text')n.textContent=props[k];else if(k.slice(0,2)==='on')n.addEventListener(k.slice(2),props[k]);else if(props[k]!==false&&props[k]!=null)n.setAttribute(k,props[k]===true?'':props[k])});(kids||[]).forEach(function(c){if(c!=null)n.appendChild(typeof c==='string'?document.createTextNode(c):c)});return n}
@@ -232,7 +232,7 @@ function openInvite(f){
         sh.replaceChildren(h('div',{class:'grab'}));
         sh.appendChild(h('div',{class:'row'},[avatar(f.username,f.color,f.status),h('div',{},[h('h2',{text:'Invite '+f.username}),h('div',{class:'st online',text:'Online now'})])]));
         sh.appendChild(h('div',{class:'lbl',text:'Game'}));
-        sh.appendChild(h('div',{class:'seg c'+Math.min(3,games.length)},games.map(function(g){return h('button',{class:'opt','aria-pressed':st.game===g,onclick:function(){st.game=g;draw()}},[GAME_ICON[g]+' '+GAME_NAME[g]])})));
+        sh.appendChild(h('div',{class:'seg c'+Math.min(4,games.length)},games.map(function(g){return h('button',{class:'opt','aria-pressed':st.game===g,onclick:function(){st.game=g;draw()}},[GAME_ICON[g]+' '+GAME_NAME[g]])})));
         sh.appendChild(h('div',{class:'lbl',text:'Match type'}));
         sh.appendChild(h('div',{class:'seg c2'},[
           h('button',{class:'opt','aria-pressed':st.mode==='friendly',onclick:function(){st.mode='friendly';draw()}},['Friendly',h('small',{text:'No chips, just for fun'})]),

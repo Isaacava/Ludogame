@@ -62,7 +62,7 @@ h1{font-size:22px;margin:0;flex:1}.bal{font-size:12px;color:var(--muted);text-al
 (function(){
 'use strict';
 var S=window.CodePlaySocial,API=window.CODEPLAY_API_BASE||'',TOKEN=null;try{TOKEN=localStorage.getItem('codeplay_acct_token')}catch(e){}
-var GAME={ludo:['🎲','Ludo'],whot:['🃏','Whot'],chess:['♟️','Chess']},CPU=100;
+var GAME={ludo:['🎲','Ludo'],whot:['🃏','Whot'],chess:['♟️','Chess'],snooker:['🎱','Snooker']},CPU=100;
 var filter='all',rows=null,me=null,openId=null,sheetEl=null,tick=null;
 function $(i){return document.getElementById(i)}
 function h(tag,props,kids){var n=document.createElement(tag);props=props||{};Object.keys(props).forEach(function(k){var v=props[k];if(k==='class')n.className=v;else if(k==='text')n.textContent=v;else if(k.slice(0,2)==='on')n.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)n.setAttribute(k,v===true?'':v)});(kids||[]).forEach(function(c){if(c!=null&&c!==false)n.appendChild(typeof c==='string'||typeof c==='number'?document.createTextNode(String(c)):c)});return n}
@@ -78,7 +78,7 @@ function when(ms){return new Date(ms).toLocaleString([], {weekday:'short',month:
 function statusPill(t){return t.status==='registration'?h('span',{class:'pill open',text:'Open'}):t.status==='running'?h('span',{class:'pill live',text:'Live'}):t.status==='completed'?h('span',{class:'pill done',text:'Finished'}):h('span',{class:'pill bad',text:'Cancelled'})}
 
 /* ---------- list ---------- */
-function drawFilters(){var f=$('filters');f.replaceChildren();[['all','All'],['ludo','🎲 Ludo'],['whot','🃏 Whot'],['chess','♟️ Chess']].forEach(function(o){f.appendChild(h('button',{class:'chip','aria-pressed':String(filter===o[0]),onclick:function(){filter=o[0];drawFilters();drawList()},text:o[1]}))})}
+function drawFilters(){var f=$('filters');f.replaceChildren();[['all','All'],['ludo','🎲 Ludo'],['whot','🃏 Whot'],['chess','♟️ Chess'],['snooker','🎱 Snooker']].forEach(function(o){f.appendChild(h('button',{class:'chip','aria-pressed':String(filter===o[0]),onclick:function(){filter=o[0];drawFilters();drawList()},text:o[1]}))})}
 function load(){return af('/api/tournaments').then(function(r){if(r.ok){rows=r.data.rows;drawList();if(openId)openDetail(openId,true)}else if(!rows){$('list').replaceChildren(h('div',{class:'empty'},[h('div',{class:'big',text:'📡'}),h('b',{text:"Can't reach the server"}),h('button',{class:'btn',onclick:load,text:'Try again'})]))}})}
 function drawList(){
   var l=$('list');l.replaceChildren();

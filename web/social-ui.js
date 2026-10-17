@@ -8,8 +8,8 @@
   var TOKEN = null; try { TOKEN = localStorage.getItem('codeplay_acct_token'); } catch (e) {}
   var API = window.CODEPLAY_API_BASE || '';
   var WHERE = window.CODEPLAY_WHERE || 'site';
-  var IN_GAME = ['ludo', 'whot', 'chess'].indexOf(WHERE) > -1;
-  var GAME_NAME = { ludo: 'Ludo', whot: 'Whot', chess: 'Chess' };
+  var IN_GAME = ['ludo', 'whot', 'chess', 'snooker'].indexOf(WHERE) > -1;
+  var GAME_NAME = { ludo: 'Ludo', whot: 'Whot', chess: 'Chess', snooker: 'Snooker' };
   var listeners = {};
   var Social = window.CodePlaySocial = { enabled: !!TOKEN, requests: 0, socket: null };
 

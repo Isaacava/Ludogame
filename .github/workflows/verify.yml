@@ -33,6 +33,9 @@ jobs:
           node --check server/versus/versusRoutes.js
           node --check server/wallet/walletRoutes.js
           node --check server/social/friends.js
+          node --check server/engine/snookerEngine.js
+          node --check server/rooms/snookerRoomManager.js
+          node --check server/snookerServer.js
           node --check server/social/social.js
           node --check server/tournaments/tournamentService.js
           node --check server/tournaments/tournamentRoutes.js

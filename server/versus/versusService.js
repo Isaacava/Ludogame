@@ -25,7 +25,7 @@ function eloDelta(winnerPts, loserPts) {
 }
 
 class VersusService {
-  constructor({ wallet, accounts, persistence = null, games = ['ludo', 'whot', 'chess'], createRoom, feeRate = FEE_RATE, stakes = STAKES, now = () => Date.now() }) {
+  constructor({ wallet, accounts, persistence = null, games = ['ludo', 'whot', 'chess', 'snooker'], createRoom, feeRate = FEE_RATE, stakes = STAKES, now = () => Date.now() }) {
     this.wallet = wallet; this.accounts = accounts; this.persistence = persistence;
     this.games = games; this.createRoom = createRoom; this.feeRate = feeRate; this.stakes = stakes; this.now = now;
     this.queues = new Map();       // `${game}:${stake}` -> [entry]

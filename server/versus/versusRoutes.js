@@ -58,6 +58,7 @@ function gameUrl(game, code, token, players) {
   if (game === 'ludo') return `/play.html?mode=friends&action=reconnect&code=${code}&playerToken=${token}&players=${players}`;
   if (game === 'whot') return `/whot.html?mode=friends&action=reconnect&code=${code}&playerToken=${token}&players=${players}`;
   if (game === 'chess') return `/chess.html?mode=friends&action=reconnect&code=${code}&playerToken=${token}`;
+  if (game === 'snooker') return `/snooker.html?mode=friends&action=reconnect&code=${code}&playerToken=${token}`;
   return null;
 }
 

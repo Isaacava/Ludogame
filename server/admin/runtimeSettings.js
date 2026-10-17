@@ -1,7 +1,7 @@
 'use strict';
 // Settings the admin can change while the server runs (saved in MongoDB, so they survive restarts).
-const GAMES = ['ludo', 'whot', 'chess'];
-const DEFAULTS = () => ({ versusGames: (process.env.VERSUS_GAMES || 'ludo,whot,chess').split(',').map(x => x.trim()).filter(Boolean), versusFeeRate: process.env.VERSUS_FEE_RATE !== undefined && process.env.VERSUS_FEE_RATE !== '' ? Number(process.env.VERSUS_FEE_RATE) : 0.10,
+const GAMES = ['ludo', 'whot', 'chess', 'snooker'];
+const DEFAULTS = () => ({ versusGames: (process.env.VERSUS_GAMES || 'ludo,whot,chess,snooker').split(',').map(x => x.trim()).filter(Boolean), versusFeeRate: process.env.VERSUS_FEE_RATE !== undefined && process.env.VERSUS_FEE_RATE !== '' ? Number(process.env.VERSUS_FEE_RATE) : 0.10,
   versusStakes: [10, 20, 50, 100, 500, 1000, 5000, 10000], newAccountMaxStake: Number(process.env.NEW_ACCOUNT_MAX_STAKE) || 1000, versusChessBase: Number(process.env.VERSUS_CHESS_BASE) || 300, versusChessInc: Number(process.env.VERSUS_CHESS_INC) || 0 });
 
 function validate(p) {

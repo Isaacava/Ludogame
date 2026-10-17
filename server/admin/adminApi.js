@@ -20,7 +20,7 @@ function createAdminApi({ auth, accounts, wallet, deposits, versus, tournaments,
       accounts.count(), accounts.count({ createdAt: { $gte: startOfDay() } }), accounts.count({ createdAt: { $gte: daysAgo(7) } }),
       deposits.recent(1000), wallet.summary(), versus.stats(86400000), versus.stats(7 * 86400000)]);
     const rooms = liveRooms(); const byGame = {};
-    for (const g of ['ludo', 'whot', 'chess']) { const r = rooms.filter(x => x.game === g); byGame[g] = { rooms: r.length, playing: r.filter(x => x.started && !x.over).length, waiting: r.filter(x => !x.started).length }; }
+    for (const g of ['ludo', 'whot', 'chess', 'snooker']) { const r = rooms.filter(x => x.game === g); byGame[g] = { rooms: r.length, playing: r.filter(x => x.started && !x.over).length, waiting: r.filter(x => !x.started).length }; }
     const tAll = await tournaments.list({ limit: 300 }); const tCount = {}; tAll.forEach(t => { tCount[t.status] = (tCount[t.status] || 0) + 1; });
     const done = depRows.filter(d => d.status === 'completed' || d.status === 'completed-manual');
     const sum = (rows, since) => rows.filter(d => new Date(d.paidAt || d.createdAt) >= since).reduce((a, d) => a + (d.usd || 0), 0);

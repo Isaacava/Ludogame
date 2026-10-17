@@ -70,11 +70,19 @@ Players sign up or log in with Google (one button does both), in addition to Wha
 - Versus (`server/versus/`): a player locks a stake (10, 20, 50, 100, 500, 1000, 5000 or 10000 chips), is paired at random with someone at the same game and stake, and the winner receives the pot minus a 10% house fee (`VERSUS_FEE_RATE`). Draws, no-shows and server restarts refund both stakes. A player who is disconnected for 90s forfeits. Each match settles exactly once.
 - Points are Elo-style (win up, loss down, never below 0) with weekly and all-time leaderboards.
 - Safeguards: 18+ confirmation, a lower stake cap for accounts under 24h old, and one active match per player.
-- Versus works for Ludo, Whot and Chess (`VERSUS_GAMES`). Chess versus uses a 5 minute clock per side (`VERSUS_CHESS_BASE`). Lobby page: `web/versus.html`.
+- Versus works for Ludo, Whot, Chess and Snooker (`VERSUS_GAMES`). Chess versus uses a 5 minute clock per side (`VERSUS_CHESS_BASE`). Lobby page: `web/versus.html`.
 - Wallet page `web/wallet.html`: crypto deposits through NOWPayments hosted invoices (`server/wallet/walletRoutes.js`). Set `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET` and `PUBLIC_BASE_URL`, and register `PUBLIC_BASE_URL/api/wallet/ipn` as the IPN URL. Chips are credited only on the signed `finished` status, exactly once, and only if the paid amount matches the invoice. `partially_paid` and mismatched payments are held for manual review. Try it first with `NOWPAYMENTS_SANDBOX=1`.
 - `CHIPS_TEST_TOPUP=1` lets players add free chips for testing. Never leave it on once real deposits or withdrawals exist.
 - Not built yet: withdrawals (cash-out).
 - Real-money play can be regulated as gambling. Get legal advice before enabling deposits or withdrawals.
+
+## Snooker
+
+- Full-size table, 15 reds + 6 colours + cue ball, standard scoring: red then colour, colours re-spotted while reds remain, then yellow to black. Fouls (no contact, wrong ball first, wrong ball potted, cue ball potted, out of time) give the opponent 4-7 points, and after a potted cue ball the opponent places it in the D. A level score on the black is decided by a re-spotted black. Not implemented: free ball, "miss" replay requests, spin.
+- The server is the referee and the physics engine (`server/engine/snookerEngine.js`, 480 Hz simulation). Clients only send an aim angle and power; the server replays the whole shot to both players as recorded frames, so nobody can cheat or see a different result. Sockets: `server/snookerServer.js`, rooms: `server/rooms/snookerRoomManager.js`.
+- Page: `web/snooker.html` (upright table on phones, landscape on wide screens, zoom button, aiming guide with ghost ball, opponent's cue line, sound effects). Play vs computer (3 levels), friends rooms by 4-letter code, and rematches.
+- Snooker is a first-class game everywhere: staked versus, tournaments, friend invites (friendly or staked), admin dashboards and settings.
+- Shot clock: 90s per shot in friends/versus/tournament rooms (a timeout is a 4-point foul).
 
 ## Friends and invites
 

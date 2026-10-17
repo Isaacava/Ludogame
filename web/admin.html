@@ -142,7 +142,7 @@ VIEWS.dashboard=function(){return Promise.all([api('/overview'),api('/finance?da
   var chart=h('div',{class:'chart'},keys.map(function(k){var d=days[k];function bar(val,c){return h('i',{style:'height:'+Math.max(1,Math.round(val/max*100))+'px;background:'+c,title:fmt(val)+' chips'})}return h('div',{class:'col'},[h('div',{class:'bargrp'},[bar(d.dep,'var(--green)'),bar(d.prize,'var(--blue)'),bar(d.fee,'var(--gold)')]),h('div',{class:'d',text:k.slice(5)})])}));
   root.appendChild(h('div',{class:'grid g2',style:'margin-top:12px'},[
     h('div',{class:'card'},[h('h3',{text:'Chips per day (last 14 days)'}),keys.length?chart:h('div',{class:'mut',text:'No chip activity yet.'}),h('div',{class:'legend'},[h('span',{},[h('b',{style:'background:var(--green)'}),'Deposited']),h('span',{},[h('b',{style:'background:var(--blue)'}),'Paid out to winners']),h('span',{},[h('b',{style:'background:var(--gold)'}),'House fees'])])]),
-    h('div',{class:'card'},[h('h3',{text:'Live rooms'}),table([{h:'Game',v:function(x){return x[0]}},{h:'Rooms',v:function(x){return x[1]},r:1},{h:'Playing',v:function(x){return x[2]},r:1},{h:'Waiting',v:function(x){return x[3]},r:1}],['ludo','whot','chess'].map(function(g){var x=o.rooms[g];return [g[0].toUpperCase()+g.slice(1),x.rooms,x.playing,x.waiting]})),
+    h('div',{class:'card'},[h('h3',{text:'Live rooms'}),table([{h:'Game',v:function(x){return x[0]}},{h:'Rooms',v:function(x){return x[1]},r:1},{h:'Playing',v:function(x){return x[2]},r:1},{h:'Waiting',v:function(x){return x[3]},r:1}],['ludo','whot','chess','snooker'].map(function(g){var x=o.rooms[g];return [g[0].toUpperCase()+g.slice(1),x.rooms,x.playing,x.waiting]})),
       h('h3',{style:'margin-top:16px',text:'Upcoming tournaments'}),table([{h:'Name',v:function(t){return t.name}},{h:'Game',v:function(t){return t.game}},{h:'Starts',v:function(t){return when(t.startAt)}},{h:'Players',v:function(t){return t.players+'/'+t.max},r:1}],o.tournaments.upcoming,'No open tournaments. Create one in Tournaments.')])
   ]));
   return root;
@@ -238,7 +238,7 @@ function tournamentForm(t){modal(function(m,close){
   var v=t||{game:'ludo',name:'',description:'',entryFee:0,fixedPrize:0,rakePercent:10,minPlayers:4,maxPlayers:32,matchTimeoutSec:180,chessBase:300,chessInc:0,feeToPool:true,repeatWeekly:false,prizeSplit:[50,30,20],startAt:nextSaturday()};
   var f={};
   function num(label,key,min,max){var i=h('input',{type:'number',min:String(min),value:String(v[key]!=null?v[key]:'')});if(max!=null)i.setAttribute('max',String(max));f[key]=i;return h('label',{},[label,i])}
-  var game=h('select',{},['ludo','whot','chess'].map(function(g){return h('option',{value:g,text:g[0].toUpperCase()+g.slice(1),selected:v.game===g})}));f.game=game;if(t&&t.playerCount>0)game.disabled=true;
+  var game=h('select',{},['ludo','whot','chess','snooker'].map(function(g){return h('option',{value:g,text:g[0].toUpperCase()+g.slice(1),selected:v.game===g})}));f.game=game;if(t&&t.playerCount>0)game.disabled=true;
   f.name=h('input',{maxlength:'60',value:v.name});f.description=h('input',{maxlength:'400',value:v.description||''});
   f.startAt=h('input',{type:'datetime-local',value:localDT(v.startAt)});f.prizeSplit=h('input',{value:(v.prizeSplit||[]).join(',')});
   f.feeToPool=h('input',{type:'checkbox'});f.feeToPool.checked=v.feeToPool!==false;f.repeatWeekly=h('input',{type:'checkbox'});f.repeatWeekly.checked=!!v.repeatWeekly;
@@ -280,7 +280,7 @@ function tournamentDrawer(id){api('/tournaments/'+id).then(function(r){var t=r.t
 /* ---------- settings ---------- */
 VIEWS.settings=function(){return Promise.all([api('/settings/runtime'),api('/config')]).then(function(r){
   var v=r[0].values,cfg=r[1],root=h('div',{},[header('Settings')]);
-  var games=['ludo','whot','chess'].map(function(g){var c=h('input',{type:'checkbox','data-g':g});c.checked=v.versusGames.indexOf(g)>-1;return h('label',{style:'margin-right:16px'},[c,' ',g[0].toUpperCase()+g.slice(1)])});
+  var games=['ludo','whot','chess','snooker'].map(function(g){var c=h('input',{type:'checkbox','data-g':g});c.checked=v.versusGames.indexOf(g)>-1;return h('label',{style:'margin-right:16px'},[c,' ',g[0].toUpperCase()+g.slice(1)])});
   var fee=h('input',{type:'number',step:'0.5',min:'0',max:'50',value:String(Math.round(v.versusFeeRate*1000)/10)}),stakes=h('input',{value:v.versusStakes.join(', ')}),cap=h('input',{type:'number',min:'0',value:String(v.newAccountMaxStake)}),base=h('input',{type:'number',min:'60',value:String(v.versusChessBase)}),inc=h('input',{type:'number',min:'0',value:String(v.versusChessInc)});
   root.appendChild(h('div',{class:'card',style:'margin-bottom:12px'},[h('h3',{text:'Versus & chips (applies immediately)'}),h('div',{class:'form'},[
     h('div',{class:'full'},[h('div',{class:'sm mut',text:'Games open for versus'}),h('div',{style:'margin-top:6px'},games)]),
