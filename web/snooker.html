@@ -119,47 +119,27 @@ function tone(freq,dur,vol,type,slide){if(!soundOn)return;var c=ac();if(!c)retur
 function sfx(t,v){v=Math.min(1,(v||1500)/3000);if(t==='cue')tone(180,.12,.35,'triangle',.5);else if(t==='ball')tone(1500+Math.random()*500,.05,.08+v*.25,'square',.6);else if(t==='cushion')tone(150,.09,.1+v*.25,'sine',.6);else if(t==='pot'){tone(260,.22,.3,'sine',.4)}else if(t==='foul')tone(120,.3,.25,'sawtooth',.7)}
 
 /* ---------- connection ---------- */
-var socket=null,connectWatchdog=null,joinWatchdog=null;
+var socket=null;
 function show(el,on){el.classList.toggle('hide',!on)}
 function overlay(html){var o=$('waitOv'),p=$('waitPanel');p.replaceChildren();if(!html){show(o,false);return}show(o,true);p.appendChild(html)}
 function node(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n}
 function loading(msg){var d=node('div');d.appendChild(node('div','spin'));d.appendChild(node('h2','',msg));overlay(d)}
-function clearStartTimers(){clearTimeout(connectWatchdog);clearTimeout(joinWatchdog);connectWatchdog=null;joinWatchdog=null}
-function fail(msg,canRetry){clearStartTimers();var d=node('div');d.appendChild(node('h2','',msg));if(canRetry){var retry=node('button','btn pri','Retry connection');retry.onclick=function(){if(typeof io==='undefined'){location.reload();return}clearStartTimers();if(socket){socket.removeAllListeners();socket.disconnect();socket=null}connected=false;start()};d.appendChild(retry)}var b=node('button','btn','Back to menu');b.onclick=function(){location.href='index.html'};d.appendChild(b);overlay(d)}
+function fail(msg,canRetry){var d=node('div');d.appendChild(node('h2','',msg));var b=node('button','btn pri','Back to menu');b.onclick=function(){location.href='index.html'};d.appendChild(b);overlay(d)}
 var ERR={'room-not-found':'That room is no longer available.','room-full':'This room already has two players.','invalid-reconnect-token':'Your seat in this game could not be restored.','not-your-turn':'It is not your turn.','shot-in-progress':'Wait for the balls to stop.','invalid-position':'Place the cue ball inside the D, not touching another ball.','place-the-cue-ball':'Place the cue ball in the D first.','game-over':'This frame is over.','rematch-not-available-in-versus':'Rematches are not available in this match.'};
 
 function start(){
-  clearStartTimers();
-  if(typeof io==='undefined'){fail('Could not load the live connection library.',true);return}
+  if(typeof io==='undefined'){fail('Could not load the live connection.');return}
   loading(vsComputer?'Setting up the table…':'Connecting…');
   var url=window.CODEPLAY_SOCKET_URL;
-  // The frontend is hosted separately from the persistent Socket.IO backend. If its public
-  // config endpoint is unavailable (for example on the static Vercel site), never fall back
-  // to location.origin because that points at the frontend, not the game server.
-  var defaultSocketUrl='https://codeplay-ludo-production.up.railway.app';
-  var go=function(u){
-    try{
-      if(socket){socket.removeAllListeners();socket.disconnect()}
-      socket=io(u,{transports:['websocket','polling'],timeout:8000,reconnection:true,reconnectionDelay:700,reconnectionDelayMax:5000});
-      wire();
-      connectWatchdog=setTimeout(function(){if(connected)return;if(room.code||S)banner('Still trying to reconnect…','foul',6000);else fail('The game server did not respond. Check your connection and retry.',true)},12000);
-    }catch(e){fail('Could not start the live connection. Please try again.',true)}
-  };
-  if(url){go(url);return}
-  var controller=window.AbortController?new AbortController():null,resolved=false;
-  var configTimer=setTimeout(function(){if(resolved)return;resolved=true;if(controller)controller.abort();go(defaultSocketUrl)},4500);
-  fetch('/api/config/public',controller?{signal:controller.signal}:undefined)
-    .then(function(r){if(!r.ok)throw new Error('config unavailable');return r.json()})
-    .then(function(config){if(resolved)return;resolved=true;clearTimeout(configTimer);go(config.socketUrl||defaultSocketUrl)})
-    .catch(function(){if(resolved)return;resolved=true;clearTimeout(configTimer);go(defaultSocketUrl)});
+  var go=function(u){socket=io(u,{transports:['websocket','polling']});wire()};
+  if(url)go(url);else fetch('/api/config/public').then(function(r){return r.json()}).then(function(c){go(c.socketUrl||location.origin)}).catch(function(){go(location.origin)});
 }
 function wire(){
   var s=socket;
-  s.on('connect',function(){connected=true;clearTimeout(connectWatchdog);connectWatchdog=null;clearTimeout(joinWatchdog);join();joinWatchdog=setTimeout(function(){if(!room.code&&!S)fail('Connected to the network, but the snooker game did not respond.',true)},12000)});
-  s.on('disconnect',function(){connected=false;clearTimeout(joinWatchdog);joinWatchdog=null;banner('Connection lost — reconnecting…','foul',6000)});
-  s.on('connect_error',function(){connected=false;if(room.code||S)banner('Connection lost — reconnecting…','foul',6000);else fail('Could not connect to the snooker server.',true)});
-  s.on('snooker:created',function(x){clearTimeout(joinWatchdog);joinWatchdog=null;setRoom(x);if(vsComputer)history.replaceState({},'','?mode=computer&action=reconnect&code='+room.code+'&level='+level);else history.replaceState({},'','?mode=friends&action=reconnect&code='+room.code);apply(x)});
-  s.on('snooker:joined',function(x){clearTimeout(joinWatchdog);joinWatchdog=null;setRoom(x);apply(x)});
+  s.on('connect',function(){connected=true;join()});
+  s.on('disconnect',function(){connected=false;banner('Connection lost — reconnecting…','foul',6000)});
+  s.on('snooker:created',function(x){setRoom(x);if(vsComputer)history.replaceState({},'','?mode=computer&action=reconnect&code='+room.code+'&level='+level);else history.replaceState({},'','?mode=friends&action=reconnect&code='+room.code);apply(x)});
+  s.on('snooker:joined',function(x){setRoom(x);apply(x)});
   s.on('snooker:state',function(x){if(anim){pendingView=x;return}apply(x)});
   s.on('snooker:shot',onShot);
   s.on('snooker:aim',function(a){oppAim=a;oppAim.at=Date.now()});
@@ -167,7 +147,7 @@ function wire(){
   s.on('snooker:notice',function(n){if(n.type==='timeout'){sfx('foul');banner('Out of time — 4 points to the other player','foul',3500)}});
   s.on('versus-result',function(r){if(window.showVersusResult)window.showVersusResult(r,room.you)});
   s.on('snooker:session-replaced',function(){fail('This game was opened in another tab.')});
-  s.on('snooker:error',function(x){clearTimeout(joinWatchdog);joinWatchdog=null;var m=x.message||'';
+  s.on('snooker:error',function(x){var m=x.message||'';
     if(joiningMode==='reconnect'&&(m==='room-not-found'||m==='invalid-reconnect-token')){clearRoom();if(vsComputer){joiningMode='create';create();return}fail(ERR[m]);return}
     if(m==='room-not-found'||m==='room-full'){fail(ERR[m]);return}
     banner(ERR[m]||m,'foul',3200)});
@@ -242,8 +222,7 @@ function updateControls(){
   $('shoot').textContent=mine&&inHand?'Place cue ball here':'Shoot';
   var hint=$('hint');
   if(!S||S.over){show(hint,false);return}
-  var coarse=!!(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches);
-  var t=!mine?(anim?'':'Waiting for '+S.names[S.turn]+'…'):inHand?'Drag the cue ball inside the D, then confirm':(coarse?'Touch the cue to rotate · set power · Shoot':'Drag to aim · set the power · Shoot');
+  var t=!mine?(anim?'':'Waiting for '+S.names[S.turn]+'…'):inHand?'Drag the cue ball inside the D, then confirm':'Drag to aim · set the power · Shoot';
   hint.textContent=t;show(hint,!!t);
 }
 setInterval(function(){
@@ -355,37 +334,14 @@ function defaultSpot(){return {x:BAULK-120,y:W/2}}
 
 /* ---------- pointer input ---------- */
 function toTable(e){var r=cv.getBoundingClientRect();return inv(e.clientX-r.left,e.clientY-r.top)}
-var dragging=false,dragPointerId=null,dragGesture=null;
-function wrapAngle(a){while(a>Math.PI)a-=Math.PI*2;while(a< -Math.PI)a+=Math.PI*2;return a}
-function onCueStick(p,c){
-  if(!c||c.potted)return false;
-  var dx=p.x-c.x,dy=p.y-c.y,d=Math.hypot(dx,dy);
-  if(d<R*1.8||d>1350)return false;
-  var bx=-Math.cos(aim.angle),by=-Math.sin(aim.angle),along=dx*bx+dy*by,across=Math.abs(dx*by-dy*bx);
-  return along>R*.75&&across<110;
-}
-cv.addEventListener('pointerdown',function(e){
-  if(!S||!myTurn()||dragging)return;
-  dragging=true;dragPointerId=e.pointerId;
-  if(cv.setPointerCapture&&e.pointerId!=null){try{cv.setPointerCapture(e.pointerId)}catch(err){}}
-  var p=toTable(e),c=cue();
-  if(S.cueInHand)dragGesture={mode:'place'};
-  else if(c&&!c.potted&&onCueStick(p,c)){dragGesture={mode:'rotate',startPolar:Math.atan2(p.y-c.y,p.x-c.x),startAngle:aim.angle}}
-  else dragGesture={mode:'point'};
-  handleMove(e);
-});
-cv.addEventListener('pointermove',function(e){if(!dragging||(dragPointerId!=null&&e.pointerId!=null&&e.pointerId!==dragPointerId))return;handleMove(e)});
-function endPointer(e){if(dragPointerId!=null&&e&&e.pointerId!=null&&e.pointerId!==dragPointerId)return;dragging=false;dragPointerId=null;dragGesture=null}
-['pointerup','pointercancel','lostpointercapture'].forEach(function(ev){cv.addEventListener(ev,endPointer)});
+var dragging=false;
+cv.addEventListener('pointerdown',function(e){if(!S||!myTurn())return;dragging=true;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);handleMove(e)});
+cv.addEventListener('pointermove',function(e){if(dragging)handleMove(e)});
+['pointerup','pointercancel'].forEach(function(ev){cv.addEventListener(ev,function(){dragging=false})});
 function handleMove(e){
   var p=toTable(e);
   if(S.cueInHand){var x=Math.min(BAULK,Math.max(R,p.x)),y=Math.min(W-R,Math.max(R,p.y)),dx=x-BAULK,dy=y-W/2,d=Math.hypot(dx,dy);if(d>DR){x=BAULK+dx/d*DR;y=W/2+dy/d*DR}placing={x:x,y:y};draw();return}
-  var c=cue();if(!c||c.potted)return;
-  if(dragGesture&&dragGesture.mode==='rotate'){
-    var polar=Math.atan2(p.y-c.y,p.x-c.x);
-    aim.angle=dragGesture.startAngle+wrapAngle(polar-dragGesture.startPolar);
-  }else aim.angle=Math.atan2(p.y-c.y,p.x-c.x);
-  sendAim();draw();
+  var c=cue();if(!c||c.potted)return;aim.angle=Math.atan2(p.y-c.y,p.x-c.x);sendAim();
 }
 cv.addEventListener('wheel',function(e){if(!S||!myTurn()||S.cueInHand)return;e.preventDefault();nudge((e.deltaY>0?1:-1)*.004)},{passive:false});
 

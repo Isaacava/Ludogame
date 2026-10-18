@@ -54,6 +54,10 @@ In Meta's WhatsApp/Developer configuration, set that callback URL, choose a veri
 
 For sending messages, configure a WhatsApp Business Account phone number, its Phone Number ID, and a system-user access token with WhatsApp Business Messaging permission. The adapter uses Graph API v26.0 by default.
 
+## Deploying on Render
+
+`render.yaml` describes the game backend (`codeplay-game-server`, `npm install` then `npm start`, health check `/health`) next to the older WhatsApp-only bot. In the Render dashboard choose New > Blueprint (or create a Web Service from this repo with those commands) and fill in the secret environment variables listed in the file. The backend also serves the website files, so its own URL is a complete game address; if you also host `web/` on Vercel, point the `/api` and `/health` rewrites in `vercel.json` at the Render URL. The server reports its own address to browsers (`/api/config/public`), taken from `SOCKET_URL` or the `RENDER_EXTERNAL_URL` that Render sets. Use a paid instance: a free one sleeps and drops live games. MongoDB is required for accounts, chips and tournaments to survive a restart.
+
 ## Accounts (email + Google) and usernames
 
 Players sign up or log in with Google (one button does both), in addition to WhatsApp and guest mode (guest mode is unchanged). There is no email/password option.

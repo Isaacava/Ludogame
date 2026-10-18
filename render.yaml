@@ -1,4 +1,52 @@
 services:
+  # The CodePlay game backend: accounts, Ludo / Whot / Chess / Snooker, versus, tournaments, wallet, admin, and the website files.
+  # Needs a paid instance for real use: a free instance sleeps, which drops live games.
+  - type: web
+    name: codeplay-game-server
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_DB
+        value: codeplay
+      - key: MONGODB_URI
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SITE_URL
+        sync: false          # https://ludogame-tau.vercel.app (or this service's own URL)
+      - key: SITE_ORIGIN
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false          # this service's public URL, e.g. https://codeplay-game-server.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
+      - key: NOWPAYMENTS_SANDBOX
+        value: "1"           # remove once you have tested deposits and want live payments
+      - key: META_WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: META_WHATSAPP_APP_SECRET
+        sync: false
+      - key: META_WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: META_WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_PUBLIC_NUMBER
+        sync: false
+      - key: WHATSAPP_GAME_LINK_SECRET
+        sync: false
   - type: web
     name: codeplay-whatsapp-bot
     runtime: node

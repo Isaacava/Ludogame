@@ -19,7 +19,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
   <div class="login">
     <div class="brand">🎲 CodePlay Admin (classic)<span><a href="admin.html" style="color:inherit">← New admin panel</a></span></div>
     <h1 style="margin-top:22px">Admin sign in</h1>
-    <p>Use the admin password configured on the Railway backend.</p>
+    <p>Use the admin password configured on the backend (ADMIN_PASSWORD).</p>
     <div class="field"><input id="password" type="password" autocomplete="current-password" placeholder="Admin password"></div>
     <button id="loginBtn">Sign in</button>
     <div id="loginError" class="error"></div>
@@ -45,7 +45,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
       <section id="overview" class="section active">
         <div class="hero"><h1>Control center</h1><p>Manage the game rules and platform behavior without editing code.</p></div>
         <div class="card">
-          <h3>System status</h3><p class="desc">Basic live checks from this Railway service.</p>
+          <h3>System status</h3><p class="desc">Basic live checks from this backend.</p>
           <div class="status-grid">
             <div class="stat"><b id="healthValue">Checking…</b><span>Backend health</span></div>
             <div class="stat"><b id="maintenanceValue">—</b><span>Site status</span></div>
@@ -125,7 +125,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
       </section>
 
       <section id="bot" class="section">
-        <div class="hero"><h1>WhatsApp / Bot</h1><p>Manage the user-facing bot copy and public contact number. Secret Meta credentials stay on Railway and are never shown here.</p></div>
+        <div class="hero"><h1>WhatsApp / Bot</h1><p>Manage the user-facing bot copy and public contact number. Secret Meta credentials stay on the server and are never shown here.</p></div>
         <div class="card">
           <div class="stack">
             <div><label>Welcome message</label><div class="field"><textarea id="welcomeMessage" rows="4"></textarea></div></div>
@@ -133,7 +133,7 @@ main{min-width:0}.hero{background:var(--panel);border:1px solid var(--line);bord
             <div><label>Public WhatsApp number</label><div class="field"><input id="whatsappNumber" placeholder="+234…"></div></div>
           </div>
           <div class="actions"><button id="saveBot">Save bot settings</button><button class="secondary" data-reset="bot">Reset</button></div>
-          <div class="notice" style="margin-top:14px">Meta Cloud API credentials such as the access token and app secret remain environment secrets on Railway. This panel does not expose them.</div>
+          <div class="notice" style="margin-top:14px">Meta Cloud API credentials such as the access token and app secret remain environment secrets on the server. This panel does not expose them.</div>
         </div>
       </section>
 

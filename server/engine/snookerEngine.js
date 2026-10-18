@@ -168,10 +168,8 @@ class SnookerGame {
   }
 
   // choose where a re-spotted colour goes
-  respotPosition(id) {
-    // Ignore only the ball being respotted. Other colours restored earlier in the same stroke
-    // must still occupy their positions, otherwise multiple colours can overlap on one spot.
-    const free = (x, y) => this.balls.every(b => b.id === id || b.potted || (b.x - x) ** 2 + (b.y - y) ** 2 >= (2 * R) ** 2);
+  respotPosition(id, taken) {
+    const free = (x, y) => this.balls.every(b => b.potted || taken.has(b.id) || (b.x - x) ** 2 + (b.y - y) ** 2 >= (2 * R) ** 2);
     const own = SPOT[id]; if (free(own.x, own.y)) return own;
     for (const c of SPOT_PRIORITY) { const s = SPOT[c]; if (VALUE[c] >= 0 && free(s.x, s.y)) return s; }
     for (let x = own.x; x > R; x -= R) if (free(x, W / 2)) return { x, y: W / 2 }; return own;
@@ -184,8 +182,8 @@ class SnookerGame {
     const sim = simulate(this.balls, angle, power, { record }), j = this.judge(sim), me = this.turn, opp = this.opponent(me);
     const before = { reds: this.reds, on: this.on };
     this.balls = sim.end; this.shots++;
-    const respot = [];
-    const bringBack = (id) => { const p = this.respotPosition(id); const b = this.balls[id]; b.x = p.x; b.y = p.y; b.potted = false; respot.push(id); };
+    const respot = [], taken = new Set();
+    const bringBack = (id) => { const p = this.respotPosition(id, taken); const b = this.balls[id]; b.x = p.x; b.y = p.y; b.potted = false; taken.add(id); respot.push(id); };
     let next = { on: this.on, turn: me };
     if (j.foul) {
       this.scores[opp] += j.penalty; this.breakPts = 0;

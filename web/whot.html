@@ -11,7 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="🃏 CodePlay Whot — play with friends">
 <meta property="og:description" content="Pick two, hold on, general market — tap the link and you're in. No sign-up.">
-<meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-whot.png">
+<meta property="og:image" content="https://ludogame-tau.vercel.app/og-whot.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
@@ -436,7 +436,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 (function(){
   const params=new URLSearchParams(location.search);
   const API_BASE=window.CODEPLAY_API_BASE||'';
-  const SOCKET_DEFAULT='https://codeplay-ludo-production.up.railway.app';
+  const SOCKET_DEFAULT=location.origin;
   let profileName=(params.get('name')||'').slice(0,40)||'Guest';
   const whatsappGameToken=(params.get('wa_token')||'').trim();
   let whatsappBotNumber='';
@@ -943,7 +943,11 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     return true;
   }
   function connect(){
-    socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_DEFAULT,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10,timeout:12000});
+    if(window.CODEPLAY_SOCKET_URL)return startSocket(window.CODEPLAY_SOCKET_URL);
+    fetch(API_BASE+'/api/config/public').then(r=>r.json()).catch(()=>({})).then(cfg=>startSocket((cfg&&cfg.socketUrl)||SOCKET_DEFAULT));
+  }
+  function startSocket(socketUrl){
+    socket=io(socketUrl,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:10,timeout:12000});
     const saved=loadRoom(),requestedCode=String(roomCode||'').toUpperCase(),incomingPlayerToken=(params.get('playerToken')||'').trim(),creating=(vsComputer&&action!=='reconnect')||(!vsComputer&&action==='create');
     if(spectatorMode){roomCode=requestedCode;playerToken=null;me=-1}
     else if(incomingPlayerToken&&requestedCode){roomCode=requestedCode;playerToken=incomingPlayerToken}

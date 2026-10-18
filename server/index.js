@@ -122,12 +122,13 @@ app.get('/health',(req,res)=>res.send('ok'));
 app.get('/api/live-rooms',(req,res)=>{res.set('Cache-Control','no-store');res.json({rooms:require('./bot/gameControl').listLiveRooms()})});
 app.get('/api/config/public',(req,res)=>{
   const cfg=configStore.getAll();
-  const railwayDomain=process.env.RAILWAY_PUBLIC_DOMAIN||'codeplay-ludo-production.up.railway.app';
+  // Where browsers should open their live connection: explicit SOCKET_URL, else this host (Render sets RENDER_EXTERNAL_URL), else the legacy Railway variable.
+  const selfUrl=process.env.SOCKET_URL||process.env.RENDER_EXTERNAL_URL||(process.env.RAILWAY_PUBLIC_DOMAIN?`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`:'');
   res.json({
     bot:{whatsappNumber:process.env.WHATSAPP_PUBLIC_NUMBER||cfg.bot.whatsappNumber},
     maintenance:cfg.maintenance,
     monetization:cfg.monetization,
-    socketUrl:`https://${railwayDomain}`,
+    socketUrl:String(selfUrl).replace(/\/+$/,''),
     rules:{
       playerCounts:cfg.rules.playerCounts,
       safeZonesEnabled:!!cfg.rules.safeZonesEnabled,

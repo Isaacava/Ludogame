@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="🎲 CodePlay Ludo — play with friends">
 <meta property="og:description" content="Roll, race and send your friends' tokens home. Join with one tap — no sign-up.">
-<meta property="og:image" content="https://codeplay-ludo-production.up.railway.app/og-ludo.png">
+<meta property="og:image" content="https://ludogame-tau.vercel.app/og-ludo.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/theme.css?v=4"><link rel="stylesheet" href="/appbar.css?v=4"><link rel="stylesheet" href="/ludo.css?v=4"><script src="/icons.js?v=4"></script>
@@ -111,7 +111,7 @@
 const TEAM_SETUPS={2:[{name:'You',isHuman:true,colors:['red','blue']},{name:'Computer',isHuman:false,colors:['yellow','green']}],3:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']}],4:[{name:'You',isHuman:true,colors:['red']},{name:'Green',isHuman:false,colors:['green']},{name:'Yellow',isHuman:false,colors:['yellow']},{name:'Blue',isHuman:false,colors:['blue']}]};
 
 
-var RULES={safeZonesEnabled:false,blockadesEnabled:false,extraTurnValues:[6],doubleValueGrantsExtraTurn:true,captureSendsCapturerHome:true,captureGrantsExtraTurn:false,exactRollToFinish:true},players=[],turn=0,d1=0,d2=0,gameOver=false,currentValid=[],finishOrder=[],captureBonusPending=false,connectionStates=[],rematchRequested=false,SOCKET_URL='https://codeplay-ludo-production.up.railway.app';
+var RULES={safeZonesEnabled:false,blockadesEnabled:false,extraTurnValues:[6],doubleValueGrantsExtraTurn:true,captureSendsCapturerHome:true,captureGrantsExtraTurn:false,exactRollToFinish:true},players=[],turn=0,d1=0,d2=0,gameOver=false,currentValid=[],finishOrder=[],captureBonusPending=false,connectionStates=[],rematchRequested=false,SOCKET_URL=location.origin;
 function blockedByOtherColor(abs,movingColor){if(!RULES.blockadesEnabled)return false;var counts={};players.forEach(function(p){p.colors.forEach(function(c){p.tokens[c].forEach(function(t){if(t>=0&&t<=50&&pathIdx(t,c)===abs)counts[c]=(counts[c]||0)+1})})});return Object.keys(counts).some(function(c){return c!==movingColor&&counts[c]>=2})}
 function canUseValue(pos,value,isDie,color){if(pos===56)return false;if(pos===-1){if(!(isDie&&value===6))return false;return !blockedByOtherColor(pathIdx(0,color),color)}var newPos=pos+value;if(newPos>56&&RULES.exactRollToFinish)return false;if(RULES.blockadesEnabled){var steps=Math.min(value,Math.max(0,50-pos));for(var s=1;s<=steps;s++)if(blockedByOtherColor(pathIdx(pos+s,color),color))return false}return true}
 function legalMoves(pIdx,value,isDie){var out=[];players[pIdx].colors.forEach(function(color){players[pIdx].tokens[color].forEach(function(t,i){if(canUseValue(t,value,isDie,color))out.push({color:color,idx:i})})});return out}
@@ -397,7 +397,7 @@ function promptDieNet(value,isLast,after){var legal=legalMoves(HUMAN_INDEX,value
 function commitNet(mv,value,isLast,after){currentValid=[];modeRow.innerHTML='';render();window._netAfterMove=isLast?null:after;socket.emit('play-move',{code:ROOM_CODE,move:mv,value:value,mode:isLast&&value===d1+d2?'combine':'split',isLastMoveThisTurn:isLast})}
 function startCombineNet(){modeRow.innerHTML='';var sum=d1+d2,legal=legalMoves(HUMAN_INDEX,sum,false);if(legal.length===1){commitNet(legal[0],sum,true,null);return}currentValid=legal;wrText('Tap a token to move it by '+sum+'.');window._netPending={value:sum,isLast:true,after:null,mode:'combine'};render()}
 function initFriendsMode(action,existingCode,playerCount){
- GAME_MODE='friends';SPECTATOR_MODE=(new URLSearchParams(location.search).get('action')==='spectate'||new URLSearchParams(location.search).get('mode')==='watch');ROOM_CODE=normalizeRoomCode(existingCode)||ROOM_CODE;WATCH_TOKEN=(new URLSearchParams(location.search).get('watchToken')||new URLSearchParams(location.search).get('watch')||'').trim();refreshAudienceUi();renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||'https://codeplay-ludo-production.up.railway.app',{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
+ GAME_MODE='friends';SPECTATOR_MODE=(new URLSearchParams(location.search).get('action')==='spectate'||new URLSearchParams(location.search).get('mode')==='watch');ROOM_CODE=normalizeRoomCode(existingCode)||ROOM_CODE;WATCH_TOKEN=(new URLSearchParams(location.search).get('watchToken')||new URLSearchParams(location.search).get('watch')||'').trim();refreshAudienceUi();renderSocialBar();socket=io(window.CODEPLAY_SOCKET_URL||SOCKET_URL||location.origin,{transports:['websocket','polling'],timeout:12000,reconnection:true,reconnectionAttempts:10});
  var saved=loadActiveRoom(), savedCode=normalizeRoomCode(saved&&saved.code), requestedCode=normalizeRoomCode(existingCode), incomingPlayerToken=(new URLSearchParams(location.search).get('playerToken')||'').trim(), crossTabSaved=(!savedCode||savedCode!==requestedCode)?loadSavedRoomForCode(requestedCode):null;
  var sameTabRoom=!incomingPlayerToken&&!!(saved&&saved.playerToken&&saved.tabId===ROOM_TAB_ID&&savedCode);
  var resumeAcrossTabs=!incomingPlayerToken&&!!(!sameTabRoom&&requestedCode&&crossTabSaved&&crossTabSaved.playerToken);
